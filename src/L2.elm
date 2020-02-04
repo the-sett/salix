@@ -1,4 +1,4 @@
-module L2 exposing (Flagged(..))
+module L2 exposing (Flagged(..), L2)
 
 import L1 exposing (Declarations)
 

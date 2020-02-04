@@ -3,6 +3,7 @@ module L1 exposing
     , Container(..)
     , Declarable(..)
     , Declarations
+    , L1
     , Restricted(..)
     , Type(..)
     , Unchecked(..)
