@@ -4,17 +4,26 @@ import L1 exposing (Declarations)
 
 
 
--- L2
--- Purpose is to pull up some information about what kind of thing an alias
--- is referring to.
--- It also indicates that the the L1 model has been reference checked; all TNamed
--- in a set of Declarations are present.
+-- Model TODO:
+-- Rename to RefChecked
+-- Add more than just enum and restricted - a summary of all the decl
+-- kinds.
+-- Need indication that something is recursive.
+-- Derivation of relational model.
+--  arity
+--  directionality
+-- Code TODO:
+-- L1 to L2 transformation.
 
 
 type Flagged
     = FlEnum
     | FlRestricted L1.Basic
     | FlNone
+
+
+
+-- The L2 model
 
 
 type alias L2 =

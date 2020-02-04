@@ -8,19 +8,15 @@ module L1 exposing
     , Unchecked(..)
     )
 
-{-| L1 is a data modelling language.
-
-The name L1 stands for 'level 1', as it is envisioned to be part of a sequence of
-similar data modelling languages, 'level 2', 'level 3'. With L1 being completely
-language agnostic, and higher levels bringing in more specific information targetting
-code generation on particular languages or systems.
-
-What you see here is a first pass at describing the L1 modelling language, and using
-it in a practical context of generating AWS Service stubs for Elm.
-
--}
-
 import Dict exposing (Dict)
+
+
+
+-- TODO:
+-- Source code locations for error reporting.
+-- Somewhere to hold L3 properties
+-- Matching up of bi-directional references. When only one on each end it is obvious.
+-- When more than one, target needs to be explicit. Is this an L1 concern?
 
 
 type Basic
@@ -46,10 +42,6 @@ type Type a
     | TFunction (Type a) (Type a)
 
 
-
--- Do I want Restricted separate or merge into BInt and BString?
-
-
 type Restricted
     = RInt { min : Maybe Int, max : Maybe Int, width : Maybe Int }
     | RString { minLength : Maybe Int, maxLength : Maybe Int, regex : Maybe String }
@@ -62,16 +54,14 @@ type Declarable a
     | DRestricted Restricted
 
 
-
--- Indicates that the AST has not been reference checked.
-
-
+{-| Indicates that the model has not been reference checked.
+-}
 type Unchecked
     = Unchecked
 
 
 
--- A set of declarations
+-- The L1 model
 
 
 type alias Declarations a =

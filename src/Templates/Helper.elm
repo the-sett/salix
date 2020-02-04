@@ -1,4 +1,4 @@
-module Templates.Util exposing (mChain, mChainMaybe, mChainResult, safeCCL, safeCCU, safeName)
+module Templates.Helper exposing (mChain, mChainMaybe, mChainResult, safeCCL, safeCCU, safeName)
 
 import Elm.CodeGen as CG exposing (Expression)
 import Set

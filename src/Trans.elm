@@ -1,4 +1,4 @@
-module Transform exposing (transform)
+module Trans exposing (transform)
 
 import AWS.Core.Service exposing (Signer(..))
 import AWSApiModel exposing (AWSApiModel, Endpoint)

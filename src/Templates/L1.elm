@@ -20,7 +20,7 @@ import L1 exposing (Basic(..), Container(..), Declarable(..), Restricted(..), Ty
 import L2 exposing (Flagged(..))
 import Maybe.Extra
 import Set exposing (Set)
-import Templates.Util as Util
+import Templates.Helper as Util
 
 
 
