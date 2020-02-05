@@ -10,7 +10,6 @@ import Maybe.Extra
 type ModelCheckingError
     = UnresolvedRef String
     | MapKeyTypeNotAllowed
-    | Blah
 
 
 errorToString : ModelCheckingError -> String
@@ -21,15 +20,6 @@ errorToString err =
 
         MapKeyTypeNotAllowed ->
             "Map .key is not an enum, restricted, or basic."
-
-        Blah ->
-            "Todo"
-
-
-dummyError =
-    Blah
-        |> List.Nonempty.fromElement
-        |> Err
 
 
 transform : L1 -> Result (Nonempty ModelCheckingError) L2
@@ -71,7 +61,16 @@ refcheckType decls l1type =
             TBasic basic |> Ok
 
         TNamed name _ ->
-            dummyError
+            case Dict.get name decls of
+                Nothing ->
+                    UnresolvedRef name
+                        |> List.Nonempty.fromElement
+                        |> Err
+
+                Just resolvedDecl ->
+                    declToRefChecked resolvedDecl
+                        |> TNamed name
+                        |> Ok
 
         TProduct fields ->
             refcheckFields decls fields
@@ -115,6 +114,27 @@ refcheckFields decls fields =
                 refcheckType decls fieldType |> Result.map (\checkedType -> ( name, checkedType ))
             )
         |> mapResultErrList identity
+
+
+declToRefChecked : Declarable a -> RefChecked
+declToRefChecked decl =
+    case decl of
+        DAlias l1type ->
+            RcNone
+
+        DSum constructors ->
+            RcNone
+
+        DEnum labels ->
+            RcEnum
+
+        DRestricted res ->
+            case res of
+                RInt _ ->
+                    RcRestricted BInt
+
+                RString _ ->
+                    RcRestricted BString
 
 
 map2ResultErr : (a -> b -> c) -> Result (Nonempty err) a -> Result (Nonempty err) b -> Result (Nonempty err) c
