@@ -45,7 +45,14 @@ walk decl =
                 |> Result.map DAlias
 
         DSum constructors ->
-            dummyError
+            List.map
+                (\( name, fields ) ->
+                    checkFields fields
+                        |> Result.map (\checkedFields -> ( name, checkedFields ))
+                )
+                constructors
+                |> mapResultErrList identity
+                |> Result.map DSum
 
         DEnum labels ->
             DEnum labels |> Ok
@@ -67,10 +74,8 @@ walkType l1type =
             dummyError
 
         TProduct fields ->
-            -- List.map
-            --     (\( name, fieldType ) -> walkType fieldType)
-            --     fields
-            dummyError
+            checkFields fields
+                |> Result.map TProduct
 
         TContainer container ->
             walkContainer container
@@ -99,6 +104,18 @@ walkContainer container =
                 |> Result.map COptional
 
 
+checkFields :
+    List ( String, Type a )
+    -> Result (Nonempty ModelCheckingError) (List ( String, Type RefChecked ))
+checkFields fields =
+    fields
+        |> List.map
+            (\( name, fieldType ) ->
+                walkType fieldType |> Result.map (\checkedType -> ( name, checkedType ))
+            )
+        |> mapResultErrList identity
+
+
 map2ResultErr : (a -> b -> c) -> Result (Nonempty err) a -> Result (Nonempty err) b -> Result (Nonempty err) c
 map2ResultErr fun first second =
     case ( first, second ) of
@@ -118,16 +135,20 @@ map2ResultErr fun first second =
 
 mapResultErrList : (a -> b) -> List (Result (Nonempty err) a) -> Result (Nonempty err) (List b)
 mapResultErrList fun results =
-    let
-        ( errors, mappedVals ) =
-            List.foldl
-                (\vals ( errorAccum, valAccum ) -> ( errorAccum, valAccum ))
-                ( [], [] )
-                results
-    in
-    case List.Nonempty.fromList errors of
-        Nothing ->
-            Ok mappedVals
+    List.foldl
+        (\result accumRes ->
+            case ( result, accumRes ) of
+                ( Ok val, Ok accum ) ->
+                    fun val :: accum |> Ok
 
-        Just nonemptyErrors ->
-            Err nonemptyErrors
+                ( Err err, Ok _ ) ->
+                    Err err
+
+                ( Ok _, Err errAccum ) ->
+                    Err errAccum
+
+                ( Err err, Err errAccum ) ->
+                    List.Nonempty.append err errAccum |> Err
+        )
+        (Ok [])
+        results
