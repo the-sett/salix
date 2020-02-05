@@ -2,7 +2,7 @@ module Trans exposing (transform)
 
 import Dict exposing (Dict)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Declarations, L1, Restricted(..), Type(..))
-import L2 exposing (Flagged(..), L2)
+import L2 exposing (RefChecked(..), L2)
 import Maybe.Extra
 
 

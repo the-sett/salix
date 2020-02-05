@@ -1,4 +1,4 @@
-module L2 exposing (Flagged(..), L2)
+module L2 exposing (RefChecked(..), L2)
 
 import L1 exposing (Declarations)
 
@@ -16,10 +16,10 @@ import L1 exposing (Declarations)
 -- L1 to L2 transformation.
 
 
-type Flagged
-    = FlEnum
-    | FlRestricted L1.Basic
-    | FlNone
+type RefChecked
+    = RcEnum
+    | RcRestricted L1.Basic
+    | RcNone
 
 
 
@@ -27,4 +27,4 @@ type Flagged
 
 
 type alias L2 =
-    Declarations Flagged
+    Declarations RefChecked
