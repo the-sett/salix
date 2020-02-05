@@ -1,11 +1,10 @@
-module L2 exposing (RefChecked(..), L2)
+module L2 exposing (L2, RefChecked(..))
 
 import L1 exposing (Declarations)
 
 
 
 -- Model TODO:
--- Rename to RefChecked
 -- Add more than just enum and restricted - a summary of all the decl
 -- kinds.
 -- Need indication that something is recursive.
