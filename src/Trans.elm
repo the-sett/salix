@@ -32,22 +32,22 @@ dummyError =
         |> Err
 
 
-transform : L1 -> Result ModelCheckingError L2
-transform _ =
+transform : L1 -> Result (Nonempty ModelCheckingError) L2
+transform decls =
     Dict.empty |> Ok
 
 
-walk : Declarable a -> Result (Nonempty ModelCheckingError) (Declarable RefChecked)
-walk decl =
+refcheckDecl : L1 -> Declarable a -> Result (Nonempty ModelCheckingError) (Declarable RefChecked)
+refcheckDecl decls decl =
     case decl of
         DAlias l1type ->
-            walkType l1type
+            refcheckType decls l1type
                 |> Result.map DAlias
 
         DSum constructors ->
             List.map
                 (\( name, fields ) ->
-                    checkFields fields
+                    refcheckFields decls fields
                         |> Result.map (\checkedFields -> ( name, checkedFields ))
                 )
                 constructors
@@ -61,8 +61,8 @@ walk decl =
             DRestricted res |> Ok
 
 
-walkType : Type a -> Result (Nonempty ModelCheckingError) (Type RefChecked)
-walkType l1type =
+refcheckType : L1 -> Type a -> Result (Nonempty ModelCheckingError) (Type RefChecked)
+refcheckType decls l1type =
     case l1type of
         TUnit ->
             TUnit |> Ok
@@ -74,44 +74,45 @@ walkType l1type =
             dummyError
 
         TProduct fields ->
-            checkFields fields
+            refcheckFields decls fields
                 |> Result.map TProduct
 
         TContainer container ->
-            walkContainer container
+            refcheckContainer decls container
                 |> Result.map TContainer
 
         TFunction arg res ->
-            map2ResultErr TFunction (walkType arg) (walkType res)
+            map2ResultErr TFunction (refcheckType decls arg) (refcheckType decls res)
 
 
-walkContainer : Container a -> Result (Nonempty ModelCheckingError) (Container RefChecked)
-walkContainer container =
+refcheckContainer : L1 -> Container a -> Result (Nonempty ModelCheckingError) (Container RefChecked)
+refcheckContainer decls container =
     case container of
         CList valType ->
-            walkType valType
+            refcheckType decls valType
                 |> Result.map CList
 
         CSet valType ->
-            walkType valType
+            refcheckType decls valType
                 |> Result.map CSet
 
         CDict keyType valType ->
-            map2ResultErr CDict (walkType keyType) (walkType valType)
+            map2ResultErr CDict (refcheckType decls keyType) (refcheckType decls valType)
 
         COptional valType ->
-            walkType valType
+            refcheckType decls valType
                 |> Result.map COptional
 
 
-checkFields :
-    List ( String, Type a )
+refcheckFields :
+    L1
+    -> List ( String, Type a )
     -> Result (Nonempty ModelCheckingError) (List ( String, Type RefChecked ))
-checkFields fields =
+refcheckFields decls fields =
     fields
         |> List.map
             (\( name, fieldType ) ->
-                walkType fieldType |> Result.map (\checkedType -> ( name, checkedType ))
+                refcheckType decls fieldType |> Result.map (\checkedType -> ( name, checkedType ))
             )
         |> mapResultErrList identity
 
