@@ -24,7 +24,10 @@ errorToString err =
 
 check : L1 -> Result (Nonempty ModelCheckingError) L2
 check decls =
-    Dict.empty |> Ok
+    Dict.map
+        (\key val -> checkDecl decls val)
+        decls
+        |> combineDict
 
 
 checkDecl : L1 -> Declarable a -> Result (Nonempty ModelCheckingError) (Declarable RefChecked)
