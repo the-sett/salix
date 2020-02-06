@@ -10,6 +10,7 @@ module L1 exposing
     )
 
 import Dict exposing (Dict)
+import List.Nonempty exposing (Nonempty)
 
 
 
@@ -38,7 +39,8 @@ type Type a
     = TUnit
     | TBasic Basic
     | TNamed String a
-    | TProduct (List ( String, Type a ))
+    | TProduct (Nonempty ( String, Type a ))
+    | TEmptyProduct
     | TContainer (Container a)
     | TFunction (Type a) (Type a)
 
@@ -50,8 +52,8 @@ type Restricted
 
 type Declarable a
     = DAlias (Type a)
-    | DSum (List ( String, List ( String, Type a ) ))
-    | DEnum (List String)
+    | DSum (Nonempty ( String, List ( String, Type a ) ))
+    | DEnum (Nonempty String)
     | DRestricted Restricted
 
 

@@ -18,6 +18,7 @@ Lowerings of L1 into Elm type annotations:
 import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, Linkage, TypeAnnotation)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Restricted(..), Type(..))
 import L2 exposing (RefChecked(..))
+import List.Nonempty
 import Maybe.Extra
 import Set exposing (Set)
 import Templates.Helper as Util
@@ -41,11 +42,11 @@ typeDecl name doc decl =
                 |> Tuple.mapFirst List.singleton
 
         DSum constructors ->
-            customType name (Just doc) constructors
+            customType name (Just doc) (List.Nonempty.toList constructors)
                 |> Tuple.mapFirst List.singleton
 
         DEnum labels ->
-            enumCustomType name (Just doc) labels
+            enumCustomType name (Just doc) (List.Nonempty.toList labels)
 
         DRestricted res ->
             restrictedType name (Just doc) res
@@ -390,7 +391,10 @@ lowerType l1Type =
             )
 
         TProduct fields ->
-            lowerProduct fields
+            lowerProduct (List.Nonempty.toList fields)
+
+        TEmptyProduct ->
+            lowerProduct []
 
         TContainer container ->
             lowerContainer container
@@ -532,10 +536,10 @@ codec name decl =
             typeAliasCodec name l1Type
 
         DSum constructors ->
-            customTypeCodec name constructors
+            customTypeCodec name (List.Nonempty.toList constructors)
 
         DEnum labels ->
-            enumCodec name labels
+            enumCodec name (List.Nonempty.toList labels)
 
         DRestricted res ->
             restrictedCodec name res
@@ -753,7 +757,10 @@ codecNamedType name l1Type =
             CG.string "codecNamedType_TNamed"
 
         TProduct fields ->
-            codecNamedProduct name fields
+            codecNamedProduct name (List.Nonempty.toList fields)
+
+        TEmptyProduct ->
+            codecNamedProduct name []
 
         TContainer container ->
             codecType l1Type
@@ -774,7 +781,7 @@ codecType l1Type =
             codecNamed named
 
         TProduct fields ->
-            codecProduct fields
+            codecProduct (List.Nonempty.toList fields)
 
         TContainer container ->
             codecContainer container
@@ -800,7 +807,11 @@ codecTypeField name l1Type =
                 |> codecField name
 
         TProduct fields ->
-            codecProduct fields
+            codecProduct (List.Nonempty.toList fields)
+                |> codecField name
+
+        TEmptyProduct ->
+            codecProduct []
                 |> codecField name
 
         TContainer container ->

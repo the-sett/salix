@@ -3,7 +3,7 @@ module Checker exposing (check)
 import Dict exposing (Dict)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Declarations, L1, Restricted(..), Type(..))
 import L2 exposing (L2, RefChecked(..))
-import List.Nonempty exposing (Nonempty)
+import List.Nonempty exposing (Nonempty(..))
 import Maybe.Extra
 
 
@@ -38,13 +38,13 @@ checkDecl decls decl =
                 |> Result.map DAlias
 
         DSum constructors ->
-            List.map
+            List.Nonempty.map
                 (\( name, fields ) ->
                     checkFields decls fields
                         |> Result.map (\checkedFields -> ( name, checkedFields ))
                 )
                 constructors
-                |> combineList
+                |> combineNonempty
                 |> Result.map DSum
 
         DEnum labels ->
@@ -76,8 +76,11 @@ checkType decls l1type =
                         |> Ok
 
         TProduct fields ->
-            checkFields decls fields
+            checkNonemptyFields decls fields
                 |> Result.map TProduct
+
+        TEmptyProduct ->
+            TEmptyProduct |> Ok
 
         TContainer container ->
             checkContainer decls container
@@ -104,6 +107,19 @@ checkContainer decls container =
         COptional valType ->
             checkType decls valType
                 |> Result.map COptional
+
+
+checkNonemptyFields :
+    L1
+    -> Nonempty ( String, Type a )
+    -> Result (Nonempty ModelCheckingError) (Nonempty ( String, Type RefChecked ))
+checkNonemptyFields decls fields =
+    fields
+        |> List.Nonempty.map
+            (\( name, fieldType ) ->
+                checkType decls fieldType |> Result.map (\checkedType -> ( name, checkedType ))
+            )
+        |> combineNonempty
 
 
 checkFields :
@@ -176,6 +192,27 @@ combineList results =
         )
         (Ok [])
         results
+
+
+combineNonempty : Nonempty (Result (Nonempty err) a) -> Result (Nonempty err) (Nonempty a)
+combineNonempty (Nonempty head tail) =
+    List.foldl
+        (\result accumRes ->
+            case ( result, accumRes ) of
+                ( Ok val, Ok accum ) ->
+                    List.Nonempty.cons val accum |> Ok
+
+                ( Err err, Ok _ ) ->
+                    Err err
+
+                ( Ok _, Err errAccum ) ->
+                    Err errAccum
+
+                ( Err err, Err errAccum ) ->
+                    List.Nonempty.append err errAccum |> Err
+        )
+        (Result.map List.Nonempty.fromElement head)
+        tail
 
 
 combineDict : Dict comparable (Result (Nonempty err) v) -> Result (Nonempty err) (Dict comparable v)
