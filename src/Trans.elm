@@ -41,7 +41,7 @@ checkDecl decls decl =
                         |> Result.map (\checkedFields -> ( name, checkedFields ))
                 )
                 constructors
-                |> mapResultErrList identity
+                |> combineList
                 |> Result.map DSum
 
         DEnum labels ->
@@ -81,7 +81,7 @@ checkType decls l1type =
                 |> Result.map TContainer
 
         TFunction arg res ->
-            map2ResultErr TFunction (checkType decls arg) (checkType decls res)
+            combine2 TFunction (checkType decls arg) (checkType decls res)
 
 
 checkContainer : L1 -> Container a -> Result (Nonempty ModelCheckingError) (Container RefChecked)
@@ -96,7 +96,7 @@ checkContainer decls container =
                 |> Result.map CSet
 
         CDict keyType valType ->
-            map2ResultErr CDict (checkType decls keyType) (checkType decls valType)
+            combine2 CDict (checkType decls keyType) (checkType decls valType)
 
         COptional valType ->
             checkType decls valType
@@ -113,7 +113,7 @@ checkFields decls fields =
             (\( name, fieldType ) ->
                 checkType decls fieldType |> Result.map (\checkedType -> ( name, checkedType ))
             )
-        |> mapResultErrList identity
+        |> combineList
 
 
 declToRefChecked : Declarable a -> RefChecked
@@ -137,8 +137,8 @@ declToRefChecked decl =
                     RcRestricted BString
 
 
-map2ResultErr : (a -> b -> c) -> Result (Nonempty err) a -> Result (Nonempty err) b -> Result (Nonempty err) c
-map2ResultErr fun first second =
+combine2 : (a -> b -> c) -> Result (Nonempty err) a -> Result (Nonempty err) b -> Result (Nonempty err) c
+combine2 fun first second =
     case ( first, second ) of
         ( Ok checkedArg, Ok checkedRes ) ->
             fun checkedArg checkedRes |> Ok
@@ -154,13 +154,13 @@ map2ResultErr fun first second =
                 |> Err
 
 
-mapResultErrList : (a -> b) -> List (Result (Nonempty err) a) -> Result (Nonempty err) (List b)
-mapResultErrList fun results =
+combineList : List (Result (Nonempty err) a) -> Result (Nonempty err) (List a)
+combineList results =
     List.foldl
         (\result accumRes ->
             case ( result, accumRes ) of
                 ( Ok val, Ok accum ) ->
-                    fun val :: accum |> Ok
+                    val :: accum |> Ok
 
                 ( Err err, Ok _ ) ->
                     Err err
