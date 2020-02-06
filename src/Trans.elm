@@ -173,3 +173,24 @@ combineList results =
         )
         (Ok [])
         results
+
+
+combineDict : Dict comparable (Result (Nonempty err) v) -> Result (Nonempty err) (Dict comparable v)
+combineDict results =
+    Dict.foldl
+        (\key result accumRes ->
+            case ( result, accumRes ) of
+                ( Ok val, Ok accum ) ->
+                    Dict.insert key val accum |> Ok
+
+                ( Err err, Ok _ ) ->
+                    Err err
+
+                ( Ok _, Err errAccum ) ->
+                    Err errAccum
+
+                ( Err err, Err errAccum ) ->
+                    List.Nonempty.append err errAccum |> Err
+        )
+        (Ok Dict.empty)
+        results
