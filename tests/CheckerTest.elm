@@ -5,6 +5,7 @@ import Dict exposing (Dict)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import L1 exposing (..)
+import List.Nonempty exposing (Nonempty)
 import Random
 import Shrink
 import Test exposing (..)
@@ -68,12 +69,14 @@ declarableFuzzer : Fuzzer (Type Unchecked) -> Fuzzer (Declarable Unchecked)
 declarableFuzzer tFuzzer =
     Fuzz.oneOf
         [ Fuzz.map DAlias tFuzzer
+        , Fuzz.tuple ( Fuzz.string, tFuzzer )
+            |> nonEmptyList
+            --|> Fuzz.map List.singleton
+            |> Fuzz.map2 Tuple.pair Fuzz.string
+            --|> nonempty
+            |> Fuzz.map List.Nonempty.fromElement
+            |> Fuzz.map DSum
 
-        -- , Fuzz.tuple ( Fuzz.string, tFuzzer )
-        --     |> Fuzz.list
-        --     |> Fuzz.map2 Tuple.pair Fuzz.string
-        --     |> Fuzz.list
-        --     |> Fuzz.map DSum
         --  DEnum (List String)
         --  DRestricted Restricted
         ]
@@ -110,7 +113,7 @@ recursiveTypeFuzzer : Fuzzer (Type Unchecked) -> Fuzzer (Type Unchecked)
 recursiveTypeFuzzer tFuzzer =
     Fuzz.oneOf
         [ Fuzz.tuple ( Fuzz.string, tFuzzer )
-            |> Fuzz.list
+            |> nonempty
             |> Fuzz.map TProduct
         , Fuzz.map TContainer (containerFuzzer tFuzzer)
         , Fuzz.map2 TFunction tFuzzer tFuzzer
@@ -126,3 +129,18 @@ typeFuzzer =
         , base = leafTypeFuzzer
         , recurse = recursiveTypeFuzzer
         }
+
+
+nonempty : Fuzzer a -> Fuzzer (Nonempty a)
+nonempty fuzz =
+    Fuzz.map2
+        (\list singleton ->
+            List.Nonempty.fromElement singleton
+                |> List.Nonempty.replaceTail list
+        )
+        (Fuzz.list fuzz)
+        fuzz
+
+
+nonEmptyList fuzzer =
+    Fuzz.map2 (::) fuzzer (Fuzz.list fuzzer)
