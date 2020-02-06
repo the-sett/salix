@@ -1,4 +1,4 @@
-module Trans exposing (transform)
+module Trans exposing (check)
 
 import Dict exposing (Dict)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Declarations, L1, Restricted(..), Type(..))
@@ -22,8 +22,8 @@ errorToString err =
             "Map .key is not an enum, restricted, or basic."
 
 
-transform : L1 -> Result (Nonempty ModelCheckingError) L2
-transform decls =
+check : L1 -> Result (Nonempty ModelCheckingError) L2
+check decls =
     Dict.empty |> Ok
 
 
