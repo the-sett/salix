@@ -1,4 +1,4 @@
-module Trans exposing (check)
+module Checker exposing (check)
 
 import Dict exposing (Dict)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Declarations, L1, Restricted(..), Type(..))

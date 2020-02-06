@@ -7,7 +7,7 @@
     "exposed-modules": [
         "L1",
         "L2",
-        "Trans",
+        "Checker",
         "Templates.L1"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",
