@@ -1,5 +1,5 @@
 module MultiError exposing
-    ( ResultME, error
+    ( ResultME, error, fromResult
     , combine2, combineList, combineDict, combineNonempty
     , map
     , mapError
@@ -18,7 +18,7 @@ multiple syntax errors.
 
 # Type and Constructors
 
-@docs ResultME, error
+@docs ResultME, error, fromResult
 
 
 # Combining errors from multiple sources together
