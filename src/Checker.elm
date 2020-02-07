@@ -7,9 +7,19 @@ import List.Nonempty exposing (Nonempty(..))
 import Maybe.Extra
 
 
+
+--TODO:
+-- Check field and decl names are legal
+-- Check at least one sum type constructor has args, or else its an enum
+-- error or warning?
+
+
 type ModelCheckingError
     = UnresolvedRef String
     | MapKeyTypeNotAllowed
+    | BadFieldName String
+    | BadDeclarationName String
+    | DeclaredMoreThanOnce String
 
 
 errorToString : ModelCheckingError -> String
@@ -20,6 +30,15 @@ errorToString err =
 
         MapKeyTypeNotAllowed ->
             "Map .key is not an enum, restricted, or basic."
+
+        BadFieldName name ->
+            name ++ " is not allowed as a field name."
+
+        BadDeclarationName name ->
+            name ++ " is not allows as a declaration name."
+
+        DeclaredMoreThanOnce name ->
+            name ++ " cannot be declared more than once."
 
 
 check : L1 -> Result (Nonempty ModelCheckingError) L2
