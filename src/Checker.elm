@@ -5,7 +5,7 @@ import L1 exposing (Basic(..), Container(..), Declarable(..), Declarations, L1, 
 import L2 exposing (L2, RefChecked(..))
 import List.Nonempty exposing (Nonempty(..))
 import Maybe.Extra
-import MultiError
+import MultiError exposing (ResultME)
 
 
 
@@ -42,7 +42,7 @@ errorToString err =
             name ++ " cannot be declared more than once."
 
 
-check : L1 -> Result (Nonempty ModelCheckingError) L2
+check : L1 -> ResultME ModelCheckingError L2
 check decls =
     Dict.map
         (\key val -> checkDecl decls val)
@@ -50,7 +50,7 @@ check decls =
         |> MultiError.combineDict
 
 
-checkDecl : L1 -> Declarable a -> Result (Nonempty ModelCheckingError) (Declarable RefChecked)
+checkDecl : L1 -> Declarable a -> ResultME ModelCheckingError (Declarable RefChecked)
 checkDecl decls decl =
     case decl of
         DAlias l1type ->
@@ -74,7 +74,7 @@ checkDecl decls decl =
             DRestricted res |> Ok
 
 
-checkType : L1 -> Type a -> Result (Nonempty ModelCheckingError) (Type RefChecked)
+checkType : L1 -> Type a -> ResultME ModelCheckingError (Type RefChecked)
 checkType decls l1type =
     case l1type of
         TUnit ->
@@ -110,7 +110,7 @@ checkType decls l1type =
             MultiError.combine2 TFunction (checkType decls arg) (checkType decls res)
 
 
-checkContainer : L1 -> Container a -> Result (Nonempty ModelCheckingError) (Container RefChecked)
+checkContainer : L1 -> Container a -> ResultME ModelCheckingError (Container RefChecked)
 checkContainer decls container =
     case container of
         CList valType ->
@@ -132,7 +132,7 @@ checkContainer decls container =
 checkNonemptyFields :
     L1
     -> Nonempty ( String, Type a )
-    -> Result (Nonempty ModelCheckingError) (Nonempty ( String, Type RefChecked ))
+    -> ResultME ModelCheckingError (Nonempty ( String, Type RefChecked ))
 checkNonemptyFields decls fields =
     fields
         |> List.Nonempty.map
@@ -145,7 +145,7 @@ checkNonemptyFields decls fields =
 checkFields :
     L1
     -> List ( String, Type a )
-    -> Result (Nonempty ModelCheckingError) (List ( String, Type RefChecked ))
+    -> ResultME ModelCheckingError (List ( String, Type RefChecked ))
 checkFields decls fields =
     fields
         |> List.map
