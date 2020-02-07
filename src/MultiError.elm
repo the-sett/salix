@@ -1,5 +1,5 @@
 module MultiError exposing
-    ( ResultME
+    ( ResultME, error
     , combine2, combineList, combineDict, combineNonempty
     , map
     , mapError
@@ -18,7 +18,7 @@ multiple syntax errors.
 
 # Type and Constructors
 
-@docs ResultME
+@docs ResultME, error
 
 
 # Combining errors from multiple sources together
@@ -48,20 +48,37 @@ type alias ResultME err a =
     Result (Nonempty err) a
 
 
+error : err -> ResultME err a
+error err =
+    err
+        |> List.Nonempty.fromElement
+        |> Err
+
+
+fromResult : Result err a -> ResultME err a
+fromResult result =
+    case result of
+        Err err ->
+            error err
+
+        Ok val ->
+            Ok val
+
+
 combine2 : (a -> b -> c) -> ResultME err a -> ResultME err b -> ResultME err c
 combine2 fun first second =
     case ( first, second ) of
         ( Ok checkedArg, Ok checkedRes ) ->
             fun checkedArg checkedRes |> Ok
 
-        ( Err error, Ok _ ) ->
-            Err error
+        ( Err err, Ok _ ) ->
+            Err err
 
-        ( Ok _, Err error ) ->
-            Err error
+        ( Ok _, Err err ) ->
+            Err err
 
-        ( Err error1, Err error2 ) ->
-            List.Nonempty.append error1 error2
+        ( Err err1, Err err2 ) ->
+            List.Nonempty.append err1 err2
                 |> Err
 
 

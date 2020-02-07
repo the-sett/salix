@@ -6,6 +6,7 @@ import L2 exposing (L2, RefChecked(..))
 import List.Nonempty exposing (Nonempty(..))
 import Maybe.Extra
 import MultiError exposing (ResultME)
+import Naming
 
 
 
@@ -42,10 +43,20 @@ errorToString err =
             name ++ " cannot be declared more than once."
 
 
+
+-- left : a -> b -> a
+-- right : a -> b -> b
+
+
 check : L1 -> ResultME ModelCheckingError L2
 check decls =
     Dict.map
-        (\key val -> checkDecl decls val)
+        (\key val ->
+            MultiError.combine2
+                always
+                (checkDecl decls val)
+                (checkName key)
+        )
         decls
         |> MultiError.combineDict
 
@@ -60,8 +71,10 @@ checkDecl decls decl =
         DSum constructors ->
             List.Nonempty.map
                 (\( name, fields ) ->
-                    checkFields decls fields
-                        |> Result.map (\checkedFields -> ( name, checkedFields ))
+                    MultiError.combine2
+                        Tuple.pair
+                        (checkName name)
+                        (checkFields decls fields)
                 )
                 constructors
                 |> MultiError.combineNonempty
@@ -87,8 +100,7 @@ checkType decls l1type =
             case Dict.get name decls of
                 Nothing ->
                     UnresolvedRef name
-                        |> List.Nonempty.fromElement
-                        |> Err
+                        |> MultiError.error
 
                 Just resolvedDecl ->
                     declToRefChecked resolvedDecl
@@ -137,7 +149,10 @@ checkNonemptyFields decls fields =
     fields
         |> List.Nonempty.map
             (\( name, fieldType ) ->
-                checkType decls fieldType |> Result.map (\checkedType -> ( name, checkedType ))
+                MultiError.combine2
+                    Tuple.pair
+                    (checkName name)
+                    (checkType decls fieldType)
             )
         |> MultiError.combineNonempty
 
@@ -150,9 +165,22 @@ checkFields decls fields =
     fields
         |> List.map
             (\( name, fieldType ) ->
-                checkType decls fieldType |> Result.map (\checkedType -> ( name, checkedType ))
+                MultiError.combine2
+                    Tuple.pair
+                    (checkName name)
+                    (checkType decls fieldType)
             )
         |> MultiError.combineList
+
+
+checkName : String -> ResultME ModelCheckingError String
+checkName val =
+    case Naming.checkName val of
+        True ->
+            Ok val
+
+        False ->
+            BadFieldName val |> MultiError.error
 
 
 declToRefChecked : Declarable a -> RefChecked

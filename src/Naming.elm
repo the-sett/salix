@@ -10,6 +10,7 @@ nameRegex =
         Regex.fromString "^\\w+[\\d\\w]*$"
 
 
+checkName : String -> Bool
 checkName val =
     Regex.contains nameRegex val
 
