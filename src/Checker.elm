@@ -9,13 +9,6 @@ import MultiError exposing (ResultME)
 import Naming
 
 
-
---TODO:
--- Check field and decl names are legal
--- Check at least one sum type constructor has args, or else its an enum
--- error or warning?
-
-
 type ModelCheckingError
     = UnresolvedRef String
     | MapKeyTypeNotAllowed
@@ -41,11 +34,6 @@ errorToString err =
 
         DeclaredMoreThanOnce name ->
             name ++ " cannot be declared more than once."
-
-
-
--- left : a -> b -> a
--- right : a -> b -> b
 
 
 check : L1 -> ResultME ModelCheckingError L2
@@ -134,11 +122,39 @@ checkContainer decls container =
                 |> Result.map CSet
 
         CDict keyType valType ->
-            MultiError.combine2 CDict (checkType decls keyType) (checkType decls valType)
+            MultiError.combine2
+                CDict
+                (checkType decls keyType
+                    |> MultiError.andThen checkDictKey
+                )
+                (checkType decls valType)
 
         COptional valType ->
             checkType decls valType
                 |> Result.map COptional
+
+
+{-| Checks that a Dict key is either a basic type, or a ref to an enum or
+refined type.
+
+This check must be performed on a type that has already been ref-checked,
+which makes it simple to know what it refers to in the case where it is a ref.
+
+-}
+checkDictKey : Type RefChecked -> ResultME ModelCheckingError (Type RefChecked)
+checkDictKey l2type =
+    case l2type of
+        TBasic _ ->
+            l2type |> Ok
+
+        TNamed _ RcEnum ->
+            l2type |> Ok
+
+        TNamed _ (RcRestricted _) ->
+            l2type |> Ok
+
+        _ ->
+            MultiError.error MapKeyTypeNotAllowed
 
 
 checkNonemptyFields :
