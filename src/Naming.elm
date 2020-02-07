@@ -1,7 +1,17 @@
 module Naming exposing (..)
 
+import Regex
 import Set
 import String.Case as Case
+
+
+nameRegex =
+    Maybe.withDefault Regex.never <|
+        Regex.fromString "^\\w+[\\d\\w]*$"
+
+
+checkName val =
+    Regex.contains nameRegex val
 
 
 {-| Checks if a name matches an Elm keyword, and proposes a different name to
