@@ -1,5 +1,5 @@
 module MultiError exposing
-    ( ResultME, error, fromResult
+    ( ResultME, error, errors, fromResult
     , combine2, combineList, combineDict, combineNonempty
     , map
     , mapError
@@ -18,7 +18,7 @@ multiple syntax errors.
 
 # Type and Constructors
 
-@docs ResultME, error, fromResult
+@docs ResultME, error, errors, fromResult
 
 
 # Combining errors from multiple sources together
@@ -53,6 +53,11 @@ error err =
     err
         |> List.Nonempty.fromElement
         |> Err
+
+
+errors : err -> List err -> ResultME err a
+errors err errs =
+    List.Nonempty.Nonempty err errs |> Err
 
 
 fromResult : Result err a -> ResultME err a
