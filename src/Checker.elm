@@ -5,6 +5,7 @@ import L1 exposing (Basic(..), Container(..), Declarable(..), Declarations, L1, 
 import L2 exposing (L2, RefChecked(..))
 import List.Nonempty exposing (Nonempty(..))
 import Maybe.Extra
+import MultiError
 
 
 
@@ -46,7 +47,7 @@ check decls =
     Dict.map
         (\key val -> checkDecl decls val)
         decls
-        |> combineDict
+        |> MultiError.combineDict
 
 
 checkDecl : L1 -> Declarable a -> Result (Nonempty ModelCheckingError) (Declarable RefChecked)
@@ -63,7 +64,7 @@ checkDecl decls decl =
                         |> Result.map (\checkedFields -> ( name, checkedFields ))
                 )
                 constructors
-                |> combineNonempty
+                |> MultiError.combineNonempty
                 |> Result.map DSum
 
         DEnum labels ->
@@ -106,7 +107,7 @@ checkType decls l1type =
                 |> Result.map TContainer
 
         TFunction arg res ->
-            combine2 TFunction (checkType decls arg) (checkType decls res)
+            MultiError.combine2 TFunction (checkType decls arg) (checkType decls res)
 
 
 checkContainer : L1 -> Container a -> Result (Nonempty ModelCheckingError) (Container RefChecked)
@@ -121,7 +122,7 @@ checkContainer decls container =
                 |> Result.map CSet
 
         CDict keyType valType ->
-            combine2 CDict (checkType decls keyType) (checkType decls valType)
+            MultiError.combine2 CDict (checkType decls keyType) (checkType decls valType)
 
         COptional valType ->
             checkType decls valType
@@ -138,7 +139,7 @@ checkNonemptyFields decls fields =
             (\( name, fieldType ) ->
                 checkType decls fieldType |> Result.map (\checkedType -> ( name, checkedType ))
             )
-        |> combineNonempty
+        |> MultiError.combineNonempty
 
 
 checkFields :
@@ -151,7 +152,7 @@ checkFields decls fields =
             (\( name, fieldType ) ->
                 checkType decls fieldType |> Result.map (\checkedType -> ( name, checkedType ))
             )
-        |> combineList
+        |> MultiError.combineList
 
 
 declToRefChecked : Declarable a -> RefChecked
@@ -173,83 +174,3 @@ declToRefChecked decl =
 
                 RString _ ->
                     RcRestricted BString
-
-
-combine2 : (a -> b -> c) -> Result (Nonempty err) a -> Result (Nonempty err) b -> Result (Nonempty err) c
-combine2 fun first second =
-    case ( first, second ) of
-        ( Ok checkedArg, Ok checkedRes ) ->
-            fun checkedArg checkedRes |> Ok
-
-        ( Err error, Ok _ ) ->
-            Err error
-
-        ( Ok _, Err error ) ->
-            Err error
-
-        ( Err error1, Err error2 ) ->
-            List.Nonempty.append error1 error2
-                |> Err
-
-
-combineList : List (Result (Nonempty err) a) -> Result (Nonempty err) (List a)
-combineList results =
-    List.foldl
-        (\result accumRes ->
-            case ( result, accumRes ) of
-                ( Ok val, Ok accum ) ->
-                    val :: accum |> Ok
-
-                ( Err err, Ok _ ) ->
-                    Err err
-
-                ( Ok _, Err errAccum ) ->
-                    Err errAccum
-
-                ( Err err, Err errAccum ) ->
-                    List.Nonempty.append err errAccum |> Err
-        )
-        (Ok [])
-        results
-
-
-combineNonempty : Nonempty (Result (Nonempty err) a) -> Result (Nonempty err) (Nonempty a)
-combineNonempty (Nonempty head tail) =
-    List.foldl
-        (\result accumRes ->
-            case ( result, accumRes ) of
-                ( Ok val, Ok accum ) ->
-                    List.Nonempty.cons val accum |> Ok
-
-                ( Err err, Ok _ ) ->
-                    Err err
-
-                ( Ok _, Err errAccum ) ->
-                    Err errAccum
-
-                ( Err err, Err errAccum ) ->
-                    List.Nonempty.append err errAccum |> Err
-        )
-        (Result.map List.Nonempty.fromElement head)
-        tail
-
-
-combineDict : Dict comparable (Result (Nonempty err) v) -> Result (Nonempty err) (Dict comparable v)
-combineDict results =
-    Dict.foldl
-        (\key result accumRes ->
-            case ( result, accumRes ) of
-                ( Ok val, Ok accum ) ->
-                    Dict.insert key val accum |> Ok
-
-                ( Err err, Ok _ ) ->
-                    Err err
-
-                ( Ok _, Err errAccum ) ->
-                    Err errAccum
-
-                ( Err err, Err errAccum ) ->
-                    List.Nonempty.append err errAccum |> Err
-        )
-        (Ok Dict.empty)
-        results
