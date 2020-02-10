@@ -1,6 +1,7 @@
 module L2 exposing (L2, RefChecked(..))
 
-import L1 exposing (Declarations)
+import Dict exposing (Dict)
+import L1 exposing (Declarable)
 
 
 {-| Indicates that named type in the model have been reference checked to
@@ -28,4 +29,4 @@ type RefChecked
 
 
 type alias L2 =
-    Declarations RefChecked
+    Dict String (Declarable RefChecked)
