@@ -20,8 +20,7 @@ suite =
             \alias ->
                 let
                     decls =
-                        Dict.empty
-                            |> Dict.insert "Test" alias
+                        [ ( "Test", alias ) ]
 
                     l2result =
                         check decls
