@@ -1,12 +1,13 @@
 module Checker exposing (check, errorToString)
 
 import Dict exposing (Dict)
-import L1 exposing (Basic(..), Container(..), Declarable(..), L1, Restricted(..), Type(..))
+import L1 exposing (Basic(..), Container(..), Declarable(..), L1, Restricted(..), Type(..), Unchecked)
 import L2 exposing (L2, RefChecked(..))
 import List.Nonempty exposing (Nonempty(..))
 import Maybe.Extra
 import MultiError exposing (ResultME)
 import Naming
+import Set exposing (Set)
 
 
 type ModelCheckingError
@@ -38,10 +39,28 @@ errorToString err =
 
 check : L1 -> ResultME ModelCheckingError L2
 check l1Decls =
+    checkDuplicateDecls l1Decls
+        |> MultiError.andThen checkRefs
+
+
+checkDuplicateDecls : L1 -> ResultME ModelCheckingError (Dict String (Declarable Unchecked))
+checkDuplicateDecls l1Decls =
     let
-        decls =
-            Dict.fromList l1Decls
+        ( uniq, dupls ) =
+            uniqueHelp Tuple.first Set.empty l1Decls [] []
     in
+    case dupls of
+        [] ->
+            Dict.fromList uniq |> Ok
+
+        headDup :: tailDup ->
+            Nonempty headDup tailDup
+                |> List.Nonempty.map (Tuple.first >> DeclaredMoreThanOnce)
+                |> Err
+
+
+checkRefs : Dict String (Declarable a) -> ResultME ModelCheckingError L2
+checkRefs decls =
     Dict.map
         (\key val ->
             MultiError.combine2
@@ -51,6 +70,24 @@ check l1Decls =
         )
         decls
         |> MultiError.combineDict
+
+
+uniqueHelp : (a -> comparable) -> Set comparable -> List a -> List a -> List a -> ( List a, List a )
+uniqueHelp f existing remaining uniqAccum duplAccum =
+    case remaining of
+        [] ->
+            ( List.reverse uniqAccum, List.reverse duplAccum )
+
+        first :: rest ->
+            let
+                computedFirst =
+                    f first
+            in
+            if Set.member computedFirst existing then
+                uniqueHelp f existing rest uniqAccum (first :: duplAccum)
+
+            else
+                uniqueHelp f (Set.insert computedFirst existing) rest (first :: uniqAccum) duplAccum
 
 
 checkDecl :
