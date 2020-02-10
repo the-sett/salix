@@ -37,12 +37,16 @@ errorToString err =
             name ++ " cannot be declared more than once."
 
 
+{-| Runs checks on an L1 model and lowers it to L2 if all the checks pass.
+-}
 check : L1 -> ResultME ModelCheckingError L2
 check l1Decls =
     checkDuplicateDecls l1Decls
-        |> MultiError.andThen checkRefs
+        |> MultiError.andThen checkDecls
 
 
+{-| Checks for duplicate declarations in L1.
+-}
 checkDuplicateDecls : L1 -> ResultME ModelCheckingError (Dict String (Declarable Unchecked))
 checkDuplicateDecls l1Decls =
     let
@@ -57,19 +61,6 @@ checkDuplicateDecls l1Decls =
             Nonempty headDup tailDup
                 |> List.Nonempty.map (Tuple.first >> DeclaredMoreThanOnce)
                 |> Err
-
-
-checkRefs : Dict String (Declarable a) -> ResultME ModelCheckingError L2
-checkRefs decls =
-    Dict.map
-        (\key val ->
-            MultiError.combine2
-                always
-                (checkDecl decls val)
-                (checkName key)
-        )
-        decls
-        |> MultiError.combineDict
 
 
 uniqueHelp : (a -> comparable) -> Set comparable -> List a -> List a -> List a -> ( List a, List a )
@@ -88,6 +79,21 @@ uniqueHelp f existing remaining uniqAccum duplAccum =
 
             else
                 uniqueHelp f (Set.insert computedFirst existing) rest (first :: uniqAccum) duplAccum
+
+
+{-| Checks all the individual declarations for errors.
+-}
+checkDecls : Dict String (Declarable a) -> ResultME ModelCheckingError L2
+checkDecls decls =
+    Dict.map
+        (\key val ->
+            MultiError.combine2
+                always
+                (checkDecl decls val)
+                (checkName key)
+        )
+        decls
+        |> MultiError.combineDict
 
 
 checkDecl :
@@ -110,7 +116,6 @@ checkDecl decls decl =
                 )
                 constructors
                 |> MultiError.combineNonempty
-                --|> Result.map Naming.sortNonemptyNamed
                 |> Result.map DSum
 
         DEnum labels ->
