@@ -1,7 +1,7 @@
 module Checker exposing (check, errorToString)
 
 import Dict exposing (Dict)
-import L1 exposing (Basic(..), Container(..), Declarable(..), Declarations, L1, Restricted(..), Type(..))
+import L1 exposing (Basic(..), Container(..), Declarable(..), L1, Restricted(..), Type(..))
 import L2 exposing (L2, RefChecked(..))
 import List.Nonempty exposing (Nonempty(..))
 import Maybe.Extra

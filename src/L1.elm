@@ -2,7 +2,6 @@ module L1 exposing
     ( Basic(..)
     , Container(..)
     , Declarable(..)
-    , Declarations
     , L1
     , Restricted(..)
     , Type(..)
@@ -67,9 +66,5 @@ type Unchecked
 -- The L1 model
 
 
-type alias Declarations a =
-    Dict String (Declarable a)
-
-
 type alias L1 =
-    Declarations Unchecked
+    Dict String (Declarable Unchecked)
