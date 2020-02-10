@@ -37,7 +37,11 @@ errorToString err =
 
 
 check : L1 -> ResultME ModelCheckingError L2
-check decls =
+check l1Decls =
+    let
+        decls =
+            Dict.fromList l1Decls
+    in
     Dict.map
         (\key val ->
             MultiError.combine2
@@ -49,7 +53,10 @@ check decls =
         |> MultiError.combineDict
 
 
-checkDecl : L1 -> Declarable a -> ResultME ModelCheckingError (Declarable RefChecked)
+checkDecl :
+    Dict String (Declarable a)
+    -> Declarable a
+    -> ResultME ModelCheckingError (Declarable RefChecked)
 checkDecl decls decl =
     case decl of
         DAlias l1type ->
@@ -76,7 +83,10 @@ checkDecl decls decl =
             DRestricted res |> Ok
 
 
-checkType : L1 -> Type a -> ResultME ModelCheckingError (Type RefChecked)
+checkType :
+    Dict String (Declarable a)
+    -> Type a
+    -> ResultME ModelCheckingError (Type RefChecked)
 checkType decls l1type =
     case l1type of
         TUnit ->
@@ -112,7 +122,10 @@ checkType decls l1type =
             MultiError.combine2 TFunction (checkType decls arg) (checkType decls res)
 
 
-checkContainer : L1 -> Container a -> ResultME ModelCheckingError (Container RefChecked)
+checkContainer :
+    Dict String (Declarable a)
+    -> Container a
+    -> ResultME ModelCheckingError (Container RefChecked)
 checkContainer decls container =
     case container of
         CList valType ->
@@ -163,7 +176,7 @@ checkDictKey l2type =
 
 
 checkNonemptyFields :
-    L1
+    Dict String (Declarable a)
     -> Nonempty ( String, Type a )
     -> ResultME ModelCheckingError (Nonempty ( String, Type RefChecked ))
 checkNonemptyFields decls fields =
@@ -179,7 +192,7 @@ checkNonemptyFields decls fields =
 
 
 checkFields :
-    L1
+    Dict String (Declarable a)
     -> List ( String, Type a )
     -> ResultME ModelCheckingError (List ( String, Type RefChecked ))
 checkFields decls fields =

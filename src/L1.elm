@@ -67,4 +67,4 @@ type Unchecked
 
 
 type alias L1 =
-    Dict String (Declarable Unchecked)
+    List ( String, Declarable Unchecked )
