@@ -147,6 +147,9 @@ checkDictKey l2type =
         TBasic _ ->
             l2type |> Ok
 
+        TNamed _ RcTBasic ->
+            l2type |> Ok
+
         TNamed _ RcEnum ->
             l2type |> Ok
 
@@ -203,10 +206,30 @@ declToRefChecked : Declarable a -> RefChecked
 declToRefChecked decl =
     case decl of
         DAlias l1type ->
-            RcNone
+            case l1type of
+                TUnit ->
+                    RcTUnit
+
+                TBasic _ ->
+                    RcTBasic
+
+                TNamed _ _ ->
+                    RcTNamed
+
+                TProduct _ ->
+                    RcTProduct
+
+                TEmptyProduct ->
+                    RcTEmptyProduct
+
+                TContainer _ ->
+                    RcTContainer
+
+                TFunction _ _ ->
+                    RcTFunction
 
         DSum constructors ->
-            RcNone
+            RcSum
 
         DEnum labels ->
             RcEnum

@@ -18,7 +18,14 @@ import L1 exposing (Declarations)
 type RefChecked
     = RcEnum
     | RcRestricted L1.Basic
-    | RcNone
+    | RcSum
+    | RcTUnit
+    | RcTBasic
+    | RcTNamed
+    | RcTProduct
+    | RcTEmptyProduct
+    | RcTContainer
+    | RcTFunction
 
 
 
