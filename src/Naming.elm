@@ -1,5 +1,6 @@
 module Naming exposing (..)
 
+import List.Nonempty exposing (Nonempty)
 import Regex
 import Set
 import String.Case as Case
@@ -64,3 +65,13 @@ safeCCL =
 safeCCU : String -> String
 safeCCU =
     Case.toCamelCaseUpper >> safeName
+
+
+sortNamed : List ( String, a ) -> List ( String, a )
+sortNamed =
+    List.sortBy Tuple.first
+
+
+sortNonemptyNamed : Nonempty ( String, a ) -> Nonempty ( String, a )
+sortNonemptyNamed =
+    List.Nonempty.sortBy Tuple.first

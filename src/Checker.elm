@@ -66,6 +66,7 @@ checkDecl decls decl =
                 )
                 constructors
                 |> MultiError.combineNonempty
+                --|> Result.map Naming.sortNonemptyNamed
                 |> Result.map DSum
 
         DEnum labels ->
@@ -97,6 +98,7 @@ checkType decls l1type =
 
         TProduct fields ->
             checkNonemptyFields decls fields
+                |> Result.map Naming.sortNonemptyNamed
                 |> Result.map TProduct
 
         TEmptyProduct ->
