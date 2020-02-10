@@ -3,18 +3,13 @@ module L2 exposing (L2, RefChecked(..))
 import L1 exposing (Declarations)
 
 
+{-| Indicates that named type in the model have been reference checked to
+enusure that they name something that actually exists.
 
--- Model TODO:
--- Add more than just enum and restricted - a summary of all the decl
--- kinds.
--- Need indication that something is recursive.
--- Derivation of relational model.
---  arity
---  directionality
--- Code TODO:
--- L1 to L2 transformation.
+Some summary information of what they refer to is also cached during ref
+checking.
 
-
+-}
 type RefChecked
     = RcEnum
     | RcRestricted L1.Basic
