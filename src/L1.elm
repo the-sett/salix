@@ -6,6 +6,8 @@ module L1 exposing
     , Restricted(..)
     , Type(..)
     , Unchecked(..)
+    , positionOfDeclarable
+    , positionOfType
     )
 
 import Dict exposing (Dict)
@@ -27,33 +29,41 @@ type Basic
     | BString
 
 
-type Container ref
-    = CList (Type ref)
-    | CSet (Type ref)
-    | CDict (Type ref) (Type ref)
-    | COptional (Type ref)
+type Container pos ref
+    = CList (Type pos ref)
+    | CSet (Type pos ref)
+    | CDict (Type pos ref) (Type pos ref)
+    | COptional (Type pos ref)
 
 
-type Type ref
-    = TUnit
-    | TBasic Basic
-    | TNamed String ref
-    | TProduct (Nonempty ( String, Type ref ))
-    | TEmptyProduct
-    | TContainer (Container ref)
-    | TFunction (Type ref) (Type ref)
+type Type pos ref
+    = TUnit pos
+    | TBasic pos Basic
+    | TNamed pos String ref
+    | TProduct pos (Nonempty ( String, Type pos ref ))
+    | TEmptyProduct pos
+    | TContainer pos (Container pos ref)
+    | TFunction pos (Type pos ref) (Type pos ref)
 
 
 type Restricted
-    = RInt { min : Maybe Int, max : Maybe Int, width : Maybe Int }
-    | RString { minLength : Maybe Int, maxLength : Maybe Int, regex : Maybe String }
+    = RInt
+        { min : Maybe Int
+        , max : Maybe Int
+        , width : Maybe Int
+        }
+    | RString
+        { minLength : Maybe Int
+        , maxLength : Maybe Int
+        , regex : Maybe String
+        }
 
 
-type Declarable ref
-    = DAlias (Type ref)
-    | DSum (Nonempty ( String, List ( String, Type ref ) ))
-    | DEnum (Nonempty String)
-    | DRestricted Restricted
+type Declarable pos ref
+    = DAlias pos (Type pos ref)
+    | DSum pos (Nonempty ( String, List ( String, Type pos ref ) ))
+    | DEnum pos (Nonempty String)
+    | DRestricted pos Restricted
 
 
 {-| Indicates that the model has not been reference checked.
@@ -63,8 +73,53 @@ type Unchecked
 
 
 
+-- Helper functions for extracting position info.
+
+
+positionOfDeclarable : Declarable pos ref -> pos
+positionOfDeclarable decl =
+    case decl of
+        DAlias pos _ ->
+            pos
+
+        DSum pos _ ->
+            pos
+
+        DEnum pos _ ->
+            pos
+
+        DRestricted pos _ ->
+            pos
+
+
+positionOfType : Type pos ref -> pos
+positionOfType type_ =
+    case type_ of
+        TUnit pos ->
+            pos
+
+        TBasic pos _ ->
+            pos
+
+        TNamed pos _ _ ->
+            pos
+
+        TProduct pos _ ->
+            pos
+
+        TEmptyProduct pos ->
+            pos
+
+        TContainer pos _ ->
+            pos
+
+        TFunction pos _ _ ->
+            pos
+
+
+
 -- The L1 model
 
 
-type alias L1 =
-    List ( String, Declarable Unchecked )
+type alias L1 pos =
+    List ( String, Declarable pos Unchecked )

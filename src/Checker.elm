@@ -10,36 +10,36 @@ import Naming
 import Set exposing (Set)
 
 
-type ModelCheckingError
-    = UnresolvedRef String
-    | MapKeyTypeNotAllowed
-    | BadFieldName String
-    | BadDeclarationName String
-    | DeclaredMoreThanOnce String
+type ModelCheckingError pos
+    = UnresolvedRef pos String
+    | MapKeyTypeNotAllowed pos
+    | BadFieldName pos String
+    | BadDeclarationName pos String
+    | DeclaredMoreThanOnce pos String
 
 
-errorToString : ModelCheckingError -> String
+errorToString : ModelCheckingError pos -> String
 errorToString err =
     case err of
-        UnresolvedRef hint ->
+        UnresolvedRef _ hint ->
             hint ++ " reference did not resolve."
 
-        MapKeyTypeNotAllowed ->
+        MapKeyTypeNotAllowed _ ->
             "Map .key is not an enum, restricted, or basic."
 
-        BadFieldName name ->
+        BadFieldName _ name ->
             name ++ " is not allowed as a field name."
 
-        BadDeclarationName name ->
+        BadDeclarationName _ name ->
             name ++ " is not allows as a declaration name."
 
-        DeclaredMoreThanOnce name ->
+        DeclaredMoreThanOnce _ name ->
             name ++ " cannot be declared more than once."
 
 
 {-| Runs checks on an L1 model and lowers it to L2 if all the checks pass.
 -}
-check : L1 -> ResultME ModelCheckingError L2
+check : L1 pos -> ResultME (ModelCheckingError pos) (L2 pos)
 check l1Decls =
     checkDuplicateDecls l1Decls
         |> MultiError.andThen checkDecls
@@ -47,11 +47,14 @@ check l1Decls =
 
 {-| Checks for duplicate declarations in L1.
 -}
-checkDuplicateDecls : L1 -> ResultME ModelCheckingError (Dict String (Declarable Unchecked))
+checkDuplicateDecls : L1 pos -> ResultME (ModelCheckingError pos) (Dict String (Declarable pos Unchecked))
 checkDuplicateDecls l1Decls =
     let
         ( uniq, dupls ) =
             uniqueHelp Tuple.first Set.empty l1Decls [] []
+
+        declaredMoreThanOnce ( name, decl ) =
+            DeclaredMoreThanOnce (L1.positionOfDeclarable decl) name
     in
     case dupls of
         [] ->
@@ -59,7 +62,7 @@ checkDuplicateDecls l1Decls =
 
         headDup :: tailDup ->
             Nonempty headDup tailDup
-                |> List.Nonempty.map (Tuple.first >> DeclaredMoreThanOnce)
+                |> List.Nonempty.map declaredMoreThanOnce
                 |> Err
 
 
@@ -83,92 +86,93 @@ uniqueHelp f existing remaining uniqAccum duplAccum =
 
 {-| Checks all the individual declarations for errors.
 -}
-checkDecls : Dict String (Declarable a) -> ResultME ModelCheckingError L2
+checkDecls : Dict String (Declarable pos a) -> ResultME (ModelCheckingError pos) (L2 pos)
 checkDecls decls =
     Dict.map
         (\key val ->
             MultiError.combine2
                 always
                 (checkDecl decls val)
-                (checkName key)
+                (checkName (L1.positionOfDeclarable val) key)
         )
         decls
         |> MultiError.combineDict
 
 
 checkDecl :
-    Dict String (Declarable a)
-    -> Declarable a
-    -> ResultME ModelCheckingError (Declarable RefChecked)
+    Dict String (Declarable pos a)
+    -> Declarable pos a
+    -> ResultME (ModelCheckingError pos) (Declarable pos RefChecked)
 checkDecl decls decl =
     case decl of
-        DAlias l1type ->
+        DAlias pos l1type ->
             checkType decls l1type
-                |> Result.map DAlias
+                |> Result.map (DAlias pos)
 
-        DSum constructors ->
+        DSum pos constructors ->
             List.Nonempty.map
                 (\( name, fields ) ->
                     MultiError.combine2
                         Tuple.pair
-                        (checkName name)
-                        (checkFields decls fields)
+                        (checkName pos name)
+                        (checkFields pos decls fields)
                 )
                 constructors
                 |> MultiError.combineNonempty
-                |> Result.map DSum
+                |> Result.map (DSum pos)
 
-        DEnum labels ->
-            DEnum labels |> Ok
+        DEnum pos labels ->
+            DEnum pos labels |> Ok
 
-        DRestricted res ->
-            DRestricted res |> Ok
+        DRestricted pos res ->
+            DRestricted pos res |> Ok
 
 
 checkType :
-    Dict String (Declarable a)
-    -> Type a
-    -> ResultME ModelCheckingError (Type RefChecked)
+    Dict String (Declarable pos a)
+    -> Type pos a
+    -> ResultME (ModelCheckingError pos) (Type pos RefChecked)
 checkType decls l1type =
     case l1type of
-        TUnit ->
-            TUnit |> Ok
+        TUnit pos ->
+            TUnit pos |> Ok
 
-        TBasic basic ->
-            TBasic basic |> Ok
+        TBasic pos basic ->
+            TBasic pos basic |> Ok
 
-        TNamed name _ ->
+        TNamed pos name _ ->
             case Dict.get name decls of
                 Nothing ->
-                    UnresolvedRef name
+                    UnresolvedRef pos name
                         |> MultiError.error
 
                 Just resolvedDecl ->
                     declToRefChecked resolvedDecl
-                        |> TNamed name
+                        |> TNamed pos name
                         |> Ok
 
-        TProduct fields ->
-            checkNonemptyFields decls fields
+        TProduct pos fields ->
+            checkNonemptyFields pos decls fields
                 |> Result.map Naming.sortNonemptyNamed
-                |> Result.map TProduct
+                |> Result.map (TProduct pos)
 
-        TEmptyProduct ->
-            TEmptyProduct |> Ok
+        TEmptyProduct pos ->
+            TEmptyProduct pos |> Ok
 
-        TContainer container ->
-            checkContainer decls container
-                |> Result.map TContainer
+        TContainer pos container ->
+            checkContainer pos decls container
+                |> Result.map (TContainer pos)
 
-        TFunction arg res ->
-            MultiError.combine2 TFunction (checkType decls arg) (checkType decls res)
+        TFunction pos arg res ->
+            MultiError.combine2 (TFunction pos) (checkType decls arg) (checkType decls res)
 
 
 checkContainer :
-    Dict String (Declarable a)
-    -> Container a
-    -> ResultME ModelCheckingError (Container RefChecked)
-checkContainer decls container =
+    pos
+    -> Dict String (Declarable pos a)
+    -> Container pos a
+    -> ResultME (ModelCheckingError pos) (Container pos RefChecked)
+checkContainer pos decls container =
     case container of
         CList valType ->
             checkType decls valType
@@ -182,7 +186,7 @@ checkContainer decls container =
             MultiError.combine2
                 CDict
                 (checkType decls keyType
-                    |> MultiError.andThen checkDictKey
+                    |> MultiError.andThen (checkDictKey (L1.positionOfType keyType))
                 )
                 (checkType decls valType)
 
@@ -198,100 +202,102 @@ This check must be performed on a type that has already been ref-checked,
 which makes it simple to know what it refers to in the case where it is a ref.
 
 -}
-checkDictKey : Type RefChecked -> ResultME ModelCheckingError (Type RefChecked)
-checkDictKey l2type =
+checkDictKey : pos -> Type pos RefChecked -> ResultME (ModelCheckingError pos) (Type pos RefChecked)
+checkDictKey pos l2type =
     case l2type of
-        TBasic _ ->
+        TBasic _ _ ->
             l2type |> Ok
 
-        TNamed _ RcTBasic ->
+        TNamed _ _ RcTBasic ->
             l2type |> Ok
 
-        TNamed _ RcEnum ->
+        TNamed _ _ RcEnum ->
             l2type |> Ok
 
-        TNamed _ (RcRestricted _) ->
+        TNamed _ _ (RcRestricted _) ->
             l2type |> Ok
 
         _ ->
-            MultiError.error MapKeyTypeNotAllowed
+            MapKeyTypeNotAllowed pos |> MultiError.error
 
 
 checkNonemptyFields :
-    Dict String (Declarable a)
-    -> Nonempty ( String, Type a )
-    -> ResultME ModelCheckingError (Nonempty ( String, Type RefChecked ))
-checkNonemptyFields decls fields =
+    pos
+    -> Dict String (Declarable pos a)
+    -> Nonempty ( String, Type pos a )
+    -> ResultME (ModelCheckingError pos) (Nonempty ( String, Type pos RefChecked ))
+checkNonemptyFields pos decls fields =
     fields
         |> List.Nonempty.map
             (\( name, fieldType ) ->
                 MultiError.combine2
                     Tuple.pair
-                    (checkName name)
+                    (checkName pos name)
                     (checkType decls fieldType)
             )
         |> MultiError.combineNonempty
 
 
 checkFields :
-    Dict String (Declarable a)
-    -> List ( String, Type a )
-    -> ResultME ModelCheckingError (List ( String, Type RefChecked ))
-checkFields decls fields =
+    pos
+    -> Dict String (Declarable pos a)
+    -> List ( String, Type pos a )
+    -> ResultME (ModelCheckingError pos) (List ( String, Type pos RefChecked ))
+checkFields pos decls fields =
     fields
         |> List.map
             (\( name, fieldType ) ->
                 MultiError.combine2
                     Tuple.pair
-                    (checkName name)
+                    (checkName pos name)
                     (checkType decls fieldType)
             )
         |> MultiError.combineList
 
 
-checkName : String -> ResultME ModelCheckingError String
-checkName val =
+checkName : pos -> String -> ResultME (ModelCheckingError pos) String
+checkName pos val =
     case Naming.checkName val of
         True ->
             Ok val
 
         False ->
-            BadFieldName val |> MultiError.error
+            BadFieldName pos val |> MultiError.error
 
 
-declToRefChecked : Declarable a -> RefChecked
+declToRefChecked : Declarable pos a -> RefChecked
 declToRefChecked decl =
     case decl of
-        DAlias l1type ->
+        DAlias _ l1type ->
             case l1type of
-                TUnit ->
+                TUnit _ ->
                     RcTUnit
 
-                TBasic _ ->
+                TBasic _ _ ->
                     RcTBasic
 
-                TNamed _ _ ->
+                TNamed _ _ _ ->
                     RcTNamed
 
-                TProduct _ ->
+                TProduct _ _ ->
                     RcTProduct
 
-                TEmptyProduct ->
+                TEmptyProduct _ ->
                     RcTEmptyProduct
 
-                TContainer _ ->
+                TContainer _ _ ->
                     RcTContainer
 
-                TFunction _ _ ->
+                TFunction _ _ _ ->
                     RcTFunction
 
-        DSum constructors ->
+        DSum _ constructors ->
             RcSum
 
-        DEnum labels ->
+        DEnum _ labels ->
             RcEnum
 
-        DRestricted res ->
+        DRestricted _ res ->
             case res of
                 RInt _ ->
                     RcRestricted BInt

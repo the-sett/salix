@@ -34,21 +34,21 @@ A type can result in a list of declarations - enums in addition to declaring a
 type can also declare the permitted enum values.
 
 -}
-typeDecl : String -> Comment DocComment -> Declarable RefChecked -> ( List Declaration, Linkage )
+typeDecl : String -> Comment DocComment -> Declarable pos RefChecked -> ( List Declaration, Linkage )
 typeDecl name doc decl =
     case decl of
-        DAlias l1Type ->
+        DAlias _ l1Type ->
             typeAlias name (Just doc) l1Type
                 |> Tuple.mapFirst List.singleton
 
-        DSum constructors ->
+        DSum _ constructors ->
             customType name (Just doc) (List.Nonempty.toList constructors)
                 |> Tuple.mapFirst List.singleton
 
-        DEnum labels ->
+        DEnum _ labels ->
             enumCustomType name (Just doc) (List.Nonempty.toList labels)
 
-        DRestricted res ->
+        DRestricted _ res ->
             restrictedType name (Just doc) res
 
 
@@ -91,8 +91,10 @@ restrictedInt name maybeDoc res =
     case guards of
         [] ->
             -- If there are no guard clauses, it is just an int.
-            typeAlias name Nothing (BInt |> TBasic)
-                |> Tuple.mapFirst List.singleton
+            ( [ CG.aliasDecl Nothing (Util.safeCCU name) [] (lowerBasic BInt) ]
+            , CG.emptyLinkage
+                |> CG.addExposing (CG.typeOrAliasExpose (Util.safeCCU name))
+            )
 
         gd :: gds ->
             let
@@ -180,8 +182,10 @@ restrictedString name maybeDoc res =
     case guards of
         [] ->
             -- If there are no guard clauses, it is just an string.
-            typeAlias name Nothing (BString |> TBasic)
-                |> Tuple.mapFirst List.singleton
+            ( [ CG.aliasDecl Nothing (Util.safeCCU name) [] (lowerBasic BString) ]
+            , CG.emptyLinkage
+                |> CG.addExposing (CG.typeOrAliasExpose (Util.safeCCU name))
+            )
 
         gd :: gds ->
             let
@@ -243,7 +247,7 @@ restrictedString name maybeDoc res =
 
 {-| Turns an L1 `Type` into a type alias in Elm code.
 -}
-typeAlias : String -> Maybe (Comment DocComment) -> Type RefChecked -> ( Declaration, Linkage )
+typeAlias : String -> Maybe (Comment DocComment) -> Type pos RefChecked -> ( Declaration, Linkage )
 typeAlias name maybeDoc l1Type =
     let
         ( loweredType, linkage ) =
@@ -257,7 +261,7 @@ typeAlias name maybeDoc l1Type =
 
 {-| Turns an L1 sum type into a custom type in Elm code.
 -}
-customType : String -> Maybe (Comment DocComment) -> List ( String, List ( String, Type RefChecked ) ) -> ( Declaration, Linkage )
+customType : String -> Maybe (Comment DocComment) -> List ( String, List ( String, Type pos RefChecked ) ) -> ( Declaration, Linkage )
 customType name maybeDoc constructors =
     let
         lowerArgs ( _, l1Type ) =
@@ -374,32 +378,32 @@ enumRefinedType name labels =
 
 {-| Lowers an L1 type into an Elm type annotation.
 -}
-lowerType : Type RefChecked -> ( TypeAnnotation, Linkage )
+lowerType : Type pos RefChecked -> ( TypeAnnotation, Linkage )
 lowerType l1Type =
     case l1Type of
-        TUnit ->
+        TUnit _ ->
             ( CG.unitAnn, CG.emptyLinkage )
 
-        TBasic basic ->
+        TBasic _ basic ->
             ( lowerBasic basic
             , CG.emptyLinkage
             )
 
-        TNamed name _ ->
+        TNamed _ name _ ->
             ( CG.typed (Util.safeCCU name) []
             , CG.emptyLinkage
             )
 
-        TProduct fields ->
+        TProduct _ fields ->
             lowerProduct (List.Nonempty.toList fields)
 
-        TEmptyProduct ->
+        TEmptyProduct _ ->
             lowerProduct []
 
-        TContainer container ->
+        TContainer _ container ->
             lowerContainer container
 
-        TFunction arg res ->
+        TFunction _ arg res ->
             ( CG.unitAnn
             , CG.emptyLinkage
             )
@@ -425,7 +429,7 @@ lowerBasic basic =
 
 {-| Lowers an L1 product type into an Elm type annotation.
 -}
-lowerProduct : List ( String, Type RefChecked ) -> ( TypeAnnotation, Linkage )
+lowerProduct : List ( String, Type pos RefChecked ) -> ( TypeAnnotation, Linkage )
 lowerProduct fields =
     let
         ( mappedFields, linkages ) =
@@ -447,7 +451,7 @@ lowerProduct fields =
 
 {-| Lowers an L1 container type into an Elm type annotation.
 -}
-lowerContainer : Container RefChecked -> ( TypeAnnotation, Linkage )
+lowerContainer : Container pos RefChecked -> ( TypeAnnotation, Linkage )
 lowerContainer container =
     case container of
         CList l1Type ->
@@ -467,10 +471,10 @@ lowerContainer container =
                 |> Tuple.mapFirst CG.maybeAnn
 
 
-lowerDict : Type RefChecked -> Type RefChecked -> ( TypeAnnotation, Linkage )
+lowerDict : Type pos RefChecked -> Type pos RefChecked -> ( TypeAnnotation, Linkage )
 lowerDict l1keyType l1valType =
     case l1keyType of
-        TNamed name (RcRestricted basic) ->
+        TNamed _ name (RcRestricted basic) ->
             let
                 ( keyAnn, keyLink ) =
                     lowerType l1keyType
@@ -482,7 +486,7 @@ lowerDict l1keyType l1valType =
             , CG.combineLinkage [ keyLink, valLink ] |> CG.addImport dictRefinedImport
             )
 
-        TNamed name RcEnum ->
+        TNamed _ name RcEnum ->
             let
                 ( keyAnn, keyLink ) =
                     lowerType l1keyType
@@ -509,7 +513,7 @@ lowerDict l1keyType l1valType =
 
 {-| Lowers an L1 function type into an Elm type annotation
 -}
-lowerFun : Type RefChecked -> Type RefChecked -> ( TypeAnnotation, Linkage )
+lowerFun : Type pos RefChecked -> Type pos RefChecked -> ( TypeAnnotation, Linkage )
 lowerFun fromType toType =
     let
         ( from, fromLinkage ) =
@@ -529,25 +533,25 @@ lowerFun fromType toType =
 
 {-| Generates a Codec for an L1 type declaration.
 -}
-codec : String -> Declarable RefChecked -> ( Declaration, Linkage )
+codec : String -> Declarable pos RefChecked -> ( Declaration, Linkage )
 codec name decl =
     case decl of
-        DAlias l1Type ->
+        DAlias _ l1Type ->
             typeAliasCodec name l1Type
 
-        DSum constructors ->
+        DSum _ constructors ->
             customTypeCodec name (List.Nonempty.toList constructors)
 
-        DEnum labels ->
+        DEnum _ labels ->
             enumCodec name (List.Nonempty.toList labels)
 
-        DRestricted res ->
+        DRestricted _ res ->
             restrictedCodec name res
 
 
 {-| Generates a Codec for an L1 type alias.
 -}
-typeAliasCodec : String -> Type RefChecked -> ( Declaration, Linkage )
+typeAliasCodec : String -> Type pos RefChecked -> ( Declaration, Linkage )
 typeAliasCodec name l1Type =
     let
         codecFnName =
@@ -580,7 +584,7 @@ typeAliasCodec name l1Type =
 
 {-| Generates a Codec for an L1 sum type.
 -}
-customTypeCodec : String -> List ( String, List ( String, Type RefChecked ) ) -> ( Declaration, Linkage )
+customTypeCodec : String -> List ( String, List ( String, Type pos RefChecked ) ) -> ( Declaration, Linkage )
 customTypeCodec name constructors =
     let
         codecFnName =
@@ -689,7 +693,7 @@ restrictedCodec name _ =
     )
 
 
-codecCustomType : List ( String, List ( String, Type RefChecked ) ) -> Expression
+codecCustomType : List ( String, List ( String, Type pos RefChecked ) ) -> Expression
 codecCustomType constructors =
     let
         codecVariant name args =
@@ -714,7 +718,7 @@ codecCustomType constructors =
             )
 
 
-codecMatchFn : List ( String, List ( String, Type RefChecked ) ) -> Expression
+codecMatchFn : List ( String, List ( String, Type pos RefChecked ) ) -> Expression
 codecMatchFn constructors =
     let
         consFnName name =
@@ -744,46 +748,46 @@ codecMatchFn constructors =
 
 {-| Generates a Codec for an L1 type that has been named as an alias.
 -}
-codecNamedType : String -> Type RefChecked -> Expression
+codecNamedType : String -> Type pos RefChecked -> Expression
 codecNamedType name l1Type =
     case l1Type of
-        TUnit ->
+        TUnit _ ->
             codecUnit
 
-        TBasic basic ->
+        TBasic _ basic ->
             codecType l1Type
 
-        TNamed named _ ->
+        TNamed _ named _ ->
             CG.string "codecNamedType_TNamed"
 
-        TProduct fields ->
+        TProduct _ fields ->
             codecNamedProduct name (List.Nonempty.toList fields)
 
-        TEmptyProduct ->
+        TEmptyProduct _ ->
             codecNamedProduct name []
 
-        TContainer container ->
+        TContainer _ container ->
             codecType l1Type
 
-        TFunction arg res ->
+        TFunction _ arg res ->
             CG.unit
 
 
 {-| Generates a Codec for an L1 type.
 -}
-codecType : Type RefChecked -> Expression
+codecType : Type pos RefChecked -> Expression
 codecType l1Type =
     case l1Type of
-        TBasic basic ->
+        TBasic _ basic ->
             codecBasic basic
 
-        TNamed named _ ->
+        TNamed _ named _ ->
             codecNamed named
 
-        TProduct fields ->
+        TProduct _ fields ->
             codecProduct (List.Nonempty.toList fields)
 
-        TContainer container ->
+        TContainer _ container ->
             codecContainer container
 
         _ ->
@@ -792,32 +796,32 @@ codecType l1Type =
 
 {-| Generates a field codec for a named field with an L1 type.
 -}
-codecTypeField : String -> Type RefChecked -> Expression
+codecTypeField : String -> Type pos RefChecked -> Expression
 codecTypeField name l1Type =
     case l1Type of
-        TUnit ->
+        TUnit _ ->
             codecUnit |> codecField name
 
-        TBasic basic ->
+        TBasic _ basic ->
             codecBasic basic
                 |> codecField name
 
-        TNamed named _ ->
+        TNamed _ named _ ->
             codecNamed named
                 |> codecField name
 
-        TProduct fields ->
+        TProduct _ fields ->
             codecProduct (List.Nonempty.toList fields)
                 |> codecField name
 
-        TEmptyProduct ->
+        TEmptyProduct _ ->
             codecProduct []
                 |> codecField name
 
-        TContainer container ->
+        TContainer _ container ->
             codecContainerField name container
 
-        TFunction arg res ->
+        TFunction _ arg res ->
             CG.unit
 
 
@@ -855,7 +859,7 @@ codecNamed named =
     CG.fun (Util.safeCCL (named ++ "Codec"))
 
 
-codecContainer : Container RefChecked -> Expression
+codecContainer : Container pos RefChecked -> Expression
 codecContainer container =
     case container of
         CList l1Type ->
@@ -874,10 +878,10 @@ codecContainer container =
                 |> CG.parens
 
 
-codecDict : Type RefChecked -> Type RefChecked -> Expression
+codecDict : Type pos RefChecked -> Type pos RefChecked -> Expression
 codecDict l1keyType l1valType =
     case l1keyType of
-        TNamed name (RcRestricted basic) ->
+        TNamed _ name (RcRestricted basic) ->
             let
                 _ =
                     Debug.log "codecDict" "Codec for dict with restricted key."
@@ -900,7 +904,7 @@ codecDict l1keyType l1valType =
                     |> CG.parens
                 ]
 
-        TNamed name RcEnum ->
+        TNamed _ name RcEnum ->
             let
                 _ =
                     Debug.log "codecDict" "Codec for dict with enum key."
@@ -931,7 +935,7 @@ codecDict l1keyType l1valType =
 {-| Generates a codec for an L1 product type that has been named as an alias.
 The alias name is also the constructor function for the type.
 -}
-codecNamedProduct : String -> List ( String, Type RefChecked ) -> Expression
+codecNamedProduct : String -> List ( String, Type pos RefChecked ) -> Expression
 codecNamedProduct name fields =
     let
         typeName =
@@ -953,7 +957,7 @@ codecNamedProduct name fields =
 Without a name there is no constructor function for the product, so it must be
 built explicitly by its fields.
 -}
-codecProduct : List ( String, Type RefChecked ) -> Expression
+codecProduct : List ( String, Type pos RefChecked ) -> Expression
 codecProduct fields =
     CG.string "codecProduct"
 
@@ -961,7 +965,7 @@ codecProduct fields =
 {-| Generates a field codec for an L1 container type. The 'optional' type is mapped
 onto `Maybe` and makes use of `Codec.optionalField`.
 -}
-codecContainerField : String -> Container RefChecked -> Expression
+codecContainerField : String -> Container pos RefChecked -> Expression
 codecContainerField name container =
     case container of
         CList l1Type ->
