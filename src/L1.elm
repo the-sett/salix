@@ -27,21 +27,21 @@ type Basic
     | BString
 
 
-type Container a
-    = CList (Type a)
-    | CSet (Type a)
-    | CDict (Type a) (Type a)
-    | COptional (Type a)
+type Container ref
+    = CList (Type ref)
+    | CSet (Type ref)
+    | CDict (Type ref) (Type ref)
+    | COptional (Type ref)
 
 
-type Type a
+type Type ref
     = TUnit
     | TBasic Basic
-    | TNamed String a
-    | TProduct (Nonempty ( String, Type a ))
+    | TNamed String ref
+    | TProduct (Nonempty ( String, Type ref ))
     | TEmptyProduct
-    | TContainer (Container a)
-    | TFunction (Type a) (Type a)
+    | TContainer (Container ref)
+    | TFunction (Type ref) (Type ref)
 
 
 type Restricted
@@ -49,9 +49,9 @@ type Restricted
     | RString { minLength : Maybe Int, maxLength : Maybe Int, regex : Maybe String }
 
 
-type Declarable a
-    = DAlias (Type a)
-    | DSum (Nonempty ( String, List ( String, Type a ) ))
+type Declarable ref
+    = DAlias (Type ref)
+    | DSum (Nonempty ( String, List ( String, Type ref ) ))
     | DEnum (Nonempty String)
     | DRestricted Restricted
 
