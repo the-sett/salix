@@ -17,6 +17,12 @@ import Enum exposing (Enum)
 import List.Nonempty exposing (Nonempty)
 
 
+
+-- TODO:
+-- Need to be able to say what kind of property something is, without giving
+-- a value for it.
+
+
 type Basic
     = BBool
     | BInt
@@ -72,7 +78,7 @@ type Property
     | PEnum (Enum String)
     | PQName (List String) String
     | PBool Bool
-    | POptional (Maybe Property)
+    | POptional (Maybe Property) -- Needs to say what kind it is..
 
 
 {-| A set of additional properties on the model.
