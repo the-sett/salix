@@ -72,6 +72,7 @@ type Property
     | PEnum (Enum String)
     | PQName (List String) String
     | PBool Bool
+    | POptional (Maybe Property)
 
 
 {-| A set of additional properties on the model.
