@@ -5,8 +5,8 @@ import L1 exposing (Basic(..), Container(..), Declarable(..), L1, Restricted(..)
 import L2 exposing (L2, RefChecked(..))
 import List.Nonempty exposing (Nonempty(..))
 import Maybe.Extra
-import MultiError exposing (ResultME)
 import Naming
+import ResultME exposing (ResultME)
 import Set exposing (Set)
 
 
@@ -42,7 +42,7 @@ errorToString err =
 check : L1 pos -> ResultME (ModelCheckingError pos) (L2 pos)
 check l1Decls =
     checkDuplicateDecls l1Decls
-        |> MultiError.andThen checkDecls
+        |> ResultME.andThen checkDecls
 
 
 {-| Checks for duplicate declarations in L1.
@@ -90,13 +90,13 @@ checkDecls : Dict String (Declarable pos a) -> ResultME (ModelCheckingError pos)
 checkDecls decls =
     Dict.map
         (\key val ->
-            MultiError.combine2
+            ResultME.combine2
                 always
                 (checkDecl decls val)
                 (checkName (L1.positionOfDeclarable val) key)
         )
         decls
-        |> MultiError.combineDict
+        |> ResultME.combineDict
 
 
 checkDecl :
@@ -112,13 +112,13 @@ checkDecl decls decl =
         DSum pos constructors ->
             List.Nonempty.map
                 (\( name, fields ) ->
-                    MultiError.combine2
+                    ResultME.combine2
                         Tuple.pair
                         (checkName pos name)
                         (checkFields pos decls fields)
                 )
                 constructors
-                |> MultiError.combineNonempty
+                |> ResultME.combineNonempty
                 |> Result.map (DSum pos)
 
         DEnum pos labels ->
@@ -144,7 +144,7 @@ checkType decls l1type =
             case Dict.get name decls of
                 Nothing ->
                     UnresolvedRef pos name
-                        |> MultiError.error
+                        |> ResultME.error
 
                 Just resolvedDecl ->
                     declToRefChecked resolvedDecl
@@ -164,7 +164,7 @@ checkType decls l1type =
                 |> Result.map (TContainer pos)
 
         TFunction pos arg res ->
-            MultiError.combine2 (TFunction pos) (checkType decls arg) (checkType decls res)
+            ResultME.combine2 (TFunction pos) (checkType decls arg) (checkType decls res)
 
 
 checkContainer :
@@ -183,10 +183,10 @@ checkContainer pos decls container =
                 |> Result.map CSet
 
         CDict keyType valType ->
-            MultiError.combine2
+            ResultME.combine2
                 CDict
                 (checkType decls keyType
-                    |> MultiError.andThen (checkDictKey (L1.positionOfType keyType))
+                    |> ResultME.andThen (checkDictKey (L1.positionOfType keyType))
                 )
                 (checkType decls valType)
 
@@ -218,7 +218,7 @@ checkDictKey pos l2type =
             l2type |> Ok
 
         _ ->
-            MapKeyTypeNotAllowed pos |> MultiError.error
+            MapKeyTypeNotAllowed pos |> ResultME.error
 
 
 checkNonemptyFields :
@@ -230,12 +230,12 @@ checkNonemptyFields pos decls fields =
     fields
         |> List.Nonempty.map
             (\( name, fieldType ) ->
-                MultiError.combine2
+                ResultME.combine2
                     Tuple.pair
                     (checkName pos name)
                     (checkType decls fieldType)
             )
-        |> MultiError.combineNonempty
+        |> ResultME.combineNonempty
 
 
 checkFields :
@@ -247,12 +247,12 @@ checkFields pos decls fields =
     fields
         |> List.map
             (\( name, fieldType ) ->
-                MultiError.combine2
+                ResultME.combine2
                     Tuple.pair
                     (checkName pos name)
                     (checkType decls fieldType)
             )
-        |> MultiError.combineList
+        |> ResultME.combineList
 
 
 checkName : pos -> String -> ResultME (ModelCheckingError pos) String
@@ -262,7 +262,7 @@ checkName pos val =
             Ok val
 
         False ->
-            BadFieldName pos val |> MultiError.error
+            BadFieldName pos val |> ResultME.error
 
 
 declToRefChecked : Declarable pos a -> RefChecked

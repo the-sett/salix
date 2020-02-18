@@ -1,4 +1,4 @@
-module MultiError exposing
+module ResultME exposing
     ( ResultME, error, errors, fromResult
     , combine2, combineList, combineDict, combineNonempty
     , map
@@ -6,7 +6,7 @@ module MultiError exposing
     , andThen
     )
 
-{-| MultiError is a variation on Result, where the `err` is a non-empty list of
+{-| ResultME is a variation on Result, where the `err` is a non-empty list of
 errors. This is useful in situations where multiple errors can be detected in a
 single pass, and it is preferable to report all errors detected, and not to fail
 only on the first error.
