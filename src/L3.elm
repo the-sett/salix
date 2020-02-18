@@ -6,14 +6,22 @@ import L2 exposing (L2)
 import ResultME exposing (ResultME)
 
 
+{-| Indicates that all L3 properties have been checked to be of the correct type
+and legitimate for an L3 processor.
+-}
+type PropChecked
+    = PropChecked
 
---L3 = L1 but with checked properties
+
+
+-- type alias L3 pos =
+--     Dict String (Declarable pos RefChecked PropChecked)
 
 
 {-| API for an L3 model processor.
 -- Rename to processor
 -}
-type alias L3 pos err =
+type alias Processor pos err =
     { name : String
     , defaults : Properties
     , check : L2 pos -> ResultME err (L2 pos)
