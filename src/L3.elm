@@ -6,7 +6,12 @@ import L2 exposing (L2)
 import ResultME exposing (ResultME)
 
 
+
+--L3 = L1 but with checked properties
+
+
 {-| API for an L3 model processor.
+-- Rename to processor
 -}
 type alias L3 pos err =
     { name : String
