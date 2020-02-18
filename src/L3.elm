@@ -12,14 +12,14 @@ type alias L3 pos err =
     { name : String
     , defaults : Properties
     , check : L2 pos -> ResultME err (L2 pos)
-    , errorToString : err -> pos -> String
+    , errorToString : (pos -> String) -> pos -> err -> String
     }
 
 
 
 -- TODO:
 -- Stacking of properties of multiple processors
--- stack : Properties -> Properties -> Properties
+-- stack : Properties -> Properties -> ResultME err Properties
 --
 -- Reporting of defaults throughout the entire model.
 -- On declarations.
