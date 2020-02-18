@@ -3,6 +3,8 @@ module L1 exposing
     , Container(..)
     , Declarable(..)
     , L1
+    , Properties
+    , Property(..)
     , Restricted(..)
     , Type(..)
     , Unchecked(..)
@@ -11,12 +13,12 @@ module L1 exposing
     )
 
 import Dict exposing (Dict)
+import Enum exposing (Enum)
 import List.Nonempty exposing (Nonempty)
 
 
 
 -- TODO:
--- Source code locations for error reporting.
 -- Somewhere to hold L3 properties
 -- Matching up of bi-directional references. When only one on each end it is obvious.
 -- When more than one, target needs to be explicit. Is this an L1 concern?
@@ -40,7 +42,7 @@ type Type pos ref
     = TUnit pos
     | TBasic pos Basic
     | TNamed pos String ref
-    | TProduct pos (Nonempty ( String, Type pos ref ))
+    | TProduct pos (Nonempty ( String, Type pos ref )) -- Properties on fields.
     | TEmptyProduct pos
     | TContainer pos (Container pos ref)
     | TFunction pos (Type pos ref) (Type pos ref)
@@ -61,9 +63,29 @@ type Restricted
 
 type Declarable pos ref
     = DAlias pos (Type pos ref)
-    | DSum pos (Nonempty ( String, List ( String, Type pos ref ) ))
+    | DSum pos (Nonempty ( String, List ( String, Type pos ref ) )) -- Properties on fields.
     | DEnum pos (Nonempty String)
     | DRestricted pos Restricted
+
+
+
+-- Additional model properties.
+
+
+{-| Defines the type of additional property that can be placed in the model.
+-}
+type Property
+    = PEnum (Enum String)
+
+
+{-| A set of additional properties on the model.
+-}
+type alias Properties =
+    Dict String Property
+
+
+
+-- Model property checking.
 
 
 {-| Indicates that the model has not been reference checked.
@@ -117,9 +139,7 @@ positionOfType type_ =
             pos
 
 
-
--- The L1 model
-
-
+{-| The L1 model
+-}
 type alias L1 pos =
     List ( String, Declarable pos Unchecked )

@@ -24,9 +24,7 @@ type RefChecked
     | RcTFunction
 
 
-
--- The L2 model
-
-
+{-| The L2 model
+-}
 type alias L2 pos =
     Dict String (Declarable pos RefChecked)
