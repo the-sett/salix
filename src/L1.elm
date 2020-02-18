@@ -17,13 +17,6 @@ import Enum exposing (Enum)
 import List.Nonempty exposing (Nonempty)
 
 
-
--- TODO:
--- Somewhere to hold L3 properties
--- Matching up of bi-directional references. When only one on each end it is obvious.
--- When more than one, target needs to be explicit. Is this an L1 concern?
-
-
 type Basic
     = BBool
     | BInt
@@ -75,7 +68,10 @@ type Declarable pos ref
 {-| Defines the type of additional property that can be placed in the model.
 -}
 type Property
-    = PEnum (Enum String)
+    = PString String
+    | PEnum (Enum String)
+    | PQName (List String) String
+    | PBool Bool
 
 
 {-| A set of additional properties on the model.

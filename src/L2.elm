@@ -4,6 +4,12 @@ import Dict exposing (Dict)
 import L1 exposing (Declarable)
 
 
+
+-- TODO:
+-- Matching up of bi-directional references. When only one on each end it is obvious.
+-- When more than one, target needs to be explicit. Is this an L1 concern?
+
+
 {-| Indicates that named type in the model have been reference checked to
 enusure that they name something that actually exists.
 

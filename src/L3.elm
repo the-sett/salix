@@ -1,9 +1,19 @@
-module L3 exposing (..)
+module L3 exposing (Processor, PropChecked(..))
 
 import Dict exposing (Dict)
 import L1 exposing (Properties)
 import L2 exposing (L2)
 import ResultME exposing (ResultME)
+
+
+
+-- TODO:
+-- Stacking of properties of multiple processors
+-- stack : Properties -> Properties -> ResultME err Properties
+--
+-- Reporting of defaults throughout the entire model.
+-- On declarations.
+-- On fields.
 
 
 {-| Indicates that all L3 properties have been checked to be of the correct type
@@ -27,13 +37,3 @@ type alias Processor pos err =
     , check : L2 pos -> ResultME err (L2 pos)
     , errorToString : (pos -> String) -> pos -> err -> String
     }
-
-
-
--- TODO:
--- Stacking of properties of multiple processors
--- stack : Properties -> Properties -> ResultME err Properties
---
--- Reporting of defaults throughout the entire model.
--- On declarations.
--- On fields.
