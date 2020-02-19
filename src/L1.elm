@@ -11,6 +11,7 @@ module L1 exposing
     , Type(..)
     , Unchecked(..)
     , defineProperties
+    , emptyProperties
     , positionOfDeclarable
     , positionOfType
     )
@@ -100,6 +101,11 @@ type Property
 -}
 type alias Properties =
     Dict String Property
+
+
+emptyProperties : Properties
+emptyProperties =
+    Dict.empty
 
 
 defineProperties : List ( String, PropSpec ) -> List ( String, Property ) -> ( PropSpecs, Properties )
