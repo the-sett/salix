@@ -1,8 +1,8 @@
 module L3 exposing (DefaultProperties, Processor, PropChecked(..))
 
 import Dict exposing (Dict)
-import L1 exposing (PropSpecs, Properties)
-import L2 exposing (L2)
+import L1 exposing (Declarable, PropSpecs, Properties)
+import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
 
 
@@ -30,9 +30,12 @@ type alias DefaultProperties =
     }
 
 
-
--- type alias L3 pos =
---     Dict String (Declarable pos RefChecked PropChecked)
+{-| The L3 model
+-}
+type alias L3 pos =
+    { topProperties : Properties
+    , declarations : Dict String (Declarable pos RefChecked)
+    }
 
 
 {-| API for an L3 model processor.
@@ -41,6 +44,6 @@ type alias DefaultProperties =
 type alias Processor pos err =
     { name : String
     , defaults : DefaultProperties
-    , check : L2 pos -> ResultME err (L2 pos)
+    , check : L3 pos -> ResultME err (L3 pos)
     , errorToString : (pos -> String) -> pos -> err -> String
     }
