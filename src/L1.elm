@@ -38,7 +38,7 @@ type Type pos ref
     = TUnit pos
     | TBasic pos Basic
     | TNamed pos String ref
-    | TProduct pos (Nonempty ( String, Type pos ref )) -- Properties on fields.
+    | TProduct pos (Nonempty ( String, Type pos ref, Properties ))
     | TEmptyProduct pos
     | TContainer pos (Container pos ref)
     | TFunction pos (Type pos ref) (Type pos ref)
@@ -58,9 +58,9 @@ type Restricted
 
 
 type Declarable pos ref
-    = DAlias pos (Type pos ref)
-    | DSum pos (Nonempty ( String, List ( String, Type pos ref ) )) -- Properties on fields.
-    | DEnum pos (Nonempty String)
+    = DAlias pos (Type pos ref) Properties
+    | DSum pos (Nonempty ( String, List ( String, Type pos ref, Properties ) )) Properties
+    | DEnum pos (Nonempty String) Properties
     | DRestricted pos Restricted
 
 
@@ -158,13 +158,13 @@ type Unchecked
 positionOfDeclarable : Declarable pos ref -> pos
 positionOfDeclarable decl =
     case decl of
-        DAlias pos _ ->
+        DAlias pos _ _ ->
             pos
 
-        DSum pos _ ->
+        DSum pos _ _ ->
             pos
 
-        DEnum pos _ ->
+        DEnum pos _ _ ->
             pos
 
         DRestricted pos _ ->

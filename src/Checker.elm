@@ -105,11 +105,12 @@ checkDecl :
     -> ResultME (ModelCheckingError pos) (Declarable pos RefChecked)
 checkDecl decls decl =
     case decl of
-        DAlias pos l1type ->
+        DAlias pos l1type props ->
             checkType decls l1type
                 |> Result.map (DAlias pos)
+                |> Result.map (\res -> res props)
 
-        DSum pos constructors ->
+        DSum pos constructors props ->
             List.Nonempty.map
                 (\( name, fields ) ->
                     ResultME.combine2
@@ -120,9 +121,10 @@ checkDecl decls decl =
                 constructors
                 |> ResultME.combineNonempty
                 |> Result.map (DSum pos)
+                |> Result.map (\res -> res props)
 
-        DEnum pos labels ->
-            DEnum pos labels |> Ok
+        DEnum pos labels props ->
+            DEnum pos labels props |> Ok
 
         DRestricted pos res ->
             DRestricted pos res |> Ok
@@ -224,14 +226,14 @@ checkDictKey pos l2type =
 checkNonemptyFields :
     pos
     -> Dict String (Declarable pos a)
-    -> Nonempty ( String, Type pos a )
-    -> ResultME (ModelCheckingError pos) (Nonempty ( String, Type pos RefChecked ))
+    -> Nonempty ( String, Type pos a, L1.Properties )
+    -> ResultME (ModelCheckingError pos) (Nonempty ( String, Type pos RefChecked, L1.Properties ))
 checkNonemptyFields pos decls fields =
     fields
         |> List.Nonempty.map
-            (\( name, fieldType ) ->
+            (\( name, fieldType, props ) ->
                 ResultME.combine2
-                    Tuple.pair
+                    (\checkedName checkedFields -> ( checkedName, checkedFields, props ))
                     (checkName pos name)
                     (checkType decls fieldType)
             )
@@ -241,14 +243,14 @@ checkNonemptyFields pos decls fields =
 checkFields :
     pos
     -> Dict String (Declarable pos a)
-    -> List ( String, Type pos a )
-    -> ResultME (ModelCheckingError pos) (List ( String, Type pos RefChecked ))
+    -> List ( String, Type pos a, L1.Properties )
+    -> ResultME (ModelCheckingError pos) (List ( String, Type pos RefChecked, L1.Properties ))
 checkFields pos decls fields =
     fields
         |> List.map
-            (\( name, fieldType ) ->
+            (\( name, fieldType, props ) ->
                 ResultME.combine2
-                    Tuple.pair
+                    (\checkedName checkedFields -> ( checkedName, checkedFields, props ))
                     (checkName pos name)
                     (checkType decls fieldType)
             )
@@ -268,7 +270,7 @@ checkName pos val =
 declToRefChecked : Declarable pos a -> RefChecked
 declToRefChecked decl =
     case decl of
-        DAlias _ l1type ->
+        DAlias _ l1type _ ->
             case l1type of
                 TUnit _ ->
                     RcTUnit
@@ -291,10 +293,10 @@ declToRefChecked decl =
                 TFunction _ _ _ ->
                     RcTFunction
 
-        DSum _ constructors ->
+        DSum _ constructors _ ->
             RcSum
 
-        DEnum _ labels ->
+        DEnum _ labels _ ->
             RcEnum
 
         DRestricted _ res ->

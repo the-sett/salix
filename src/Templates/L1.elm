@@ -37,15 +37,15 @@ type can also declare the permitted enum values.
 typeDecl : String -> Comment DocComment -> Declarable pos RefChecked -> ( List Declaration, Linkage )
 typeDecl name doc decl =
     case decl of
-        DAlias _ l1Type ->
+        DAlias _ l1Type _ ->
             typeAlias name (Just doc) l1Type
                 |> Tuple.mapFirst List.singleton
 
-        DSum _ constructors ->
+        DSum _ constructors _ ->
             customType name (Just doc) (List.Nonempty.toList constructors)
                 |> Tuple.mapFirst List.singleton
 
-        DEnum _ labels ->
+        DEnum _ labels _ ->
             enumCustomType name (Just doc) (List.Nonempty.toList labels)
 
         DRestricted _ res ->
@@ -261,10 +261,14 @@ typeAlias name maybeDoc l1Type =
 
 {-| Turns an L1 sum type into a custom type in Elm code.
 -}
-customType : String -> Maybe (Comment DocComment) -> List ( String, List ( String, Type pos RefChecked ) ) -> ( Declaration, Linkage )
+customType :
+    String
+    -> Maybe (Comment DocComment)
+    -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) )
+    -> ( Declaration, Linkage )
 customType name maybeDoc constructors =
     let
-        lowerArgs ( _, l1Type ) =
+        lowerArgs ( _, l1Type, _ ) =
             lowerType l1Type
 
         ( mappedConstructors, linkages ) =
@@ -429,12 +433,12 @@ lowerBasic basic =
 
 {-| Lowers an L1 product type into an Elm type annotation.
 -}
-lowerProduct : List ( String, Type pos RefChecked ) -> ( TypeAnnotation, Linkage )
+lowerProduct : List ( String, Type pos RefChecked, L1.Properties ) -> ( TypeAnnotation, Linkage )
 lowerProduct fields =
     let
         ( mappedFields, linkages ) =
             List.map
-                (\( name, l1Type ) ->
+                (\( name, l1Type, _ ) ->
                     let
                         ( loweredType, linkage ) =
                             lowerType l1Type
@@ -536,13 +540,13 @@ lowerFun fromType toType =
 codec : String -> Declarable pos RefChecked -> ( Declaration, Linkage )
 codec name decl =
     case decl of
-        DAlias _ l1Type ->
+        DAlias _ l1Type _ ->
             typeAliasCodec name l1Type
 
-        DSum _ constructors ->
+        DSum _ constructors _ ->
             customTypeCodec name (List.Nonempty.toList constructors)
 
-        DEnum _ labels ->
+        DEnum _ labels _ ->
             enumCodec name (List.Nonempty.toList labels)
 
         DRestricted _ res ->
@@ -584,7 +588,7 @@ typeAliasCodec name l1Type =
 
 {-| Generates a Codec for an L1 sum type.
 -}
-customTypeCodec : String -> List ( String, List ( String, Type pos RefChecked ) ) -> ( Declaration, Linkage )
+customTypeCodec : String -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> ( Declaration, Linkage )
 customTypeCodec name constructors =
     let
         codecFnName =
@@ -693,12 +697,12 @@ restrictedCodec name _ =
     )
 
 
-codecCustomType : List ( String, List ( String, Type pos RefChecked ) ) -> Expression
+codecCustomType : List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> Expression
 codecCustomType constructors =
     let
         codecVariant name args =
             List.foldr
-                (\( _, l1Type ) accum -> codecType l1Type :: accum)
+                (\( _, l1Type, _ ) accum -> codecType l1Type :: accum)
                 [ Util.safeCCU name |> CG.fun
                 , Util.safeCCU name |> CG.string
                 , codecFn ("variant" ++ String.fromInt (List.length args))
@@ -718,7 +722,7 @@ codecCustomType constructors =
             )
 
 
-codecMatchFn : List ( String, List ( String, Type pos RefChecked ) ) -> Expression
+codecMatchFn : List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> Expression
 codecMatchFn constructors =
     let
         consFnName name =
@@ -731,8 +735,8 @@ codecMatchFn constructors =
 
         consPattern ( name, consArgs ) =
             ( CG.namedPattern (Util.safeCCU name)
-                (List.map (\( argName, _ ) -> CG.varPattern argName) consArgs)
-            , List.foldr (\( argName, _ ) accum -> CG.val argName :: accum)
+                (List.map (\( argName, _, _ ) -> CG.varPattern argName) consArgs)
+            , List.foldr (\( argName, _, _ ) accum -> CG.val argName :: accum)
                 [ consFnName name |> CG.fun ]
                 consArgs
                 |> List.reverse
@@ -935,7 +939,7 @@ codecDict l1keyType l1valType =
 {-| Generates a codec for an L1 product type that has been named as an alias.
 The alias name is also the constructor function for the type.
 -}
-codecNamedProduct : String -> List ( String, Type pos RefChecked ) -> Expression
+codecNamedProduct : String -> List ( String, Type pos RefChecked, L1.Properties ) -> Expression
 codecNamedProduct name fields =
     let
         typeName =
@@ -957,7 +961,7 @@ codecNamedProduct name fields =
 Without a name there is no constructor function for the product, so it must be
 built explicitly by its fields.
 -}
-codecProduct : List ( String, Type pos RefChecked ) -> Expression
+codecProduct : List ( String, Type pos RefChecked, L1.Properties ) -> Expression
 codecProduct fields =
     CG.string "codecProduct"
 
@@ -994,8 +998,9 @@ codecContainerField name container =
 {-| Outputs codecs for a list of fields and terminates the list with `Codec.buildObject`.
 Helper function useful when building record codecs.
 -}
+codecFields : List ( String, Type pos RefChecked, L1.Properties ) -> List Expression
 codecFields fields =
-    List.foldr (\( fieldName, l1Type ) accum -> codecTypeField fieldName l1Type :: accum)
+    List.foldr (\( fieldName, l1Type, _ ) accum -> codecTypeField fieldName l1Type :: accum)
         [ CG.apply
             [ codecFn "buildObject"
             ]

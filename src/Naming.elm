@@ -72,6 +72,6 @@ sortNamed =
     List.sortBy Tuple.first
 
 
-sortNonemptyNamed : Nonempty ( String, a ) -> Nonempty ( String, a )
+sortNonemptyNamed : Nonempty ( String, a, b ) -> Nonempty ( String, a, b )
 sortNonemptyNamed =
-    List.Nonempty.sortBy Tuple.first
+    List.Nonempty.sortBy (\( name, _, _ ) -> name)
