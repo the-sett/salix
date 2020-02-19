@@ -3,11 +3,14 @@ module L1 exposing
     , Container(..)
     , Declarable(..)
     , L1
+    , PropSpec(..)
+    , PropSpecs
     , Properties
     , Property(..)
     , Restricted(..)
     , Type(..)
     , Unchecked(..)
+    , defineProperties
     , positionOfDeclarable
     , positionOfType
     )
@@ -15,12 +18,6 @@ module L1 exposing
 import Dict exposing (Dict)
 import Enum exposing (Enum)
 import List.Nonempty exposing (Nonempty)
-
-
-
--- TODO:
--- Need to be able to say what kind of property something is, without giving
--- a value for it.
 
 
 type Basic
@@ -71,14 +68,32 @@ type Declarable pos ref
 -- Additional model properties.
 
 
-{-| Defines the type of additional property that can be placed in the model.
+{-| Defines the kinds of additional property that can be placed in the model.
+-}
+type PropSpec
+    = PSString
+    | PSEnum (Enum String)
+    | PSQName
+    | PSBool
+    | PSOptional PropSpec
+
+
+{-| A set of additional property kinds that can or must be defined against
+the model.
+-}
+type alias PropSpecs =
+    Dict String PropSpec
+
+
+{-| Allows additional properties from a variety of possible kinds to be placed
+in the model.
 -}
 type Property
     = PString String
-    | PEnum (Enum String)
+    | PEnum (Enum String) String
     | PQName (List String) String
     | PBool Bool
-    | POptional (Maybe Property) -- Needs to say what kind it is..
+    | POptional PropSpec (Maybe Property)
 
 
 {-| A set of additional properties on the model.
@@ -87,11 +102,50 @@ type alias Properties =
     Dict String Property
 
 
+defineProperties : List ( String, PropSpec ) -> List ( String, Property ) -> ( PropSpecs, Properties )
+defineProperties notSet set =
+    let
+        notSetPropSpecs =
+            List.foldl
+                (\( name, spec ) accum -> Dict.insert name spec accum)
+                Dict.empty
+                notSet
 
--- Model property checking.
+        ( fullPropSpecs, properties ) =
+            List.foldl
+                (\( name, property ) ( specsAccum, propsAccum ) ->
+                    ( Dict.insert name (asPropSpec property) specsAccum
+                    , Dict.insert name property propsAccum
+                    )
+                )
+                ( notSetPropSpecs, Dict.empty )
+                set
+
+        asPropSpec property =
+            case property of
+                PString _ ->
+                    PSString
+
+                PEnum enum _ ->
+                    PSEnum enum
+
+                PQName _ _ ->
+                    PSQName
+
+                PBool _ ->
+                    PSBool
+
+                POptional spec _ ->
+                    PSOptional spec
+    in
+    ( fullPropSpecs, properties )
 
 
-{-| Indicates that the model has not been reference checked.
+
+-- Model reference or property checking.
+
+
+{-| Indicates that the model has not been checked.
 -}
 type Unchecked
     = Unchecked

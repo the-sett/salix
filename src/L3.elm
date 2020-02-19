@@ -1,7 +1,7 @@
 module L3 exposing (DefaultProperties, Processor, PropChecked(..))
 
 import Dict exposing (Dict)
-import L1 exposing (Properties)
+import L1 exposing (PropSpecs, Properties)
 import L2 exposing (L2)
 import ResultME exposing (ResultME)
 
@@ -22,11 +22,11 @@ type PropChecked
 {-| Allows the default properties on parts of the model to be defined.
 -}
 type alias DefaultProperties =
-    { top : Properties
-    , alias : Properties
-    , sum : Properties
-    , enum : Properties
-    , fields : Properties
+    { top : ( PropSpecs, Properties )
+    , alias : ( PropSpecs, Properties )
+    , sum : ( PropSpecs, Properties )
+    , enum : ( PropSpecs, Properties )
+    , fields : ( PropSpecs, Properties )
     }
 
 
