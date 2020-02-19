@@ -1,4 +1,4 @@
-module L3 exposing (DefaultProperties, Processor, PropChecked(..))
+module L3 exposing (DefaultProperties, L3, Processor, PropChecked(..))
 
 import Dict exposing (Dict)
 import L1 exposing (Declarable, PropSpecs, Properties)
