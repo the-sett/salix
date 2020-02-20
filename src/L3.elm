@@ -1,6 +1,7 @@
 module L3 exposing (..)
 
 import Dict exposing (Dict)
+import Enum exposing (Enum)
 import L1 exposing (Declarable, PropSpec(..), PropSpecs, Properties, Property(..))
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
@@ -76,7 +77,7 @@ propCheckErrorToString err =
             "Checked property wrong kind."
 
 
-getProperty : PropSpec -> String -> Properties -> Result PropCheckError Property
+getProperty : PropSpec -> String -> Properties -> ResultME PropCheckError Property
 getProperty spec name props =
     let
         maybeProp =
@@ -99,36 +100,40 @@ getProperty spec name props =
             POptional spec maybe |> Ok
 
         ( _, Nothing ) ->
-            CheckedPropertyMissing |> Err
+            CheckedPropertyMissing |> ResultME.error
 
         ( _, _ ) ->
-            CheckedPropertyWrongKind |> Err
+            CheckedPropertyWrongKind |> ResultME.error
 
 
-getStringProperty : String -> Properties -> Result PropCheckError String
+getStringProperty : String -> Properties -> ResultME PropCheckError String
 getStringProperty name props =
     case getProperty PSString name props of
         Ok (PString val) ->
             Ok val
 
         _ ->
-            CheckedPropertyWrongKind |> Err
+            CheckedPropertyWrongKind |> ResultME.error
 
 
+getEnumProperty : Enum String -> String -> Properties -> ResultME PropCheckError String
+getEnumProperty enum name props =
+    case getProperty (PSEnum enum) name props of
+        Ok (PEnum _ val) ->
+            Ok val
 
--- getEnumProperty : String -> Properties -> Result PropCheckError String
---
---
+        _ ->
+            CheckedPropertyWrongKind |> ResultME.error
 
 
-getQNameProperty : String -> Properties -> Result PropCheckError ( List String, String )
+getQNameProperty : String -> Properties -> ResultME PropCheckError ( List String, String )
 getQNameProperty name props =
     case getProperty PSQName name props of
         Ok (PQName path val) ->
             Ok ( path, val )
 
         _ ->
-            CheckedPropertyWrongKind |> Err
+            CheckedPropertyWrongKind |> ResultME.error
 
 
 
