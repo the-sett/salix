@@ -4,7 +4,7 @@ module ResultME exposing
     , combineList, combineDict, combineNonempty
     , map
     , mapError
-    , andThen
+    , andThen, flatten
     )
 
 {-| ResultME is a variation on Result, where the `err` is a non-empty list of
@@ -36,7 +36,7 @@ multiple syntax errors.
 
 # Chaining
 
-@docs andThen
+@docs andThen, flatten
 
 -}
 
@@ -233,6 +233,19 @@ mapError fun result =
 andThen : (a -> ResultME err b) -> ResultME err a -> ResultME err b
 andThen =
     Result.andThen
+
+
+flatten : ResultME err (ResultME err a) -> ResultME err a
+flatten res =
+    case res of
+        Err err ->
+            Err err
+
+        Ok (Err err) ->
+            Err err
+
+        Ok (Ok val) ->
+            Ok val
 
 
 flip : (a -> b -> c) -> (b -> a -> c)
