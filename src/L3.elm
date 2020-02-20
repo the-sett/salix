@@ -1,7 +1,7 @@
-module L3 exposing (DefaultProperties, L3, Processor, PropChecked(..))
+module L3 exposing (..)
 
 import Dict exposing (Dict)
-import L1 exposing (Declarable, PropSpecs, Properties)
+import L1 exposing (Declarable, PropSpec(..), PropSpecs, Properties, Property(..))
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
 
@@ -33,7 +33,7 @@ type alias DefaultProperties =
 {-| The L3 model
 -}
 type alias L3 pos =
-    { topProperties : Properties
+    { properties : Properties
     , declarations : Dict String (Declarable pos RefChecked)
     }
 
@@ -47,3 +47,89 @@ type alias Processor pos err =
     , check : L3 pos -> ResultME err (L3 pos)
     , errorToString : (pos -> String) -> pos -> err -> String
     }
+
+
+
+--== Reading properties.
+
+
+{-| Once properties have been checked, then reading properties as per the property
+specification should always succeed, since those properties have been verified to be
+present and of the correct kind.
+
+If reading a property fails, it is a coding error and should be reported as a bug.
+This error type enumerates the possible properties bugs.
+
+-}
+type PropCheckError
+    = CheckedPropertyMissing
+    | CheckedPropertyWrongKind
+
+
+propCheckErrorToString : PropCheckError -> String
+propCheckErrorToString err =
+    case err of
+        CheckedPropertyMissing ->
+            "Checked property missing."
+
+        CheckedPropertyWrongKind ->
+            "Checked property wrong kind."
+
+
+getProperty : PropSpec -> String -> Properties -> Result PropCheckError Property
+getProperty spec name props =
+    let
+        maybeProp =
+            Dict.get name props
+    in
+    case ( spec, maybeProp ) of
+        ( PSString, Just (PString val) ) ->
+            PString val |> Ok
+
+        ( PSEnum _, Just (PEnum enum val) ) ->
+            PEnum enum val |> Ok
+
+        ( PSQName, Just (PQName path val) ) ->
+            PQName path val |> Ok
+
+        ( PSBool, Just (PBool val) ) ->
+            PBool val |> Ok
+
+        ( PSOptional propSpec, Just (POptional optSpec maybe) ) ->
+            POptional spec maybe |> Ok
+
+        ( _, Nothing ) ->
+            CheckedPropertyMissing |> Err
+
+        ( _, _ ) ->
+            CheckedPropertyWrongKind |> Err
+
+
+getStringProperty : String -> Properties -> Result PropCheckError String
+getStringProperty name props =
+    case getProperty PSString name props of
+        Ok (PString val) ->
+            Ok val
+
+        _ ->
+            CheckedPropertyWrongKind |> Err
+
+
+
+-- getEnumProperty : String -> Properties -> Result PropCheckError String
+--
+--
+
+
+getQNameProperty : String -> Properties -> Result PropCheckError ( List String, String )
+getQNameProperty name props =
+    case getProperty PSQName name props of
+        Ok (PQName path val) ->
+            Ok ( path, val )
+
+        _ ->
+            CheckedPropertyWrongKind |> Err
+
+
+
+-- getBoolProperty : String -> Properties -> Result PropCheckError Bool

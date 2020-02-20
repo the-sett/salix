@@ -1,6 +1,7 @@
 module ResultME exposing
     ( ResultME, error, errors, fromResult
-    , combine2, combineList, combineDict, combineNonempty
+    , combineApply, combine2, combine3, combine4
+    , combineList, combineDict, combineNonempty
     , map
     , mapError
     , andThen
@@ -23,7 +24,8 @@ multiple syntax errors.
 
 # Combining errors from multiple sources together
 
-@docs combine2, combineList, combineDict, combineNonempty
+@docs combineApply, combine2, combine3, combine4
+@docs combineList, combineDict, combineNonempty
 
 
 # Mapping
@@ -70,6 +72,23 @@ fromResult result =
             Ok val
 
 
+combineApply : ResultME e a -> ResultME e (a -> b) -> ResultME e b
+combineApply ra rfn =
+    case ( ra, rfn ) of
+        ( Ok a, Ok fun ) ->
+            fun a |> Ok
+
+        ( Err err, Ok _ ) ->
+            Err err
+
+        ( Ok _, Err err ) ->
+            Err err
+
+        ( Err err1, Err err2 ) ->
+            List.Nonempty.append err1 err2
+                |> Err
+
+
 combine2 : (a -> b -> c) -> ResultME err a -> ResultME err b -> ResultME err c
 combine2 fun first second =
     case ( first, second ) of
@@ -85,6 +104,39 @@ combine2 fun first second =
         ( Err err1, Err err2 ) ->
             List.Nonempty.append err1 err2
                 |> Err
+
+
+combine3 :
+    (a -> b -> c -> d)
+    -> ResultME err a
+    -> ResultME err b
+    -> ResultME err c
+    -> ResultME err d
+combine3 fun first second third =
+    case first of
+        Ok checkedFirst ->
+            combine2 (fun checkedFirst) second third
+
+        Err errFirst ->
+            combineApply third
+                (combine2 (flip fun) second first)
+
+
+combine4 :
+    (a -> b -> c -> d -> e)
+    -> ResultME err a
+    -> ResultME err b
+    -> ResultME err c
+    -> ResultME err d
+    -> ResultME err e
+combine4 fun first second third fourth =
+    case first of
+        Ok checkedFirst ->
+            combine3 (fun checkedFirst) second third fourth
+
+        Err errFirst ->
+            combineApply fourth
+                (combine3 (flip fun) second first third)
 
 
 combineList : List (ResultME err a) -> ResultME err (List a)
@@ -163,3 +215,8 @@ mapError fun result =
 andThen : (a -> ResultME err b) -> ResultME err a -> ResultME err b
 andThen =
     Result.andThen
+
+
+flip : (a -> b -> c) -> (b -> a -> c)
+flip f b a =
+    f a b
