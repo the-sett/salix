@@ -62,7 +62,7 @@ type Declarable pos ref
     = DAlias pos (Type pos ref) Properties
     | DSum pos (Nonempty ( String, List ( String, Type pos ref, Properties ) )) Properties
     | DEnum pos (Nonempty String) Properties
-    | DRestricted pos Restricted
+    | DRestricted pos Restricted Properties
 
 
 
@@ -173,7 +173,7 @@ positionOfDeclarable decl =
         DEnum pos _ _ ->
             pos
 
-        DRestricted pos _ ->
+        DRestricted pos _ _ ->
             pos
 
 

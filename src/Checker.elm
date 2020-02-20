@@ -126,8 +126,8 @@ checkDecl decls decl =
         DEnum pos labels props ->
             DEnum pos labels props |> Ok
 
-        DRestricted pos res ->
-            DRestricted pos res |> Ok
+        DRestricted pos res props ->
+            DRestricted pos res props |> Ok
 
 
 checkType :
@@ -299,7 +299,7 @@ declToRefChecked decl =
         DEnum _ labels _ ->
             RcEnum
 
-        DRestricted _ res ->
+        DRestricted _ res _ ->
             case res of
                 RInt _ ->
                     RcRestricted BInt

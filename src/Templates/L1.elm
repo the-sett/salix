@@ -48,7 +48,7 @@ typeDecl name doc decl =
         DEnum _ labels _ ->
             enumCustomType name (Just doc) (List.Nonempty.toList labels)
 
-        DRestricted _ res ->
+        DRestricted _ res _ ->
             restrictedType name (Just doc) res
 
 
@@ -549,7 +549,7 @@ codec name decl =
         DEnum _ labels _ ->
             enumCodec name (List.Nonempty.toList labels)
 
-        DRestricted _ res ->
+        DRestricted _ res _ ->
             restrictedCodec name res
 
 
