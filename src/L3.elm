@@ -96,7 +96,7 @@ getProperty spec name props =
         ( PSBool, Just (PBool val) ) ->
             PBool val |> Ok
 
-        ( PSOptional propSpec, Just (POptional optSpec maybe) ) ->
+        ( PSOptional _, Just (POptional optSpec maybe) ) ->
             POptional spec maybe |> Ok
 
         ( _, Nothing ) ->
@@ -136,5 +136,29 @@ getQNameProperty name props =
             CheckedPropertyWrongKind |> ResultME.error
 
 
+getBoolProperty : String -> Properties -> ResultME PropCheckError Bool
+getBoolProperty name props =
+    case getProperty PSQName name props of
+        Ok (PBool val) ->
+            Ok val
 
--- getBoolProperty : String -> Properties -> Result PropCheckError Bool
+        _ ->
+            CheckedPropertyWrongKind |> ResultME.error
+
+
+getOptionalStringProperty : String -> Properties -> ResultME PropCheckError (Maybe String)
+getOptionalStringProperty name props =
+    case getProperty (PSOptional PSString) name props of
+        Ok (POptional PSString maybeProp) ->
+            case maybeProp of
+                Nothing ->
+                    Ok Nothing
+
+                Just (PString val) ->
+                    Just val |> Ok
+
+                _ ->
+                    CheckedPropertyWrongKind |> ResultME.error
+
+        _ ->
+            CheckedPropertyWrongKind |> ResultME.error

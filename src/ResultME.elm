@@ -1,6 +1,6 @@
 module ResultME exposing
     ( ResultME, error, errors, fromResult
-    , combineApply, combine2, combine3, combine4
+    , combineApply, combine2, combine3, combine4, combine5
     , combineList, combineDict, combineNonempty
     , map
     , mapError
@@ -24,7 +24,7 @@ multiple syntax errors.
 
 # Combining errors from multiple sources together
 
-@docs combineApply, combine2, combine3, combine4
+@docs combineApply, combine2, combine3, combine4, combine5
 @docs combineList, combineDict, combineNonempty
 
 
@@ -137,6 +137,24 @@ combine4 fun first second third fourth =
         Err errFirst ->
             combineApply fourth
                 (combine3 (flip fun) second first third)
+
+
+combine5 :
+    (a -> b -> c -> d -> e -> f)
+    -> ResultME err a
+    -> ResultME err b
+    -> ResultME err c
+    -> ResultME err d
+    -> ResultME err e
+    -> ResultME err f
+combine5 fun first second third fourth fifth =
+    case first of
+        Ok checkedFirst ->
+            combine4 (fun checkedFirst) second third fourth fifth
+
+        Err errFirst ->
+            combineApply fifth
+                (combine4 (flip fun) second first third fourth)
 
 
 combineList : List (ResultME err a) -> ResultME err (List a)
