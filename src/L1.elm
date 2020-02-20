@@ -14,6 +14,7 @@ module L1 exposing
     , emptyProperties
     , positionOfDeclarable
     , positionOfType
+    , propertiesOfDeclarable
     )
 
 import Dict exposing (Dict)
@@ -158,7 +159,23 @@ type Unchecked
 
 
 
--- Helper functions for extracting position info.
+-- Helper functions for extracting info.
+
+
+propertiesOfDeclarable : Declarable pos ref -> Properties
+propertiesOfDeclarable decl =
+    case decl of
+        DAlias _ _ props ->
+            props
+
+        DSum _ _ props ->
+            props
+
+        DEnum _ _ props ->
+            props
+
+        DRestricted _ _ props ->
+            props
 
 
 positionOfDeclarable : Declarable pos ref -> pos
