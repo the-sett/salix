@@ -1,4 +1,4 @@
-module L3 exposing (..)
+module L3 exposing (DefaultProperties, L3, Processor, PropCheckError(..), PropChecked(..), getBoolProperty, getEnumProperty, getOptionalEnumProperty, getOptionalStringProperty, getProperty, getQNameProperty, getStringProperty, propCheckErrorToString)
 
 import Dict exposing (Dict)
 import Enum exposing (Enum)
@@ -155,6 +155,24 @@ getOptionalStringProperty name props =
                     Ok Nothing
 
                 Just (PString val) ->
+                    Just val |> Ok
+
+                _ ->
+                    CheckedPropertyWrongKind |> ResultME.error
+
+        _ ->
+            CheckedPropertyWrongKind |> ResultME.error
+
+
+getOptionalEnumProperty : Enum String -> String -> Properties -> ResultME PropCheckError (Maybe String)
+getOptionalEnumProperty enum name props =
+    case getProperty (PSEnum enum) name props of
+        Ok (POptional (PSEnum _) maybeProp) ->
+            case maybeProp of
+                Nothing ->
+                    Ok Nothing
+
+                Just (PEnum _ val) ->
                     Just val |> Ok
 
                 _ ->
