@@ -186,20 +186,22 @@ getOptionalEnumProperty enum name props =
 ---
 
 
-type alias PropertiesAPI =
-    { getStringProperty : String -> Properties -> ResultME PropCheckError String
-    , getEnumProperty : Enum String -> String -> Properties -> ResultME PropCheckError String
-    , getQNameProperty : String -> Properties -> ResultME PropCheckError ( List String, String )
-    , getBoolProperty : String -> Properties -> ResultME PropCheckError Bool
-    , getOptionalStringProperty : String -> Properties -> ResultME PropCheckError (Maybe String)
-    , getOptionalEnumProperty : Enum String -> String -> Properties -> ResultME PropCheckError (Maybe String)
+type alias PropertyReader =
+    { getStringProperty : String -> ResultME PropCheckError String
+    , getEnumProperty : Enum String -> String -> ResultME PropCheckError String
+    , getQNameProperty : String -> ResultME PropCheckError ( List String, String )
+    , getBoolProperty : String -> ResultME PropCheckError Bool
+    , getOptionalStringProperty : String -> ResultME PropCheckError (Maybe String)
+    , getOptionalEnumProperty : Enum String -> String -> ResultME PropCheckError (Maybe String)
     }
 
 
-type alias PropertyReaderAPI =
-    { top : PropertiesAPI
-    , alias : PropertiesAPI
-    , sum : PropertiesAPI
-    , enum : PropertiesAPI -- 3 above (plus restricted) can all be merged to work off Decl?
-    , fields : PropertiesAPI
+type alias Field pos ref =
+    ( String, L1.Type pos ref, Properties )
+
+
+type alias PropertiesAPI pos ref =
+    { top : PropertyReader
+    , declarable : Declarable pos ref -> PropertyReader
+    , field : Field pos ref -> PropertyReader
     }
