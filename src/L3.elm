@@ -180,3 +180,26 @@ getOptionalEnumProperty enum name props =
 
         _ ->
             CheckedPropertyWrongKind |> ResultME.error
+
+
+
+---
+
+
+type alias PropertiesAPI =
+    { getStringProperty : String -> Properties -> ResultME PropCheckError String
+    , getEnumProperty : Enum String -> String -> Properties -> ResultME PropCheckError String
+    , getQNameProperty : String -> Properties -> ResultME PropCheckError ( List String, String )
+    , getBoolProperty : String -> Properties -> ResultME PropCheckError Bool
+    , getOptionalStringProperty : String -> Properties -> ResultME PropCheckError (Maybe String)
+    , getOptionalEnumProperty : Enum String -> String -> Properties -> ResultME PropCheckError (Maybe String)
+    }
+
+
+type alias PropertyReaderAPI =
+    { top : PropertiesAPI
+    , alias : PropertiesAPI
+    , sum : PropertiesAPI
+    , enum : PropertiesAPI
+    , fields : PropertiesAPI
+    }
