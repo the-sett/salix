@@ -200,6 +200,6 @@ type alias PropertyReaderAPI =
     { top : PropertiesAPI
     , alias : PropertiesAPI
     , sum : PropertiesAPI
-    , enum : PropertiesAPI
+    , enum : PropertiesAPI -- 3 above (plus restricted) can all be merged to work off Decl?
     , fields : PropertiesAPI
     }
