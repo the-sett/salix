@@ -53,7 +53,7 @@ type alias Processor pos err =
     }
 
 
-makePropertiesAPI : DefaultProperties -> L3 pos -> PropertiesAPI pos ref
+makePropertiesAPI : DefaultProperties -> L3 pos -> PropertiesAPI pos
 makePropertiesAPI defaultProperties l3 =
     { top = makePropertyGet (Tuple.second defaultProperties.top) l3.properties
     , declarable =
@@ -241,8 +241,8 @@ type alias PropertyGet =
     }
 
 
-type alias PropertiesAPI pos ref =
+type alias PropertiesAPI pos =
     { top : PropertyGet
-    , declarable : Declarable pos ref -> PropertyGet
+    , declarable : Declarable pos RefChecked -> PropertyGet
     , field : Properties -> PropertyGet
     }
