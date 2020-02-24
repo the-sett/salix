@@ -196,12 +196,8 @@ type alias PropertyReader =
     }
 
 
-type alias Field pos ref =
-    ( String, L1.Type pos ref, Properties )
-
-
 type alias PropertiesAPI pos ref =
     { top : PropertyReader
     , declarable : Declarable pos ref -> PropertyReader
-    , field : Field pos ref -> PropertyReader
+    , field : Properties -> PropertyReader
     }
