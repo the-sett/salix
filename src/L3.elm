@@ -53,6 +53,23 @@ type alias Processor pos err =
     }
 
 
+type alias PropertyGet =
+    { getStringProperty : String -> ResultME PropCheckError String
+    , getEnumProperty : Enum String -> String -> ResultME PropCheckError String
+    , getQNameProperty : String -> ResultME PropCheckError ( List String, String )
+    , getBoolProperty : String -> ResultME PropCheckError Bool
+    , getOptionalStringProperty : String -> ResultME PropCheckError (Maybe String)
+    , getOptionalEnumProperty : Enum String -> String -> ResultME PropCheckError (Maybe String)
+    }
+
+
+type alias PropertiesAPI pos =
+    { top : PropertyGet
+    , declarable : Declarable pos RefChecked -> PropertyGet
+    , field : Properties -> PropertyGet
+    }
+
+
 makePropertiesAPI : DefaultProperties -> L3 pos -> PropertiesAPI pos
 makePropertiesAPI defaultProperties l3 =
     { top = makePropertyGet (Tuple.second defaultProperties.top) l3.properties
@@ -225,24 +242,3 @@ getOptionalEnumProperty defaults props enum name =
 
         _ ->
             CheckedPropertyWrongKind |> ResultME.error
-
-
-
----
-
-
-type alias PropertyGet =
-    { getStringProperty : String -> ResultME PropCheckError String
-    , getEnumProperty : Enum String -> String -> ResultME PropCheckError String
-    , getQNameProperty : String -> ResultME PropCheckError ( List String, String )
-    , getBoolProperty : String -> ResultME PropCheckError Bool
-    , getOptionalStringProperty : String -> ResultME PropCheckError (Maybe String)
-    , getOptionalEnumProperty : Enum String -> String -> ResultME PropCheckError (Maybe String)
-    }
-
-
-type alias PropertiesAPI pos =
-    { top : PropertyGet
-    , declarable : Declarable pos RefChecked -> PropertyGet
-    , field : Properties -> PropertyGet
-    }
