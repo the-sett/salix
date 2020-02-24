@@ -25,18 +25,12 @@ import ResultME exposing (ResultME)
 {-| Allows the default properties on parts of the model to be defined.
 -}
 type alias DefaultProperties =
-    { topSpec : PropSpecs
-    , top : Properties
-    , aliasSpec : PropSpecs
-    , alias : Properties
-    , sumSpec : PropSpecs
-    , sum : Properties
-    , enumSpec : PropSpecs
-    , enum : Properties
-    , restrictedSpec : PropSpecs
-    , restricted : Properties
-    , fieldsSpec : PropSpecs
-    , fields : Properties
+    { top : ( PropSpecs, Properties )
+    , alias : ( PropSpecs, Properties )
+    , sum : ( PropSpecs, Properties )
+    , enum : ( PropSpecs, Properties )
+    , restricted : ( PropSpecs, Properties )
+    , fields : ( PropSpecs, Properties )
     }
 
 
@@ -61,22 +55,22 @@ type alias Processor pos err =
 
 makePropertiesAPI : DefaultProperties -> L3 pos -> PropertiesAPI pos ref
 makePropertiesAPI defaultProperties l3 =
-    { top = makePropertyGet defaultProperties.top l3.properties
+    { top = makePropertyGet (Tuple.second defaultProperties.top) l3.properties
     , declarable =
         \decl ->
             case decl of
                 DAlias _ _ props ->
-                    makePropertyGet defaultProperties.alias props
+                    makePropertyGet (Tuple.second defaultProperties.alias) props
 
                 DSum _ _ props ->
-                    makePropertyGet defaultProperties.sum props
+                    makePropertyGet (Tuple.second defaultProperties.sum) props
 
                 DEnum _ _ props ->
-                    makePropertyGet defaultProperties.enum props
+                    makePropertyGet (Tuple.second defaultProperties.enum) props
 
                 DRestricted _ _ props ->
-                    makePropertyGet defaultProperties.restricted props
-    , field = makePropertyGet defaultProperties.fields
+                    makePropertyGet (Tuple.second defaultProperties.restricted) props
+    , field = makePropertyGet (Tuple.second defaultProperties.fields)
     }
 
 
