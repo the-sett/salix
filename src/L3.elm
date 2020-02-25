@@ -56,7 +56,7 @@ type alias Processor pos err =
 type alias PropertyGet =
     { getStringProperty : String -> ResultME PropCheckError String
     , getEnumProperty : Enum String -> String -> ResultME PropCheckError String
-    , getQNameProperty : String -> ResultME PropCheckError ( List String, String )
+    , getQNameProperty : String -> ResultME PropCheckError (List String)
     , getBoolProperty : String -> ResultME PropCheckError Bool
     , getOptionalStringProperty : String -> ResultME PropCheckError (Maybe String)
     , getOptionalEnumProperty : Enum String -> String -> ResultME PropCheckError (Maybe String)
@@ -152,14 +152,14 @@ getProperty defaults props spec name =
         ( PSEnum _, Just (PEnum enum val) ) ->
             PEnum enum val |> Ok
 
-        ( PSQName, Just (PQName path val) ) ->
-            PQName path val |> Ok
+        ( PSQName, Just (PQName path) ) ->
+            PQName path |> Ok
 
         ( PSBool, Just (PBool val) ) ->
             PBool val |> Ok
 
         ( PSOptional _, Just (POptional optSpec maybe) ) ->
-            POptional spec maybe |> Ok
+            POptional optSpec maybe |> Ok
 
         ( _, Nothing ) ->
             CheckedPropertyMissing name spec |> ResultME.error
@@ -194,11 +194,11 @@ getEnumProperty defaults props enum name =
             Err err
 
 
-getQNameProperty : Properties -> Properties -> String -> ResultME PropCheckError ( List String, String )
+getQNameProperty : Properties -> Properties -> String -> ResultME PropCheckError (List String)
 getQNameProperty defaults props name =
     case getProperty defaults props PSQName name of
-        Ok (PQName path val) ->
-            Ok ( path, val )
+        Ok (PQName path) ->
+            Ok path
 
         Ok _ ->
             CheckedPropertyWrongKind name PSQName |> ResultME.error

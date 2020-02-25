@@ -93,7 +93,7 @@ in the model.
 type Property
     = PString String
     | PEnum (Enum String) String
-    | PQName (List String) String
+    | PQName (List String)
     | PBool Bool
     | POptional PropSpec (Maybe Property)
 
@@ -136,7 +136,7 @@ defineProperties notSet set =
                 PEnum enum _ ->
                     PSEnum enum
 
-                PQName _ _ ->
+                PQName _ ->
                     PSQName
 
                 PBool _ ->
