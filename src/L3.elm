@@ -116,7 +116,7 @@ This error type enumerates the possible properties bugs.
 -}
 type PropCheckError
     = CheckedPropertyMissing
-    | CheckedPropertyWrongKind
+    | CheckedPropertyWrongKind String PropSpec
 
 
 propCheckErrorToString : PropCheckError -> String
@@ -125,7 +125,7 @@ propCheckErrorToString err =
         CheckedPropertyMissing ->
             "Checked property missing."
 
-        CheckedPropertyWrongKind ->
+        CheckedPropertyWrongKind _ _ ->
             "Checked property wrong kind."
 
 
@@ -165,7 +165,7 @@ getProperty defaults props spec name =
             CheckedPropertyMissing |> ResultME.error
 
         ( _, _ ) ->
-            CheckedPropertyWrongKind |> ResultME.error
+            CheckedPropertyWrongKind name spec |> ResultME.error
 
 
 getStringProperty : Properties -> Properties -> String -> ResultME PropCheckError String
@@ -175,7 +175,7 @@ getStringProperty defaults props name =
             Ok val
 
         _ ->
-            CheckedPropertyWrongKind |> ResultME.error
+            CheckedPropertyWrongKind name PSString |> ResultME.error
 
 
 getEnumProperty : Properties -> Properties -> Enum String -> String -> ResultME PropCheckError String
@@ -185,7 +185,7 @@ getEnumProperty defaults props enum name =
             Ok val
 
         _ ->
-            CheckedPropertyWrongKind |> ResultME.error
+            CheckedPropertyWrongKind name (PSEnum enum) |> ResultME.error
 
 
 getQNameProperty : Properties -> Properties -> String -> ResultME PropCheckError ( List String, String )
@@ -195,17 +195,17 @@ getQNameProperty defaults props name =
             Ok ( path, val )
 
         _ ->
-            CheckedPropertyWrongKind |> ResultME.error
+            CheckedPropertyWrongKind name PSQName |> ResultME.error
 
 
 getBoolProperty : Properties -> Properties -> String -> ResultME PropCheckError Bool
 getBoolProperty defaults props name =
-    case getProperty defaults props PSQName name of
+    case getProperty defaults props PSBool name of
         Ok (PBool val) ->
             Ok val
 
         _ ->
-            CheckedPropertyWrongKind |> ResultME.error
+            CheckedPropertyWrongKind name PSBool |> ResultME.error
 
 
 getOptionalStringProperty : Properties -> Properties -> String -> ResultME PropCheckError (Maybe String)
@@ -220,15 +220,15 @@ getOptionalStringProperty defaults props name =
                     Just val |> Ok
 
                 _ ->
-                    CheckedPropertyWrongKind |> ResultME.error
+                    CheckedPropertyWrongKind name (PSOptional PSString) |> ResultME.error
 
         _ ->
-            CheckedPropertyWrongKind |> ResultME.error
+            CheckedPropertyWrongKind name (PSOptional PSString) |> ResultME.error
 
 
 getOptionalEnumProperty : Properties -> Properties -> Enum String -> String -> ResultME PropCheckError (Maybe String)
 getOptionalEnumProperty defaults props enum name =
-    case getProperty defaults props (PSEnum enum) name of
+    case getProperty defaults props (PSOptional (PSEnum enum)) name of
         Ok (POptional (PSEnum _) maybeProp) ->
             case maybeProp of
                 Nothing ->
@@ -238,7 +238,9 @@ getOptionalEnumProperty defaults props enum name =
                     Just val |> Ok
 
                 _ ->
-                    CheckedPropertyWrongKind |> ResultME.error
+                    CheckedPropertyWrongKind name (PSOptional (PSEnum enum))
+                        |> ResultME.error
 
         _ ->
-            CheckedPropertyWrongKind |> ResultME.error
+            CheckedPropertyWrongKind name (PSOptional (PSEnum enum))
+                |> ResultME.error
