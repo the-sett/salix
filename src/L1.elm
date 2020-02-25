@@ -60,10 +60,10 @@ type Restricted
 
 
 type Declarable pos ref
-    = DAlias pos (Type pos ref) Properties
-    | DSum pos (Nonempty ( String, List ( String, Type pos ref, Properties ) )) Properties
-    | DEnum pos (Nonempty String) Properties
-    | DRestricted pos Restricted Properties
+    = DAlias pos Properties (Type pos ref)
+    | DSum pos Properties (Nonempty ( String, List ( String, Type pos ref, Properties ) ))
+    | DEnum pos Properties (Nonempty String)
+    | DRestricted pos Properties Restricted
 
 
 
@@ -165,16 +165,16 @@ type Unchecked
 propertiesOfDeclarable : Declarable pos ref -> Properties
 propertiesOfDeclarable decl =
     case decl of
-        DAlias _ _ props ->
+        DAlias _ props _ ->
             props
 
-        DSum _ _ props ->
+        DSum _ props _ ->
             props
 
-        DEnum _ _ props ->
+        DEnum _ props _ ->
             props
 
-        DRestricted _ _ props ->
+        DRestricted _ props _ ->
             props
 
 

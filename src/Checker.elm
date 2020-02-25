@@ -105,12 +105,11 @@ checkDecl :
     -> ResultME (ModelCheckingError pos) (Declarable pos RefChecked)
 checkDecl decls decl =
     case decl of
-        DAlias pos l1type props ->
+        DAlias pos props l1type ->
             checkType decls l1type
-                |> Result.map (DAlias pos)
-                |> Result.map (\res -> res props)
+                |> Result.map (DAlias pos props)
 
-        DSum pos constructors props ->
+        DSum pos props constructors ->
             List.Nonempty.map
                 (\( name, fields ) ->
                     ResultME.combine2
@@ -120,14 +119,13 @@ checkDecl decls decl =
                 )
                 constructors
                 |> ResultME.combineNonempty
-                |> Result.map (DSum pos)
-                |> Result.map (\res -> res props)
+                |> Result.map (DSum pos props)
 
-        DEnum pos labels props ->
-            DEnum pos labels props |> Ok
+        DEnum pos props labels ->
+            DEnum pos props labels |> Ok
 
-        DRestricted pos res props ->
-            DRestricted pos res props |> Ok
+        DRestricted pos props res ->
+            DRestricted pos props res |> Ok
 
 
 checkType :
@@ -270,7 +268,7 @@ checkName pos val =
 declToRefChecked : Declarable pos a -> RefChecked
 declToRefChecked decl =
     case decl of
-        DAlias _ l1type _ ->
+        DAlias _ _ l1type ->
             case l1type of
                 TUnit _ ->
                     RcTUnit
@@ -299,7 +297,7 @@ declToRefChecked decl =
         DEnum _ labels _ ->
             RcEnum
 
-        DRestricted _ res _ ->
+        DRestricted _ _ res ->
             case res of
                 RInt _ ->
                     RcRestricted BInt

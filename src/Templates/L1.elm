@@ -37,18 +37,18 @@ type can also declare the permitted enum values.
 typeDecl : String -> Comment DocComment -> Declarable pos RefChecked -> ( List Declaration, Linkage )
 typeDecl name doc decl =
     case decl of
-        DAlias _ l1Type _ ->
+        DAlias _ _ l1Type ->
             typeAlias name (Just doc) l1Type
                 |> Tuple.mapFirst List.singleton
 
-        DSum _ constructors _ ->
+        DSum _ _ constructors ->
             customType name (Just doc) (List.Nonempty.toList constructors)
                 |> Tuple.mapFirst List.singleton
 
-        DEnum _ labels _ ->
+        DEnum _ _ labels ->
             enumCustomType name (Just doc) (List.Nonempty.toList labels)
 
-        DRestricted _ res _ ->
+        DRestricted _ _ res ->
             restrictedType name (Just doc) res
 
 
@@ -540,16 +540,16 @@ lowerFun fromType toType =
 codec : String -> Declarable pos RefChecked -> ( Declaration, Linkage )
 codec name decl =
     case decl of
-        DAlias _ l1Type _ ->
+        DAlias _ _ l1Type ->
             typeAliasCodec name l1Type
 
-        DSum _ constructors _ ->
+        DSum _ _ constructors ->
             customTypeCodec name (List.Nonempty.toList constructors)
 
-        DEnum _ labels _ ->
+        DEnum _ _ labels ->
             enumCodec name (List.Nonempty.toList labels)
 
-        DRestricted _ res _ ->
+        DRestricted _ _ res ->
             restrictedCodec name res
 
 

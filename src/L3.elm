@@ -76,16 +76,16 @@ makePropertiesAPI defaultProperties l3 =
     , declarable =
         \decl ->
             case decl of
-                DAlias _ _ props ->
+                DAlias _ props _ ->
                     makePropertyGet (Tuple.second defaultProperties.alias) props
 
-                DSum _ _ props ->
+                DSum _ props _ ->
                     makePropertyGet (Tuple.second defaultProperties.sum) props
 
-                DEnum _ _ props ->
+                DEnum _ props _ ->
                     makePropertyGet (Tuple.second defaultProperties.enum) props
 
-                DRestricted _ _ props ->
+                DRestricted _ props _ ->
                     makePropertyGet (Tuple.second defaultProperties.restricted) props
     , field = makePropertyGet (Tuple.second defaultProperties.fields)
     }
