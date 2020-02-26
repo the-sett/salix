@@ -1,7 +1,7 @@
 {
     "type": "package",
-    "name": "the-sett/stack-gen",
-    "summary": "Codew generation.",
+    "name": "the-sett/salix",
+    "summary": "A language for code generation.",
     "license": "BSD-3-Clause",
     "version": "1.0.0",
     "exposed-modules": [
