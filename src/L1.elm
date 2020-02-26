@@ -37,13 +37,13 @@ type Container pos ref
 
 
 type Type pos ref
-    = TUnit pos
-    | TBasic pos Basic
-    | TNamed pos String ref
-    | TProduct pos (Nonempty ( String, Type pos ref, Properties ))
-    | TEmptyProduct pos
-    | TContainer pos (Container pos ref)
-    | TFunction pos (Type pos ref) (Type pos ref)
+    = TUnit pos Properties
+    | TBasic pos Properties Basic
+    | TNamed pos Properties String ref
+    | TProduct pos Properties (Nonempty ( String, Type pos ref, Properties ))
+    | TEmptyProduct pos Properties
+    | TContainer pos Properties (Container pos ref)
+    | TFunction pos Properties (Type pos ref) (Type pos ref)
 
 
 type Restricted
@@ -197,25 +197,25 @@ positionOfDeclarable decl =
 positionOfType : Type pos ref -> pos
 positionOfType type_ =
     case type_ of
-        TUnit pos ->
+        TUnit pos _ ->
             pos
 
-        TBasic pos _ ->
+        TBasic pos _ _ ->
             pos
 
-        TNamed pos _ _ ->
+        TNamed pos _ _ _ ->
             pos
 
-        TProduct pos _ ->
+        TProduct pos _ _ ->
             pos
 
-        TEmptyProduct pos ->
+        TEmptyProduct pos _ ->
             pos
 
-        TContainer pos _ ->
+        TContainer pos _ _ ->
             pos
 
-        TFunction pos _ _ ->
+        TFunction pos _ _ _ ->
             pos
 
 

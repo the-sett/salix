@@ -385,29 +385,29 @@ enumRefinedType name labels =
 lowerType : Type pos RefChecked -> ( TypeAnnotation, Linkage )
 lowerType l1Type =
     case l1Type of
-        TUnit _ ->
+        TUnit _ _ ->
             ( CG.unitAnn, CG.emptyLinkage )
 
-        TBasic _ basic ->
+        TBasic _ _ basic ->
             ( lowerBasic basic
             , CG.emptyLinkage
             )
 
-        TNamed _ name _ ->
+        TNamed _ _ name _ ->
             ( CG.typed (Util.safeCCU name) []
             , CG.emptyLinkage
             )
 
-        TProduct _ fields ->
+        TProduct _ _ fields ->
             lowerProduct (List.Nonempty.toList fields)
 
-        TEmptyProduct _ ->
+        TEmptyProduct _ _ ->
             lowerProduct []
 
-        TContainer _ container ->
+        TContainer _ _ container ->
             lowerContainer container
 
-        TFunction _ arg res ->
+        TFunction _ _ arg res ->
             ( CG.unitAnn
             , CG.emptyLinkage
             )
@@ -478,7 +478,7 @@ lowerContainer container =
 lowerDict : Type pos RefChecked -> Type pos RefChecked -> ( TypeAnnotation, Linkage )
 lowerDict l1keyType l1valType =
     case l1keyType of
-        TNamed _ name (RcRestricted basic) ->
+        TNamed _ _ name (RcRestricted basic) ->
             let
                 ( keyAnn, keyLink ) =
                     lowerType l1keyType
@@ -490,7 +490,7 @@ lowerDict l1keyType l1valType =
             , CG.combineLinkage [ keyLink, valLink ] |> CG.addImport dictRefinedImport
             )
 
-        TNamed _ name RcEnum ->
+        TNamed _ _ name RcEnum ->
             let
                 ( keyAnn, keyLink ) =
                     lowerType l1keyType
@@ -755,25 +755,25 @@ codecMatchFn constructors =
 codecNamedType : String -> Type pos RefChecked -> Expression
 codecNamedType name l1Type =
     case l1Type of
-        TUnit _ ->
+        TUnit _ _ ->
             codecUnit
 
-        TBasic _ basic ->
+        TBasic _ _ basic ->
             codecType l1Type
 
-        TNamed _ named _ ->
+        TNamed _ _ named _ ->
             CG.string "codecNamedType_TNamed"
 
-        TProduct _ fields ->
+        TProduct _ _ fields ->
             codecNamedProduct name (List.Nonempty.toList fields)
 
-        TEmptyProduct _ ->
+        TEmptyProduct _ _ ->
             codecNamedProduct name []
 
-        TContainer _ container ->
+        TContainer _ _ container ->
             codecType l1Type
 
-        TFunction _ arg res ->
+        TFunction _ _ arg res ->
             CG.unit
 
 
@@ -782,16 +782,16 @@ codecNamedType name l1Type =
 codecType : Type pos RefChecked -> Expression
 codecType l1Type =
     case l1Type of
-        TBasic _ basic ->
+        TBasic _ _ basic ->
             codecBasic basic
 
-        TNamed _ named _ ->
+        TNamed _ _ named _ ->
             codecNamed named
 
-        TProduct _ fields ->
+        TProduct _ _ fields ->
             codecProduct (List.Nonempty.toList fields)
 
-        TContainer _ container ->
+        TContainer _ _ container ->
             codecContainer container
 
         _ ->
@@ -803,29 +803,29 @@ codecType l1Type =
 codecTypeField : String -> Type pos RefChecked -> Expression
 codecTypeField name l1Type =
     case l1Type of
-        TUnit _ ->
+        TUnit _ _ ->
             codecUnit |> codecField name
 
-        TBasic _ basic ->
+        TBasic _ _ basic ->
             codecBasic basic
                 |> codecField name
 
-        TNamed _ named _ ->
+        TNamed _ _ named _ ->
             codecNamed named
                 |> codecField name
 
-        TProduct _ fields ->
+        TProduct _ _ fields ->
             codecProduct (List.Nonempty.toList fields)
                 |> codecField name
 
-        TEmptyProduct _ ->
+        TEmptyProduct _ _ ->
             codecProduct []
                 |> codecField name
 
-        TContainer _ container ->
+        TContainer _ _ container ->
             codecContainerField name container
 
-        TFunction _ arg res ->
+        TFunction _ _ arg res ->
             CG.unit
 
 
@@ -885,7 +885,7 @@ codecContainer container =
 codecDict : Type pos RefChecked -> Type pos RefChecked -> Expression
 codecDict l1keyType l1valType =
     case l1keyType of
-        TNamed _ name (RcRestricted basic) ->
+        TNamed _ _ name (RcRestricted basic) ->
             let
                 _ =
                     Debug.log "codecDict" "Codec for dict with restricted key."
@@ -908,7 +908,7 @@ codecDict l1keyType l1valType =
                     |> CG.parens
                 ]
 
-        TNamed _ name RcEnum ->
+        TNamed _ _ name RcEnum ->
             let
                 _ =
                     Debug.log "codecDict" "Codec for dict with enum key."

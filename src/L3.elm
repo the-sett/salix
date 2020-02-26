@@ -11,7 +11,7 @@ module L3 exposing
 
 import Dict exposing (Dict)
 import Enum exposing (Enum)
-import L1 exposing (Declarable(..), PropSpec(..), PropSpecs, Properties, Property(..))
+import L1 exposing (Declarable(..), PropSpec(..), PropSpecs, Properties, Property(..), Type(..))
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
 
@@ -26,11 +26,24 @@ import ResultME exposing (ResultME)
 -}
 type alias DefaultProperties =
     { top : ( PropSpecs, Properties )
+
+    -- Declarables
     , alias : ( PropSpecs, Properties )
     , sum : ( PropSpecs, Properties )
     , enum : ( PropSpecs, Properties )
     , restricted : ( PropSpecs, Properties )
+
+    -- Fields
     , fields : ( PropSpecs, Properties )
+
+    -- Types
+    , unit : ( PropSpecs, Properties )
+    , basic : ( PropSpecs, Properties )
+    , named : ( PropSpecs, Properties )
+    , product : ( PropSpecs, Properties )
+    , emptyProduct : ( PropSpecs, Properties )
+    , container : ( PropSpecs, Properties )
+    , function : ( PropSpecs, Properties )
     }
 
 
@@ -67,6 +80,7 @@ type alias PropertiesAPI pos =
     { top : PropertyGet
     , declarable : Declarable pos RefChecked -> PropertyGet
     , field : Properties -> PropertyGet
+    , type_ : Type pos RefChecked -> PropertyGet
     }
 
 
@@ -88,6 +102,29 @@ makePropertiesAPI defaultProperties l3 =
                 DRestricted _ props _ ->
                     makePropertyGet (Tuple.second defaultProperties.restricted) props
     , field = makePropertyGet (Tuple.second defaultProperties.fields)
+    , type_ =
+        \typedef ->
+            case typedef of
+                TUnit _ props ->
+                    makePropertyGet (Tuple.second defaultProperties.unit) props
+
+                TBasic _ props _ ->
+                    makePropertyGet (Tuple.second defaultProperties.basic) props
+
+                TNamed _ props _ _ ->
+                    makePropertyGet (Tuple.second defaultProperties.named) props
+
+                TProduct _ props _ ->
+                    makePropertyGet (Tuple.second defaultProperties.product) props
+
+                TEmptyProduct _ props ->
+                    makePropertyGet (Tuple.second defaultProperties.emptyProduct) props
+
+                TContainer _ props _ ->
+                    makePropertyGet (Tuple.second defaultProperties.container) props
+
+                TFunction _ props _ _ ->
+                    makePropertyGet (Tuple.second defaultProperties.function) props
     }
 
 
