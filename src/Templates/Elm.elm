@@ -887,10 +887,6 @@ codecDict : Type pos RefChecked -> Type pos RefChecked -> Expression
 codecDict l1keyType l1valType =
     case l1keyType of
         TNamed _ _ name (RcRestricted basic) ->
-            let
-                _ =
-                    Debug.log "codecDict" "Codec for dict with restricted key."
-            in
             CG.apply
                 [ codecFn "build"
                 , CG.apply
@@ -910,10 +906,6 @@ codecDict l1keyType l1valType =
                 ]
 
         TNamed _ _ name RcEnum ->
-            let
-                _ =
-                    Debug.log "codecDict" "Codec for dict with enum key."
-            in
             CG.apply
                 [ codecFn "build"
                 , CG.apply
