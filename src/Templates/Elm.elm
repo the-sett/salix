@@ -1,4 +1,4 @@
-module Templates.L1 exposing
+module Templates.Elm exposing
     ( typeDecl, codec
     , lowerType, lowerFun
     )
