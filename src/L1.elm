@@ -1,23 +1,34 @@
 module L1 exposing
-    ( Basic(..)
-    , Container(..)
-    , Declarable(..)
-    , L1
-    , PropSpec(..)
-    , PropSpecs
-    , Properties
-    , Property(..)
-    , Restricted(..)
-    , Type(..)
+    ( Basic(..), Container(..), Type(..), Restricted(..), Declarable(..), L1
+    , PropSpec(..), Property(..), Properties, PropSpecs
+    , defineProperties, emptyProperties
     , Unchecked(..)
-    , defineProperties
-    , emptyProperties
-    , positionOfDeclarable
-    , positionOfType
-    , propertiesOfDeclarable
+    , positionOfDeclarable, positionOfType, propertiesOfDeclarable
     )
 
 {-| Defines the level 1 language for data modelling.
+
+
+# The L1 data modelling AST.
+
+@docs Basic, Container, Type, Restricted, Declarable, L1
+
+
+# Properties that can be held against the L1 mode.
+
+@docs PropSpec, Property, Properties, PropSpecs
+@docs defineProperties, emptyProperties
+
+
+# Ref checking status - L1 is unchecked.
+
+@docs Unchecked
+
+
+# Helper functions for extracting info from the L1 model.
+
+@docs positionOfDeclarable, positionOfType, propertiesOfDeclarable
+
 -}
 
 import Dict exposing (Dict)
@@ -25,6 +36,8 @@ import Enum exposing (Enum)
 import List.Nonempty exposing (Nonempty)
 
 
+{-| The basic data types.
+-}
 type Basic
     = BBool
     | BInt
@@ -32,6 +45,8 @@ type Basic
     | BString
 
 
+{-| Containers for 0..n instances of some type.
+-}
 type Container pos ref
     = CList (Type pos ref)
     | CSet (Type pos ref)
@@ -39,6 +54,8 @@ type Container pos ref
     | COptional (Type pos ref)
 
 
+{-| The possible type constructs.
+-}
 type Type pos ref
     = TUnit pos Properties
     | TBasic pos Properties Basic
@@ -49,6 +66,8 @@ type Type pos ref
     | TFunction pos Properties (Type pos ref) (Type pos ref)
 
 
+{-| Restricted forms that are subsets of the basic data types.
+-}
 type Restricted
     = RInt
         { min : Maybe Int
@@ -62,11 +81,19 @@ type Restricted
         }
 
 
+{-| Things that can be declared as named constructs.
+-}
 type Declarable pos ref
     = DAlias pos Properties (Type pos ref)
     | DSum pos Properties (Nonempty ( String, List ( String, Type pos ref, Properties ) ))
     | DEnum pos Properties (Nonempty String)
     | DRestricted pos Properties Restricted
+
+
+{-| L1 is a list of unchecked declarables.
+-}
+type alias L1 pos =
+    List ( String, Declarable pos Unchecked )
 
 
 
@@ -107,11 +134,23 @@ type alias Properties =
     Dict String Property
 
 
+{-| Creates an empty set of properties.
+-}
 emptyProperties : Properties
 emptyProperties =
     Dict.empty
 
 
+{-| Defines a set of property specifications with possible defaults. The first argument is a
+list of property specs, and the second is a list of default values.
+
+Values may appear in the second argument that are not in the first, in which case a specification
+for them will be infered.
+
+Values in the second argument that are also in the first should be of the same kind, but will be
+overriden by the second argument if not.
+
+-}
 defineProperties : List ( String, PropSpec ) -> List ( String, Property ) -> ( PropSpecs, Properties )
 defineProperties notSet set =
     let
@@ -165,6 +204,8 @@ type Unchecked
 -- Helper functions for extracting info.
 
 
+{-| Gets the properties from a Declarable.
+-}
 propertiesOfDeclarable : Declarable pos ref -> Properties
 propertiesOfDeclarable decl =
     case decl of
@@ -181,6 +222,8 @@ propertiesOfDeclarable decl =
             props
 
 
+{-| Gets the position context from a Declarable.
+-}
 positionOfDeclarable : Declarable pos ref -> pos
 positionOfDeclarable decl =
     case decl of
@@ -197,6 +240,8 @@ positionOfDeclarable decl =
             pos
 
 
+{-| Gets the position context from a Type.
+-}
 positionOfType : Type pos ref -> pos
 positionOfType type_ =
     case type_ of
@@ -220,9 +265,3 @@ positionOfType type_ =
 
         TFunction pos _ _ _ ->
             pos
-
-
-{-| The L1 model
--}
-type alias L1 pos =
-    List ( String, Declarable pos Unchecked )

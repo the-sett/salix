@@ -1,8 +1,22 @@
-module L2 exposing (L2, RefChecked(..))
+module L2 exposing
+    ( L2
+    , RefChecked(..)
+    )
 
 {-| Defines the level 2 language for data models that have been checked for
 consitency, and have been processed for general data modelling concerns without
 regard to specific code generation.
+
+
+# The L2 data modelling language.
+
+@docs L2
+
+
+# Ref checking status - L2 is checked.
+
+@docs RefChecked
+
 -}
 
 import Dict exposing (Dict)

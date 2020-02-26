@@ -1,18 +1,29 @@
 module L3 exposing
-    ( DefaultProperties
-    , L3
-    , Processor
-    , PropCheckError(..)
-    , PropertiesAPI
-    , PropertyGet
-    , makePropertiesAPI
-    , propCheckErrorToString
+    ( L3
+    , DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
+    , Processor, PropCheckError(..), propCheckErrorToString
     )
 
 {-| Defines the level 3 language for data models that have been annotated with
 predicates indicating that the model has particular features needed by particular
 code generators. A level 3 language ensures the specific requirements for futher
 processing by a code generator are being met.
+
+
+# The L3 data modelling language.
+
+@docs L3
+
+
+# Defaulting of properties accross the data model, and APIs to read properties.
+
+@docs DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
+
+
+# Definition of an L3 processor which creates some output from an L3 model.
+
+@docs Processor, PropCheckError, propCheckErrorToString
+
 -}
 
 import Dict exposing (Dict)
@@ -56,7 +67,6 @@ type alias L3 pos =
 
 
 {-| API for an L3 model processor.
--- Rename to processor
 -}
 type alias Processor pos err =
     { name : String
@@ -66,6 +76,8 @@ type alias Processor pos err =
     }
 
 
+{-| An API for reading properties of various expected kinds.
+-}
 type alias PropertyGet =
     { getStringProperty : String -> ResultME PropCheckError String
     , getEnumProperty : Enum String -> String -> ResultME PropCheckError String
@@ -76,6 +88,8 @@ type alias PropertyGet =
     }
 
 
+{-| An API for supplying property readers for various parts of the data model.
+-}
 type alias PropertiesAPI pos =
     { top : PropertyGet
     , declarable : Declarable pos RefChecked -> PropertyGet
@@ -84,6 +98,9 @@ type alias PropertiesAPI pos =
     }
 
 
+{-| Creates a properties API from a set of defaulted property specs, and an
+L3 model.
+-}
 makePropertiesAPI : DefaultProperties -> L3 pos -> PropertiesAPI pos
 makePropertiesAPI defaultProperties l3 =
     { top = makePropertyGet (Tuple.second defaultProperties.top) l3.properties
@@ -156,6 +173,8 @@ type PropCheckError
     | CheckedPropertyWrongKind String PropSpec
 
 
+{-| Convert prop check errors to strings.
+-}
 propCheckErrorToString : PropCheckError -> String
 propCheckErrorToString err =
     case err of

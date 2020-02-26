@@ -1,7 +1,13 @@
-module Checker exposing (check, errorToString)
+module Checker exposing (check, ModelCheckingError, errorToString)
 
 {-| Implements a checker that ensures a data model is valid as a level 2
 construct.
+
+
+# Model checking.
+
+@docs check, ModelCheckingError, errorToString
+
 -}
 
 import Dict exposing (Dict)
@@ -14,6 +20,8 @@ import ResultME exposing (ResultME)
 import Set exposing (Set)
 
 
+{-| The error cases the model checker can detect.
+-}
 type ModelCheckingError pos
     = UnresolvedRef pos String
     | MapKeyTypeNotAllowed pos
@@ -22,6 +30,8 @@ type ModelCheckingError pos
     | DeclaredMoreThanOnce pos String
 
 
+{-| Converts model checking errors to strings.
+-}
 errorToString : ModelCheckingError pos -> String
 errorToString err =
     case err of
