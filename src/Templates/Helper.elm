@@ -1,8 +1,6 @@
 module Templates.Helper exposing (mChain, mChainMaybe, mChainResult)
 
 import Elm.CodeGen as CG exposing (Expression)
-import Set
-import String.Case as Case
 
 
 mChain : (Expression -> Expression) -> Expression -> List Expression -> Expression
