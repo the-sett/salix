@@ -1,14 +1,12 @@
 module L2 exposing (L2, RefChecked(..))
 
+{-| Defines the level 2 language for data models that have been checked for
+consitency, and have been processed for general data modelling concerns without
+regard to specific code generation.
+-}
+
 import Dict exposing (Dict)
 import L1 exposing (Declarable)
-
-
-
--- TODO:
--- Matching up of bi-directional references. When only one on each end it is obvious.
--- When more than one, target needs to be explicit.
--- Is this an L2 concern?
 
 
 {-| Indicates that named type in the model have been reference checked to

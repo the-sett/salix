@@ -1,5 +1,9 @@
 module Checker exposing (check, errorToString)
 
+{-| Implements a checker that ensures a data model is valid as a level 2
+construct.
+-}
+
 import Dict exposing (Dict)
 import L1 exposing (Basic(..), Container(..), Declarable(..), L1, Restricted(..), Type(..), Unchecked)
 import L2 exposing (L2, RefChecked(..))

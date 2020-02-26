@@ -17,6 +17,9 @@ module L1 exposing
     , propertiesOfDeclarable
     )
 
+{-| Defines the level 1 language for data modelling.
+-}
+
 import Dict exposing (Dict)
 import Enum exposing (Enum)
 import List.Nonempty exposing (Nonempty)

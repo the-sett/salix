@@ -9,17 +9,17 @@ module L3 exposing
     , propCheckErrorToString
     )
 
+{-| Defines the level 3 language for data models that have been annotated with
+predicates indicating that the model has particular features needed by particular
+code generators. A level 3 language ensures the specific requirements for futher
+processing by a code generator are being met.
+-}
+
 import Dict exposing (Dict)
 import Enum exposing (Enum)
 import L1 exposing (Declarable(..), PropSpec(..), PropSpecs, Properties, Property(..), Type(..))
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
-
-
-
--- TODO:
--- Stacking of properties of multiple processors
--- stack : Properties -> Properties -> ResultME err Properties
 
 
 {-| Allows the default properties on parts of the model to be defined.

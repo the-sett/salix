@@ -20,6 +20,7 @@ import L1 exposing (Basic(..), Container(..), Declarable(..), Restricted(..), Ty
 import L2 exposing (RefChecked(..))
 import List.Nonempty
 import Maybe.Extra
+import Naming
 import Set exposing (Set)
 import Templates.Helper as Util
 
@@ -91,27 +92,27 @@ restrictedInt name maybeDoc res =
     case guards of
         [] ->
             -- If there are no guard clauses, it is just an int.
-            ( [ CG.aliasDecl Nothing (Util.safeCCU name) [] (lowerBasic BInt) ]
+            ( [ CG.aliasDecl Nothing (Naming.safeCCU name) [] (lowerBasic BInt) ]
             , CG.emptyLinkage
-                |> CG.addExposing (CG.typeOrAliasExpose (Util.safeCCU name))
+                |> CG.addExposing (CG.typeOrAliasExpose (Naming.safeCCU name))
             )
 
         gd :: gds ->
             let
                 boxedTypeDecl =
-                    CG.customTypeDecl maybeDoc (Util.safeCCU name) [] [ ( Util.safeCCU name, [ CG.intAnn ] ) ]
+                    CG.customTypeDecl maybeDoc (Naming.safeCCU name) [] [ ( Naming.safeCCU name, [ CG.intAnn ] ) ]
 
                 restrictedSig =
                     CG.typed "Refined"
                         [ CG.typed "Int" []
-                        , CG.typed (Util.safeCCU name) []
+                        , CG.typed (Naming.safeCCU name) []
                         , CG.typed "IntError" []
                         ]
 
                 typeWrapper =
                     CG.apply
                         [ CG.fqFun resultMod "map"
-                        , CG.fun (Util.safeCCU name)
+                        , CG.fun (Naming.safeCCU name)
                         ]
 
                 guardFn =
@@ -125,7 +126,7 @@ restrictedInt name maybeDoc res =
 
                 unboxFn =
                     CG.letFunction "unboxFn"
-                        [ CG.namedPattern (Util.safeCCU name) [ CG.varPattern "val" ] ]
+                        [ CG.namedPattern (Naming.safeCCU name) [ CG.varPattern "val" ] ]
                         (CG.val "val")
 
                 restrictedImpl =
@@ -140,7 +141,7 @@ restrictedInt name maybeDoc res =
                         |> CG.letExpr [ guardFn, unboxFn ]
 
                 restrictedDecl =
-                    CG.valDecl maybeDoc (Just restrictedSig) (Util.safeCCL name) restrictedImpl
+                    CG.valDecl maybeDoc (Just restrictedSig) (Naming.safeCCL name) restrictedImpl
             in
             ( [ boxedTypeDecl
               , restrictedDecl
@@ -149,8 +150,8 @@ restrictedInt name maybeDoc res =
                 |> CG.addImport (guardedImportExposing [ "Refined", "IntError" ])
                 |> CG.addImport decodeImport
                 |> CG.addImport encodeImport
-                |> CG.addExposing (CG.funExpose (Util.safeCCL name))
-                |> CG.addExposing (CG.typeOrAliasExpose (Util.safeCCU name))
+                |> CG.addExposing (CG.funExpose (Naming.safeCCL name))
+                |> CG.addExposing (CG.typeOrAliasExpose (Naming.safeCCU name))
             )
 
 
@@ -182,27 +183,27 @@ restrictedString name maybeDoc res =
     case guards of
         [] ->
             -- If there are no guard clauses, it is just an string.
-            ( [ CG.aliasDecl Nothing (Util.safeCCU name) [] (lowerBasic BString) ]
+            ( [ CG.aliasDecl Nothing (Naming.safeCCU name) [] (lowerBasic BString) ]
             , CG.emptyLinkage
-                |> CG.addExposing (CG.typeOrAliasExpose (Util.safeCCU name))
+                |> CG.addExposing (CG.typeOrAliasExpose (Naming.safeCCU name))
             )
 
         gd :: gds ->
             let
                 boxedTypeDecl =
-                    CG.customTypeDecl maybeDoc (Util.safeCCU name) [] [ ( Util.safeCCU name, [ CG.stringAnn ] ) ]
+                    CG.customTypeDecl maybeDoc (Naming.safeCCU name) [] [ ( Naming.safeCCU name, [ CG.stringAnn ] ) ]
 
                 restrictedSig =
                     CG.typed "Refined"
                         [ CG.typed "String" []
-                        , CG.typed (Util.safeCCU name) []
+                        , CG.typed (Naming.safeCCU name) []
                         , CG.typed "StringError" []
                         ]
 
                 typeWrapper =
                     CG.apply
                         [ CG.fqFun resultMod "map"
-                        , CG.fun (Util.safeCCU name)
+                        , CG.fun (Naming.safeCCU name)
                         ]
 
                 guardFn =
@@ -216,7 +217,7 @@ restrictedString name maybeDoc res =
 
                 unboxFn =
                     CG.letFunction "unboxFn"
-                        [ CG.namedPattern (Util.safeCCU name) [ CG.varPattern "val" ] ]
+                        [ CG.namedPattern (Naming.safeCCU name) [ CG.varPattern "val" ] ]
                         (CG.val "val")
 
                 restrictedImpl =
@@ -231,7 +232,7 @@ restrictedString name maybeDoc res =
                         |> CG.letExpr [ guardFn, unboxFn ]
 
                 restrictedDecl =
-                    CG.valDecl maybeDoc (Just restrictedSig) (Util.safeCCL name) restrictedImpl
+                    CG.valDecl maybeDoc (Just restrictedSig) (Naming.safeCCL name) restrictedImpl
             in
             ( [ boxedTypeDecl
               , restrictedDecl
@@ -240,8 +241,8 @@ restrictedString name maybeDoc res =
                 |> CG.addImport (guardedImportExposing [ "Refined", "StringError" ])
                 |> CG.addImport decodeImport
                 |> CG.addImport encodeImport
-                |> CG.addExposing (CG.funExpose (Util.safeCCL name))
-                |> CG.addExposing (CG.typeOrAliasExpose (Util.safeCCU name))
+                |> CG.addExposing (CG.funExpose (Naming.safeCCL name))
+                |> CG.addExposing (CG.typeOrAliasExpose (Naming.safeCCU name))
             )
 
 
@@ -253,9 +254,9 @@ typeAlias name maybeDoc l1Type =
         ( loweredType, linkage ) =
             lowerType l1Type
     in
-    ( CG.aliasDecl maybeDoc (Util.safeCCU name) [] loweredType
+    ( CG.aliasDecl maybeDoc (Naming.safeCCU name) [] loweredType
     , linkage
-        |> CG.addExposing (CG.typeOrAliasExpose (Util.safeCCU name))
+        |> CG.addExposing (CG.typeOrAliasExpose (Naming.safeCCU name))
     )
 
 
@@ -280,14 +281,14 @@ customType name maybeDoc constructors =
                                 |> List.unzip
                                 |> Tuple.mapSecond CG.combineLinkage
                     in
-                    ( ( Util.safeCCU consName, loweredArgs ), linkage )
+                    ( ( Naming.safeCCU consName, loweredArgs ), linkage )
                 )
                 constructors
                 |> List.unzip
     in
-    ( CG.customTypeDecl maybeDoc (Util.safeCCU name) [] mappedConstructors
+    ( CG.customTypeDecl maybeDoc (Naming.safeCCU name) [] mappedConstructors
     , CG.combineLinkage linkages
-        |> CG.addExposing (CG.openTypeExpose (Util.safeCCU name))
+        |> CG.addExposing (CG.openTypeExpose (Naming.safeCCU name))
     )
 
 
@@ -302,7 +303,7 @@ enumCustomType name maybeDoc labels =
     let
         constructors =
             List.map
-                (\label -> ( Util.safeCCU name ++ Util.safeCCU label, [] ))
+                (\label -> ( Naming.safeCCU name ++ Naming.safeCCU label, [] ))
                 labels
 
         enumValues =
@@ -310,7 +311,7 @@ enumCustomType name maybeDoc labels =
                 [ CG.fqFun enumMod "define"
                 , List.map
                     (\label ->
-                        CG.fun (Util.safeCCU name ++ Util.safeCCU label)
+                        CG.fun (Naming.safeCCU name ++ Naming.safeCCU label)
                     )
                     labels
                     |> CG.list
@@ -318,7 +319,7 @@ enumCustomType name maybeDoc labels =
                     (CG.caseExpr (CG.val "val")
                         (List.map
                             (\label ->
-                                ( CG.namedPattern (Util.safeCCU name ++ Util.safeCCU label) []
+                                ( CG.namedPattern (Naming.safeCCU name ++ Naming.safeCCU label) []
                                 , CG.string label
                                 )
                             )
@@ -328,15 +329,15 @@ enumCustomType name maybeDoc labels =
                 ]
 
         enumSig =
-            CG.typed "Enum" [ CG.typed (Util.safeCCU name) [] ]
+            CG.typed "Enum" [ CG.typed (Naming.safeCCU name) [] ]
     in
-    ( [ CG.customTypeDecl maybeDoc (Util.safeCCU name) [] constructors
-      , CG.valDecl maybeDoc (Just enumSig) (Util.safeCCL name) enumValues
+    ( [ CG.customTypeDecl maybeDoc (Naming.safeCCU name) [] constructors
+      , CG.valDecl maybeDoc (Just enumSig) (Naming.safeCCL name) enumValues
       ]
     , CG.emptyLinkage
         |> CG.addImport enumImport
-        |> CG.addExposing (CG.funExpose (Util.safeCCL name))
-        |> CG.addExposing (CG.openTypeExpose (Util.safeCCU name))
+        |> CG.addExposing (CG.funExpose (Naming.safeCCL name))
+        |> CG.addExposing (CG.openTypeExpose (Naming.safeCCU name))
     )
 
 
@@ -350,7 +351,7 @@ enumRefinedType : String -> List String -> ( List Declaration, Linkage )
 enumRefinedType name labels =
     let
         guardedConstructor =
-            [ ( Util.safeCCU name, [ CG.stringAnn ] ) ]
+            [ ( Naming.safeCCU name, [ CG.stringAnn ] ) ]
 
         enumValues =
             CG.apply
@@ -358,25 +359,25 @@ enumRefinedType name labels =
                 , List.map
                     (\label ->
                         CG.apply
-                            [ CG.fun (Util.safeCCU name)
+                            [ CG.fun (Naming.safeCCU name)
                             , label |> CG.string
                             ]
                     )
                     labels
                     |> CG.list
-                , CG.lambda [ CG.namedPattern (Util.safeCCU name) [ CG.varPattern "val" ] ]
+                , CG.lambda [ CG.namedPattern (Naming.safeCCU name) [ CG.varPattern "val" ] ]
                     (CG.val "val")
                 ]
 
         enumSig =
-            CG.typed "Enum" [ CG.typed (Util.safeCCU name) [] ]
+            CG.typed "Enum" [ CG.typed (Naming.safeCCU name) [] ]
     in
-    ( [ CG.customTypeDecl Nothing (Util.safeCCU name) [] guardedConstructor
-      , CG.valDecl Nothing (Just enumSig) (Util.safeCCL name) enumValues
+    ( [ CG.customTypeDecl Nothing (Naming.safeCCU name) [] guardedConstructor
+      , CG.valDecl Nothing (Just enumSig) (Naming.safeCCL name) enumValues
       ]
     , CG.emptyLinkage
         |> CG.addImport enumImport
-        |> CG.addExposing (CG.funExpose (Util.safeCCL name))
+        |> CG.addExposing (CG.funExpose (Naming.safeCCL name))
     )
 
 
@@ -394,7 +395,7 @@ lowerType l1Type =
             )
 
         TNamed _ _ name _ ->
-            ( CG.typed (Util.safeCCU name) []
+            ( CG.typed (Naming.safeCCU name) []
             , CG.emptyLinkage
             )
 
@@ -443,7 +444,7 @@ lowerProduct fields =
                         ( loweredType, linkage ) =
                             lowerType l1Type
                     in
-                    ( ( Util.safeCCL name, loweredType ), linkage )
+                    ( ( Naming.safeCCL name, loweredType ), linkage )
                 )
                 fields
                 |> List.unzip
@@ -559,10 +560,10 @@ typeAliasCodec : String -> Type pos RefChecked -> ( Declaration, Linkage )
 typeAliasCodec name l1Type =
     let
         codecFnName =
-            Util.safeCCL (name ++ "Codec")
+            Naming.safeCCL (name ++ "Codec")
 
         typeName =
-            Util.safeCCU name
+            Naming.safeCCU name
 
         sig =
             CG.typed "Codec" [ CG.typed typeName [] ]
@@ -592,10 +593,10 @@ customTypeCodec : String -> List ( String, List ( String, Type pos RefChecked, L
 customTypeCodec name constructors =
     let
         codecFnName =
-            Util.safeCCL (name ++ "Codec")
+            Naming.safeCCL (name ++ "Codec")
 
         typeName =
-            Util.safeCCU name
+            Naming.safeCCU name
 
         sig =
             CG.typed "Codec" [ CG.typed typeName [] ]
@@ -623,13 +624,13 @@ enumCodec : String -> List String -> ( Declaration, Linkage )
 enumCodec name constructors =
     let
         codecFnName =
-            Util.safeCCL (name ++ "Codec")
+            Naming.safeCCL (name ++ "Codec")
 
         typeName =
-            Util.safeCCU name
+            Naming.safeCCU name
 
         enumName =
-            Util.safeCCL name
+            Naming.safeCCL name
 
         sig =
             CG.typed "Codec" [ CG.typed typeName [] ]
@@ -662,13 +663,13 @@ restrictedCodec : String -> Restricted -> ( Declaration, Linkage )
 restrictedCodec name _ =
     let
         codecFnName =
-            Util.safeCCL (name ++ "Codec")
+            Naming.safeCCL (name ++ "Codec")
 
         typeName =
-            Util.safeCCU name
+            Naming.safeCCU name
 
         enumName =
-            Util.safeCCL name
+            Naming.safeCCL name
 
         sig =
             CG.typed "Codec" [ CG.typed typeName [] ]
@@ -703,8 +704,8 @@ codecCustomType constructors =
         codecVariant name args =
             List.foldr
                 (\( _, l1Type, _ ) accum -> codecType l1Type :: accum)
-                [ Util.safeCCU name |> CG.fun
-                , Util.safeCCU name |> CG.string
+                [ Naming.safeCCU name |> CG.fun
+                , Naming.safeCCU name |> CG.string
                 , codecFn ("variant" ++ String.fromInt (List.length args))
                 ]
                 args
@@ -726,7 +727,7 @@ codecMatchFn : List ( String, List ( String, Type pos RefChecked, L1.Properties 
 codecMatchFn constructors =
     let
         consFnName name =
-            "f" ++ Util.safeCCL name
+            "f" ++ Naming.safeCCL name
 
         args =
             List.foldr (\( name, _ ) accum -> (consFnName name |> CG.varPattern) :: accum)
@@ -734,7 +735,7 @@ codecMatchFn constructors =
                 constructors
 
         consPattern ( name, consArgs ) =
-            ( CG.namedPattern (Util.safeCCU name)
+            ( CG.namedPattern (Naming.safeCCU name)
                 (List.map (\( argName, _, _ ) -> CG.varPattern argName) consArgs)
             , List.foldr (\( argName, _, _ ) accum -> CG.val argName :: accum)
                 [ consFnName name |> CG.fun ]
@@ -860,7 +861,7 @@ codecBasic basic =
 
 
 codecNamed named =
-    CG.fun (Util.safeCCL (named ++ "Codec"))
+    CG.fun (Naming.safeCCL (named ++ "Codec"))
 
 
 codecContainer : Container pos RefChecked -> Expression
@@ -894,14 +895,14 @@ codecDict l1keyType l1valType =
                 [ codecFn "build"
                 , CG.apply
                     [ CG.fqFun refinedMod "dictEncoder"
-                    , CG.val (Util.safeCCL name)
+                    , CG.val (Naming.safeCCL name)
                     , CG.apply [ codecFn "encoder", codecType l1valType ]
                         |> CG.parens
                     ]
                     |> CG.parens
                 , CG.apply
                     [ CG.fqFun refinedMod "dictDecoder"
-                    , CG.val (Util.safeCCL name)
+                    , CG.val (Naming.safeCCL name)
                     , CG.apply [ codecFn "decoder", codecType l1valType ]
                         |> CG.parens
                     ]
@@ -917,14 +918,14 @@ codecDict l1keyType l1valType =
                 [ codecFn "build"
                 , CG.apply
                     [ CG.fqFun enumMod "dictEncoder"
-                    , CG.val (Util.safeCCL name)
+                    , CG.val (Naming.safeCCL name)
                     , CG.apply [ codecFn "encoder", codecType l1valType ]
                         |> CG.parens
                     ]
                     |> CG.parens
                 , CG.apply
                     [ CG.fqFun enumMod "dictDecoder"
-                    , CG.val (Util.safeCCL name)
+                    , CG.val (Naming.safeCCL name)
                     , CG.apply [ codecFn "decoder", codecType l1valType ]
                         |> CG.parens
                     ]
@@ -943,7 +944,7 @@ codecNamedProduct : String -> List ( String, Type pos RefChecked, L1.Properties 
 codecNamedProduct name fields =
     let
         typeName =
-            Util.safeCCU name
+            Naming.safeCCU name
 
         impl =
             codecFields fields
@@ -1015,7 +1016,7 @@ codecField name expr =
     CG.apply
         [ codecFn "field"
         , CG.string name
-        , CG.accessFun ("." ++ Util.safeCCL name)
+        , CG.accessFun ("." ++ Naming.safeCCL name)
         , expr
         ]
 
@@ -1027,7 +1028,7 @@ codecOptionalField name expr =
     CG.apply
         [ codecFn "optionalField"
         , CG.string name
-        , CG.accessFun ("." ++ Util.safeCCL name)
+        , CG.accessFun ("." ++ Naming.safeCCL name)
         , expr
         ]
 
