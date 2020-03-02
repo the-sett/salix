@@ -11,6 +11,7 @@ construct.
 -}
 
 import Dict exposing (Dict)
+import Errors exposing (Error(..))
 import L1 exposing (Basic(..), Container(..), Declarable(..), L1, Restricted(..), Type(..), Unchecked)
 import L2 exposing (L2, RefChecked(..))
 import List.Nonempty exposing (Nonempty(..))
@@ -53,10 +54,11 @@ errorToString err =
 
 {-| Runs checks on an L1 model and lowers it to L2 if all the checks pass.
 -}
-check : L1 pos -> ResultME (ModelCheckingError pos) (L2 pos)
+check : L1 pos -> ResultME Error (L2 pos)
 check l1Decls =
     checkDuplicateDecls l1Decls
         |> ResultME.andThen checkDecls
+        |> ResultME.mapError (errorToString >> Error)
 
 
 {-| Checks for duplicate declarations in L1.
