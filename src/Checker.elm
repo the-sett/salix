@@ -104,7 +104,7 @@ checkDecls : Dict String (Declarable pos a) -> ResultME (ModelCheckingError pos)
 checkDecls decls =
     Dict.map
         (\key val ->
-            ResultME.combine2
+            ResultME.map2
                 always
                 (checkDecl decls val)
                 (checkName (L1.positionOfDeclarable val) key)
@@ -126,7 +126,7 @@ checkDecl decls decl =
         DSum pos props constructors ->
             List.Nonempty.map
                 (\( name, fields ) ->
-                    ResultME.combine2
+                    ResultME.map2
                         Tuple.pair
                         (checkName pos name)
                         (checkFields pos decls fields)
@@ -178,7 +178,7 @@ checkType decls l1type =
                 |> Result.map (TContainer pos props)
 
         TFunction pos props arg res ->
-            ResultME.combine2 (TFunction pos props) (checkType decls arg) (checkType decls res)
+            ResultME.map2 (TFunction pos props) (checkType decls arg) (checkType decls res)
 
 
 checkContainer :
@@ -197,7 +197,7 @@ checkContainer pos decls container =
                 |> Result.map CSet
 
         CDict keyType valType ->
-            ResultME.combine2
+            ResultME.map2
                 CDict
                 (checkType decls keyType
                     |> ResultME.andThen (checkDictKey (L1.positionOfType keyType))
@@ -244,7 +244,7 @@ checkNonemptyFields pos decls fields =
     fields
         |> List.Nonempty.map
             (\( name, fieldType, props ) ->
-                ResultME.combine2
+                ResultME.map2
                     (\checkedName checkedFields -> ( checkedName, checkedFields, props ))
                     (checkName pos name)
                     (checkType decls fieldType)
@@ -261,7 +261,7 @@ checkFields pos decls fields =
     fields
         |> List.map
             (\( name, fieldType, props ) ->
-                ResultME.combine2
+                ResultME.map2
                     (\checkedName checkedFields -> ( checkedName, checkedFields, props ))
                     (checkName pos name)
                     (checkType decls fieldType)
