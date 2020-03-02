@@ -17,3 +17,8 @@ type Error
 -- , title : String
 -- , body : Markdown
 -- }
+
+
+asConsoleString : Error -> String
+asConsoleString (Error val) =
+    val
