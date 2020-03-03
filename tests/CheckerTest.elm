@@ -64,24 +64,22 @@ basicFuzzer =
         ]
 
 
-declarableFuzzer : Fuzzer (Type Unchecked) -> Fuzzer (Declarable Unchecked)
+declarableFuzzer : Fuzzer (Type () Unchecked) -> Fuzzer (Declarable () Unchecked)
 declarableFuzzer tFuzzer =
     Fuzz.oneOf
-        [ Fuzz.map DAlias tFuzzer
-        , Fuzz.tuple ( Fuzz.string, tFuzzer )
+        [ Fuzz.map (DAlias () L1.emptyProperties) tFuzzer
+        , Fuzz.tuple3 ( Fuzz.string, tFuzzer, Fuzz.constant L1.emptyProperties )
             |> nonEmptyList
-            --|> Fuzz.map List.singleton
             |> Fuzz.map2 Tuple.pair Fuzz.string
-            --|> nonempty
             |> Fuzz.map List.Nonempty.fromElement
-            |> Fuzz.map DSum
+            |> Fuzz.map (DSum () L1.emptyProperties)
 
         --  DEnum (List String)
         --  DRestricted Restricted
         ]
 
 
-containerFuzzer : Fuzzer (Type Unchecked) -> Fuzzer (Container Unchecked)
+containerFuzzer : Fuzzer (Type () Unchecked) -> Fuzzer (Container () Unchecked)
 containerFuzzer tFuzzer =
     Fuzz.oneOf
         [ Fuzz.map CList tFuzzer
@@ -101,25 +99,25 @@ restrictedFuzzer =
         ]
 
 
-leafTypeFuzzer : Fuzzer (Type Unchecked)
+leafTypeFuzzer : Fuzzer (Type () Unchecked)
 leafTypeFuzzer =
     Fuzz.oneOf
-        [ TNamed "Missing" Unchecked |> Fuzz.constant
+        [ TNamed () L1.emptyProperties "Missing" Unchecked |> Fuzz.constant
         ]
 
 
-recursiveTypeFuzzer : Fuzzer (Type Unchecked) -> Fuzzer (Type Unchecked)
+recursiveTypeFuzzer : Fuzzer (Type () Unchecked) -> Fuzzer (Type () Unchecked)
 recursiveTypeFuzzer tFuzzer =
     Fuzz.oneOf
-        [ Fuzz.tuple ( Fuzz.string, tFuzzer )
+        [ Fuzz.tuple3 ( Fuzz.string, tFuzzer, Fuzz.constant L1.emptyProperties )
             |> nonempty
-            |> Fuzz.map TProduct
-        , Fuzz.map TContainer (containerFuzzer tFuzzer)
-        , Fuzz.map2 TFunction tFuzzer tFuzzer
+            |> Fuzz.map (TProduct () L1.emptyProperties)
+        , Fuzz.map (TContainer () L1.emptyProperties) (containerFuzzer tFuzzer)
+        , Fuzz.map2 (TFunction () L1.emptyProperties) tFuzzer tFuzzer
         ]
 
 
-typeFuzzer : Fuzzer (Type Unchecked)
+typeFuzzer : Fuzzer (Type () Unchecked)
 typeFuzzer =
     recursiveFuzzer
         { maxDepth = 2
