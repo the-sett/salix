@@ -2,6 +2,7 @@ module CheckerTest exposing (..)
 
 import Checker exposing (..)
 import Dict exposing (Dict)
+import Errors exposing (Error(..))
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import L1 exposing (..)
@@ -25,8 +26,18 @@ suite =
                     l2result =
                         check decls
                 in
-                Expect.err l2result
+                case l2result of
+                    Ok _ ->
+                        Expect.fail "Should give an error"
+
+                    Err err ->
+                        expectAll (expectErrorCode 201) (List.Nonempty.toList err)
         ]
+
+
+expectErrorCode : Int -> Error -> Expectation
+expectErrorCode match (Error { code }) =
+    Expect.equal match code
 
 
 basicFuzzer : Fuzzer Basic
@@ -147,7 +158,6 @@ recursiveFuzzer { maxDepth, baseWeight, recurseWeight, base, recurse } =
     helper 1
 
 
-
--- expectAll : (subject -> Expectation) -> List subject -> Expectation
--- expectAll condFn vals =
---     ()
+expectAll : (subject -> Expectation) -> List subject -> Expectation
+expectAll condFn vals =
+    Expect.all (List.map (\subject -> always (condFn subject)) vals) ()
