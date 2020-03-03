@@ -1,4 +1,4 @@
-module Checker exposing (check, ModelCheckingError, errorToString)
+module Checker exposing (check)
 
 {-| Implements a checker that ensures a data model is valid as a level 2
 construct.
@@ -11,7 +11,7 @@ construct.
 -}
 
 import Dict exposing (Dict)
-import Errors exposing (Error(..))
+import Errors exposing (Error(..), ErrorBuilder)
 import L1 exposing (Basic(..), Container(..), Declarable(..), L1, Restricted(..), Type(..), Unchecked)
 import L2 exposing (L2, RefChecked(..))
 import List.Nonempty exposing (Nonempty(..))
@@ -31,25 +31,40 @@ type ModelCheckingError pos
     | DeclaredMoreThanOnce pos String
 
 
+errorConverter =
+    errorBuilder (\_ -> "Qutoed source.")
+
+
 {-| Converts model checking errors to strings.
 -}
-errorToString : ModelCheckingError pos -> String
-errorToString err =
+errorBuilder : ErrorBuilder pos (ModelCheckingError pos)
+errorBuilder posFn err =
     case err of
         UnresolvedRef _ hint ->
-            hint ++ " reference did not resolve."
+            --hint ++ " reference did not resolve."
+            Error
+                { code = 201
+                , title = "Unresolved Reference"
+                , body = []
+                }
 
-        MapKeyTypeNotAllowed _ ->
-            "Map .key is not an enum, restricted, or basic."
-
-        BadFieldName _ name ->
-            name ++ " is not allowed as a field name."
-
-        BadDeclarationName _ name ->
-            name ++ " is not allows as a declaration name."
-
-        DeclaredMoreThanOnce _ name ->
-            name ++ " cannot be declared more than once."
+        -- MapKeyTypeNotAllowed _ ->
+        --     "Map .key is not an enum, restricted, or basic."
+        --
+        -- BadFieldName _ name ->
+        --     name ++ " is not allowed as a field name."
+        --
+        -- BadDeclarationName _ name ->
+        --     name ++ " is not allows as a declaration name."
+        --
+        -- DeclaredMoreThanOnce _ name ->
+        --     name ++ " cannot be declared more than once."
+        _ ->
+            Error
+                { code = 0
+                , title = "Dummy Error"
+                , body = []
+                }
 
 
 {-| Runs checks on an L1 model and lowers it to L2 if all the checks pass.
@@ -58,7 +73,7 @@ check : L1 pos -> ResultME Error (L2 pos)
 check l1Decls =
     checkDuplicateDecls l1Decls
         |> ResultME.andThen checkDecls
-        |> ResultME.mapError (errorToString >> Error)
+        |> ResultME.mapError errorConverter
 
 
 {-| Checks for duplicate declarations in L1.

@@ -28,6 +28,7 @@ processing by a code generator are being met.
 
 import Dict exposing (Dict)
 import Enum exposing (Enum)
+import Errors exposing (Error)
 import L1 exposing (Declarable(..), PropSpec(..), PropSpecs, Properties, Property(..), Type(..))
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
@@ -72,7 +73,7 @@ type alias Processor pos err =
     { name : String
     , defaults : DefaultProperties
     , check : L3 pos -> ResultME err (L3 pos)
-    , errorToString : (pos -> String) -> pos -> err -> String
+    , errorToString : (pos -> String) -> err -> Error
     }
 
 
