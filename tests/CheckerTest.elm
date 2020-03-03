@@ -29,31 +29,6 @@ suite =
         ]
 
 
-type alias RecursiveFuzzerConfig a =
-    { maxDepth : Int
-    , baseWeight : Float
-    , recurseWeight : Int -> Float
-    , base : Fuzzer a
-    , recurse : Fuzzer a -> Fuzzer a
-    }
-
-
-recursiveFuzzer : RecursiveFuzzerConfig a -> Fuzzer a
-recursiveFuzzer { maxDepth, baseWeight, recurseWeight, base, recurse } =
-    let
-        helper depth =
-            if depth > maxDepth then
-                base
-
-            else
-                Fuzz.frequency
-                    [ ( baseWeight, base )
-                    , ( recurseWeight depth, recurse (helper (depth + 1)) )
-                    ]
-    in
-    helper 1
-
-
 basicFuzzer : Fuzzer Basic
 basicFuzzer =
     Fuzz.oneOf
@@ -128,6 +103,10 @@ typeFuzzer =
         }
 
 
+
+-- Helpers
+
+
 nonempty : Fuzzer a -> Fuzzer (Nonempty a)
 nonempty fuzz =
     Fuzz.map2
@@ -141,3 +120,34 @@ nonempty fuzz =
 
 nonEmptyList fuzzer =
     Fuzz.map2 (::) fuzzer (Fuzz.list fuzzer)
+
+
+type alias RecursiveFuzzerConfig a =
+    { maxDepth : Int
+    , baseWeight : Float
+    , recurseWeight : Int -> Float
+    , base : Fuzzer a
+    , recurse : Fuzzer a -> Fuzzer a
+    }
+
+
+recursiveFuzzer : RecursiveFuzzerConfig a -> Fuzzer a
+recursiveFuzzer { maxDepth, baseWeight, recurseWeight, base, recurse } =
+    let
+        helper depth =
+            if depth > maxDepth then
+                base
+
+            else
+                Fuzz.frequency
+                    [ ( baseWeight, base )
+                    , ( recurseWeight depth, recurse (helper (depth + 1)) )
+                    ]
+    in
+    helper 1
+
+
+
+-- expectAll : (subject -> Expectation) -> List subject -> Expectation
+-- expectAll condFn vals =
+--     ()

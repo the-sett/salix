@@ -48,21 +48,35 @@ errorBuilder posFn err =
                 , body = []
                 }
 
-        -- MapKeyTypeNotAllowed _ ->
-        --     "Map .key is not an enum, restricted, or basic."
-        --
-        -- BadFieldName _ name ->
-        --     name ++ " is not allowed as a field name."
-        --
-        -- BadDeclarationName _ name ->
-        --     name ++ " is not allows as a declaration name."
-        --
-        -- DeclaredMoreThanOnce _ name ->
-        --     name ++ " cannot be declared more than once."
-        _ ->
+        MapKeyTypeNotAllowed _ ->
+            -- "Map .key is not an enum, restricted, or basic."
             Error
-                { code = 0
-                , title = "Dummy Error"
+                { code = 202
+                , title = "Dict Key Type Not Allowed"
+                , body = []
+                }
+
+        BadFieldName _ name ->
+            -- name ++ " is not allowed as a field name."
+            Error
+                { code = 203
+                , title = "Bad Field Name"
+                , body = []
+                }
+
+        BadDeclarationName _ name ->
+            -- name ++ " is not allows as a declaration name."
+            Error
+                { code = 204
+                , title = "Bad Declaration Name"
+                , body = []
+                }
+
+        DeclaredMoreThanOnce _ name ->
+            -- name ++ " cannot be declared more than once."
+            Error
+                { code = 205
+                , title = "Declared More Than Once"
                 , body = []
                 }
 
