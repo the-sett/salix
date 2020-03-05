@@ -1,4 +1,8 @@
-module L2 exposing (..)
+module L2 exposing
+    ( L2
+    , RefChecked(..)
+    , Processor, ProcessorImpl, builder
+    )
 
 {-| Defines the level 2 language for data models that have been checked for
 consitency, and have been processed for general data modelling concerns without
@@ -13,6 +17,11 @@ regard to specific code generation.
 # Ref checking status - L2 is checked.
 
 @docs RefChecked
+
+
+# Standardized interface to an L2 processor.
+
+@docs Processor, ProcessorImpl, builder
 
 -}
 
