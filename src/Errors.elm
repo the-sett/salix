@@ -1,5 +1,6 @@
 module Errors exposing (..)
 
+import Dict exposing (Dict)
 import Markdown.Block exposing (Block)
 import Markdown.Html
 import Markdown.Parser exposing (ListItem(..), Renderer)
@@ -19,6 +20,21 @@ type Error
         , title : String
         , body : List Block
         }
+
+
+defaultError : Error
+defaultError =
+    Error
+        { code = -1
+        , title = "Unhandled Error"
+        , body = []
+        }
+
+
+lookupError : Dict Int Error -> Int -> Error
+lookupError errorDict code =
+    Dict.get code errorDict
+        |> Maybe.withDefault defaultError
 
 
 type alias ErrorBuilder pos err =

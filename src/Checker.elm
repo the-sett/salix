@@ -32,7 +32,7 @@ type ModelCheckingError pos
 
 
 errorConverter =
-    errorBuilder (\_ -> "Qutoed source.")
+    errorBuilder (\_ -> "Quoted source.")
 
 
 {-| Converts model checking errors to strings.
