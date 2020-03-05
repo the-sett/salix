@@ -73,7 +73,7 @@ type alias Processor pos err =
     { name : String
     , defaults : DefaultProperties
     , check : L3 pos -> ResultME err (L3 pos)
-    , errorToString : (pos -> String) -> err -> Error
+    , buildError : (pos -> String) -> err -> Error
     }
 
 

@@ -1,7 +1,4 @@
-module L2 exposing
-    ( L2
-    , RefChecked(..)
-    )
+module L2 exposing (..)
 
 {-| Defines the level 2 language for data models that have been checked for
 consitency, and have been processed for general data modelling concerns without
@@ -20,7 +17,9 @@ regard to specific code generation.
 -}
 
 import Dict exposing (Dict)
-import L1 exposing (Declarable)
+import Errors exposing (Error)
+import L1 exposing (Declarable, L1)
+import ResultME exposing (ResultME)
 
 
 {-| Indicates that named type in the model have been reference checked to
@@ -47,3 +46,29 @@ type RefChecked
 -}
 type alias L2 pos =
     Dict String (Declarable pos RefChecked)
+
+
+{-| API for an L2 model processor.
+-}
+type alias Processor pos =
+    { name : String
+    , check : L1 pos -> ResultME Error (L2 pos)
+    }
+
+
+builder : (pos -> String) -> ProcessorImpl pos err -> Processor pos
+builder posFn impl =
+    { name = impl.name
+    , check =
+        impl.check
+            >> ResultME.mapError (impl.buildError posFn)
+    }
+
+
+{-| SPI for an L2 model processor.
+-}
+type alias ProcessorImpl pos err =
+    { name : String
+    , check : L1 pos -> ResultME err (L2 pos)
+    , buildError : (pos -> String) -> err -> Error
+    }
