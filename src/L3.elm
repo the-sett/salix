@@ -2,7 +2,7 @@ module L3 exposing
     ( L3
     , DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
     , Processor, ProcessorImpl, builder
-    , PropCheckError
+    , PropCheckError, errorBuilder
     )
 
 {-| Defines the level 3 language for data models that have been annotated with
@@ -29,7 +29,7 @@ processing by a code generator are being met.
 
 import Dict exposing (Dict)
 import Enum exposing (Enum)
-import Errors exposing (Error)
+import Errors exposing (Error(..), ErrorBuilder)
 import L1 exposing (Declarable(..), PropSpec(..), PropSpecs, Properties, Property(..), Type(..))
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
@@ -179,6 +179,27 @@ makePropertyGet defaults props =
 --== Reading properties.
 
 
+{-| The error catalogue for this property checking.
+-}
+errorCatalogue =
+    Dict.fromList
+        [ ( 301
+          , Error
+                { code = 301
+                , title = "Required Property Missing"
+                , body = []
+                }
+          )
+        , ( 302
+          , Error
+                { code = 302
+                , title = "Property has Wrong Kind"
+                , body = []
+                }
+          )
+        ]
+
+
 {-| Once properties have been checked, then reading properties as per the property
 specification should always succeed, since those properties have been verified to be
 present and of the correct kind.
@@ -192,16 +213,16 @@ type PropCheckError
     | CheckedPropertyWrongKind String PropSpec
 
 
-{-| Convert prop check errors to strings.
+{-| Convert prop check errors to standard errors.
 -}
-propCheckErrorToString : PropCheckError -> String
-propCheckErrorToString err =
+errorBuilder : ErrorBuilder pos PropCheckError
+errorBuilder posFn err =
     case err of
         CheckedPropertyMissing _ _ ->
-            "Checked property missing."
+            Errors.lookupError errorCatalogue 301
 
         CheckedPropertyWrongKind _ _ ->
-            "Checked property wrong kind."
+            Errors.lookupError errorCatalogue 302
 
 
 getWithDefault : Properties -> Properties -> String -> Maybe Property
