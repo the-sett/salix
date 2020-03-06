@@ -2,6 +2,7 @@ module L3 exposing
     ( L3
     , DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
     , Processor, ProcessorImpl, builder
+    , PropCheckError
     )
 
 {-| Defines the level 3 language for data models that have been annotated with
