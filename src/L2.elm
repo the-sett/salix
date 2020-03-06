@@ -68,9 +68,7 @@ type alias Processor pos =
 builder : (pos -> String) -> ProcessorImpl pos err -> Processor pos
 builder posFn impl =
     { name = impl.name
-    , check =
-        impl.check
-            >> ResultME.mapError (impl.buildError posFn)
+    , check = impl.check >> ResultME.mapError (impl.buildError posFn)
     }
 
 

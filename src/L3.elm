@@ -1,7 +1,7 @@
 module L3 exposing
     ( L3
     , DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
-    , Processor, PropCheckError(..), propCheckErrorToString
+    , Processor, ProcessorImpl, builder
     )
 
 {-| Defines the level 3 language for data models that have been annotated with
@@ -20,9 +20,9 @@ processing by a code generator are being met.
 @docs DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
 
 
-# Definition of an L3 processor which creates some output from an L3 model.
+# Standardized interface to an L3 processor.
 
-@docs Processor, PropCheckError, propCheckErrorToString
+@docs Processor, ProcessorImpl, builder
 
 -}
 
@@ -69,7 +69,24 @@ type alias L3 pos =
 
 {-| API for an L3 model processor.
 -}
-type alias Processor pos err =
+type alias Processor pos =
+    { name : String
+    , defaults : DefaultProperties
+    , check : L3 pos -> ResultME Error (L3 pos)
+    }
+
+
+builder : (pos -> String) -> ProcessorImpl pos err -> Processor pos
+builder posFn impl =
+    { name = impl.name
+    , defaults = impl.defaults
+    , check = impl.check >> ResultME.mapError (impl.buildError posFn)
+    }
+
+
+{-| SPI for an L2 model processor.
+-}
+type alias ProcessorImpl pos err =
     { name : String
     , defaults : DefaultProperties
     , check : L3 pos -> ResultME err (L3 pos)
