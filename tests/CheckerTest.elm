@@ -2,6 +2,7 @@ module CheckerTest exposing (..)
 
 import Checker exposing (..)
 import Dict exposing (Dict)
+import Errors exposing (Error(..))
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import L1 exposing (..)
@@ -25,8 +26,111 @@ suite =
                     l2result =
                         check decls
                 in
-                Expect.err l2result
+                case l2result of
+                    Ok _ ->
+                        Expect.fail "Should give an error"
+
+                    Err err ->
+                        expectAll (expectErrorCode 201) (List.Nonempty.toList err)
         ]
+
+
+expectErrorCode : Int -> Error -> Expectation
+expectErrorCode match (Error { code }) =
+    Expect.equal match code
+
+
+basicFuzzer : Fuzzer Basic
+basicFuzzer =
+    Fuzz.oneOf
+        [ Fuzz.constant BBool
+        , Fuzz.constant BInt
+        , Fuzz.constant BReal
+        , Fuzz.constant BString
+        ]
+
+
+declarableFuzzer : Fuzzer (Type () Unchecked) -> Fuzzer (Declarable () Unchecked)
+declarableFuzzer tFuzzer =
+    Fuzz.oneOf
+        [ Fuzz.map (DAlias () L1.emptyProperties) tFuzzer
+        , Fuzz.tuple3 ( Fuzz.string, tFuzzer, Fuzz.constant L1.emptyProperties )
+            |> nonEmptyList
+            |> Fuzz.map2 Tuple.pair Fuzz.string
+            |> Fuzz.map List.Nonempty.fromElement
+            |> Fuzz.map (DSum () L1.emptyProperties)
+
+        --  DEnum (List String)
+        --  DRestricted Restricted
+        ]
+
+
+containerFuzzer : Fuzzer (Type () Unchecked) -> Fuzzer (Container () Unchecked)
+containerFuzzer tFuzzer =
+    Fuzz.oneOf
+        [ Fuzz.map CList tFuzzer
+        , Fuzz.map CSet tFuzzer
+        , Fuzz.map2 CDict tFuzzer tFuzzer
+        , Fuzz.map COptional tFuzzer
+        ]
+
+
+restrictedFuzzer : Fuzzer Restricted
+restrictedFuzzer =
+    Fuzz.oneOf
+        [ RInt { min = Nothing, max = Nothing, width = Nothing }
+            |> Fuzz.constant
+        , RString { minLength = Nothing, maxLength = Nothing, regex = Nothing }
+            |> Fuzz.constant
+        ]
+
+
+leafTypeFuzzer : Fuzzer (Type () Unchecked)
+leafTypeFuzzer =
+    Fuzz.oneOf
+        [ TNamed () L1.emptyProperties "Missing" Unchecked |> Fuzz.constant
+        ]
+
+
+recursiveTypeFuzzer : Fuzzer (Type () Unchecked) -> Fuzzer (Type () Unchecked)
+recursiveTypeFuzzer tFuzzer =
+    Fuzz.oneOf
+        [ Fuzz.tuple3 ( Fuzz.string, tFuzzer, Fuzz.constant L1.emptyProperties )
+            |> nonempty
+            |> Fuzz.map (TProduct () L1.emptyProperties)
+        , Fuzz.map (TContainer () L1.emptyProperties) (containerFuzzer tFuzzer)
+        , Fuzz.map2 (TFunction () L1.emptyProperties) tFuzzer tFuzzer
+        ]
+
+
+typeFuzzer : Fuzzer (Type () Unchecked)
+typeFuzzer =
+    recursiveFuzzer
+        { maxDepth = 2
+        , baseWeight = 0.2
+        , recurseWeight = \depth -> 1 / toFloat depth
+        , base = leafTypeFuzzer
+        , recurse = recursiveTypeFuzzer
+        }
+
+
+
+-- Helpers
+
+
+nonempty : Fuzzer a -> Fuzzer (Nonempty a)
+nonempty fuzz =
+    Fuzz.map2
+        (\list singleton ->
+            List.Nonempty.fromElement singleton
+                |> List.Nonempty.replaceTail list
+        )
+        (Fuzz.list fuzz)
+        fuzz
+
+
+nonEmptyList fuzzer =
+    Fuzz.map2 (::) fuzzer (Fuzz.list fuzzer)
 
 
 type alias RecursiveFuzzerConfig a =
@@ -54,92 +158,6 @@ recursiveFuzzer { maxDepth, baseWeight, recurseWeight, base, recurse } =
     helper 1
 
 
-basicFuzzer : Fuzzer Basic
-basicFuzzer =
-    Fuzz.oneOf
-        [ Fuzz.constant BBool
-        , Fuzz.constant BInt
-        , Fuzz.constant BReal
-        , Fuzz.constant BString
-        ]
-
-
-declarableFuzzer : Fuzzer (Type Unchecked) -> Fuzzer (Declarable Unchecked)
-declarableFuzzer tFuzzer =
-    Fuzz.oneOf
-        [ Fuzz.map DAlias tFuzzer
-        , Fuzz.tuple ( Fuzz.string, tFuzzer )
-            |> nonEmptyList
-            --|> Fuzz.map List.singleton
-            |> Fuzz.map2 Tuple.pair Fuzz.string
-            --|> nonempty
-            |> Fuzz.map List.Nonempty.fromElement
-            |> Fuzz.map DSum
-
-        --  DEnum (List String)
-        --  DRestricted Restricted
-        ]
-
-
-containerFuzzer : Fuzzer (Type Unchecked) -> Fuzzer (Container Unchecked)
-containerFuzzer tFuzzer =
-    Fuzz.oneOf
-        [ Fuzz.map CList tFuzzer
-        , Fuzz.map CSet tFuzzer
-        , Fuzz.map2 CDict tFuzzer tFuzzer
-        , Fuzz.map COptional tFuzzer
-        ]
-
-
-restrictedFuzzer : Fuzzer Restricted
-restrictedFuzzer =
-    Fuzz.oneOf
-        [ RInt { min = Nothing, max = Nothing, width = Nothing }
-            |> Fuzz.constant
-        , RString { minLength = Nothing, maxLength = Nothing, regex = Nothing }
-            |> Fuzz.constant
-        ]
-
-
-leafTypeFuzzer : Fuzzer (Type Unchecked)
-leafTypeFuzzer =
-    Fuzz.oneOf
-        [ TNamed "Missing" Unchecked |> Fuzz.constant
-        ]
-
-
-recursiveTypeFuzzer : Fuzzer (Type Unchecked) -> Fuzzer (Type Unchecked)
-recursiveTypeFuzzer tFuzzer =
-    Fuzz.oneOf
-        [ Fuzz.tuple ( Fuzz.string, tFuzzer )
-            |> nonempty
-            |> Fuzz.map TProduct
-        , Fuzz.map TContainer (containerFuzzer tFuzzer)
-        , Fuzz.map2 TFunction tFuzzer tFuzzer
-        ]
-
-
-typeFuzzer : Fuzzer (Type Unchecked)
-typeFuzzer =
-    recursiveFuzzer
-        { maxDepth = 2
-        , baseWeight = 0.2
-        , recurseWeight = \depth -> 1 / toFloat depth
-        , base = leafTypeFuzzer
-        , recurse = recursiveTypeFuzzer
-        }
-
-
-nonempty : Fuzzer a -> Fuzzer (Nonempty a)
-nonempty fuzz =
-    Fuzz.map2
-        (\list singleton ->
-            List.Nonempty.fromElement singleton
-                |> List.Nonempty.replaceTail list
-        )
-        (Fuzz.list fuzz)
-        fuzz
-
-
-nonEmptyList fuzzer =
-    Fuzz.map2 (::) fuzzer (Fuzz.list fuzzer)
+expectAll : (subject -> Expectation) -> List subject -> Expectation
+expectAll condFn vals =
+    Expect.all (List.map (\subject -> always (condFn subject)) vals) ()

@@ -1,23 +1,86 @@
-module Checker exposing (check, ModelCheckingError, errorToString)
+module Checker exposing (processorImpl, errorCatalogue)
 
 {-| Implements a checker that ensures a data model is valid as a level 2
 construct.
 
 
-# Model checking.
+# Model checking processor.
 
-@docs check, ModelCheckingError, errorToString
+@docs processorImpl, errorCatalogue
 
 -}
 
 import Dict exposing (Dict)
+import Errors exposing (Error(..), ErrorBuilder)
 import L1 exposing (Basic(..), Container(..), Declarable(..), L1, Restricted(..), Type(..), Unchecked)
-import L2 exposing (L2, RefChecked(..))
+import L2 exposing (L2, ProcessorImpl, RefChecked(..))
 import List.Nonempty exposing (Nonempty(..))
 import Maybe.Extra
 import Naming
 import ResultME exposing (ResultME)
 import Set exposing (Set)
+
+
+{-| SPI for this L2 checker.
+-}
+processorImpl : ProcessorImpl pos (ModelCheckingError pos)
+processorImpl =
+    { name = "Checker"
+    , check = check
+    , buildError = errorBuilder
+    }
+
+
+{-| The error catalogue for this checker.
+-}
+errorCatalogue =
+    Dict.fromList
+        [ ( 201
+          , Error
+                { code = 201
+                , title = "Unresolved Reference"
+
+                --hint ++ " reference did not resolve."
+                , body = []
+                }
+          )
+        , ( 202
+          , Error
+                { code = 202
+                , title = "Dict Key Type Not Allowed"
+
+                -- "Map .key is not an enum, restricted, or basic."
+                , body = []
+                }
+          )
+        , ( 203
+          , Error
+                { code = 203
+                , title = "Bad Field Name"
+
+                -- name ++ " is not allowed as a field name."
+                , body = []
+                }
+          )
+        , ( 204
+          , Error
+                { code = 204
+                , title = "Bad Declaration Name"
+
+                -- name ++ " is not allows as a declaration name."
+                , body = []
+                }
+          )
+        , ( 205
+          , Error
+                { code = 205
+                , title = "Declared More Than Once"
+
+                -- name ++ " cannot be declared more than once."
+                , body = []
+                }
+          )
+        ]
 
 
 {-| The error cases the model checker can detect.
@@ -30,25 +93,23 @@ type ModelCheckingError pos
     | DeclaredMoreThanOnce pos String
 
 
-{-| Converts model checking errors to strings.
--}
-errorToString : ModelCheckingError pos -> String
-errorToString err =
+errorBuilder : ErrorBuilder pos (ModelCheckingError pos)
+errorBuilder posFn err =
     case err of
         UnresolvedRef _ hint ->
-            hint ++ " reference did not resolve."
+            Errors.lookupError errorCatalogue 201
 
         MapKeyTypeNotAllowed _ ->
-            "Map .key is not an enum, restricted, or basic."
+            Errors.lookupError errorCatalogue 202
 
         BadFieldName _ name ->
-            name ++ " is not allowed as a field name."
+            Errors.lookupError errorCatalogue 203
 
         BadDeclarationName _ name ->
-            name ++ " is not allows as a declaration name."
+            Errors.lookupError errorCatalogue 204
 
         DeclaredMoreThanOnce _ name ->
-            name ++ " cannot be declared more than once."
+            Errors.lookupError errorCatalogue 205
 
 
 {-| Runs checks on an L1 model and lowers it to L2 if all the checks pass.
