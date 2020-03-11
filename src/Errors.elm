@@ -1,17 +1,15 @@
 module Errors exposing (..)
 
+import Console
+import Css
 import Dict exposing (Dict)
+import Html.Styled as Html exposing (Html)
+import Html.Styled.Attributes as Attr
+import Mark
 
 
 
--- import Markdown.Block exposing (Block)
--- import Markdown.Html
--- import Markdown.Parser exposing (ListItem(..), Renderer)
--- TODO:
--- When converting errors, they can have multiple positions in them,
--- so quoted code blocks must be a list, to allow for more than one.
--- type Markdown
---     = List Block
+-- Common Error definition, for reporting errors to users.
 
 
 type Error
@@ -20,6 +18,10 @@ type Error
         , title : String
         , body : List String
         }
+
+
+
+-- Support for error catalogues.
 
 
 defaultError : Error
@@ -41,47 +43,143 @@ type alias ErrorBuilder pos err =
     (pos -> String) -> err -> Error
 
 
+
+-- Structural formatting of error messages as elm-markup.
+
+
+document : Renderer content -> Error -> Mark.Document (List content)
+document renderer error =
+    let
+        (Error err) =
+            error
+    in
+    Mark.manyOf
+        [ errorDocs renderer error
+        , quoteSource renderer error
+        ]
+        |> Mark.document (\parts -> renderer.renderTitle err.title :: parts)
+
+
+errorDocs : Renderer content -> Error -> Mark.Block content
+errorDocs renderer err =
+    Mark.text renderer.styleText
+        |> Mark.map renderer.textsToParagraph
+
+
+quoteSource : Renderer content -> Error -> Mark.Block content
+quoteSource renderer (Error err) =
+    Mark.record "Source"
+        renderer.annotatedSource
+        |> Mark.field "label" (Mark.text renderer.styleText)
+        |> Mark.field "pos" Mark.int
+        |> Mark.field "source" Mark.string
+        |> Mark.toBlock
+
+
+
+-- Rendering abstraction.
+
+
+type alias Renderer content =
+    { annotatedSource : List content -> Int -> String -> content
+    , renderTitle : String -> content
+    , styleText : Mark.Styles -> String -> content
+    , textsToParagraph : List content -> content
+    }
+
+
+
+-- Html rendering of error messages.
+
+
+htmlRenderer : Renderer (Html msg)
+htmlRenderer =
+    { annotatedSource = htmlAnnotatedSource
+    , renderTitle = htmlRenderTitle
+    , styleText = htmlStyleText
+    , textsToParagraph = htmlTextsToParagraph
+    }
+
+
+htmlAnnotatedSource : List (Html msg) -> Int -> String -> Html msg
+htmlAnnotatedSource label pos source =
+    Html.div []
+        [ Html.div [] label
+        , Html.pre []
+            [ Html.text "source code for location "
+            , Html.text (String.fromInt pos)
+            ]
+        ]
+
+
+htmlRenderTitle : String -> Html msg
+htmlRenderTitle val =
+    Html.styled Html.div
+        [ Css.textTransform Css.uppercase ]
+        []
+        [ Html.h4 [] [ Html.text val ] ]
+
+
+htmlStyleText : Mark.Styles -> String -> Html msg
+htmlStyleText styles string =
+    if styles.bold || styles.italic || styles.strike then
+        Html.span
+            [ Attr.classList
+                [ ( "bold", styles.bold )
+                , ( "italic", styles.italic )
+                , ( "strike", styles.strike )
+                ]
+            ]
+            [ Html.text string ]
+
+    else
+        Html.text string
+
+
+htmlTextsToParagraph : List (Html msg) -> Html msg
+htmlTextsToParagraph texts =
+    Html.p [] texts
+
+
+
+-- Console rendering of error messages.
+
+
 asConsoleString : Error -> String
 asConsoleString (Error { code, title, body }) =
-    -- let
-    --     bodyResult =
-    --         Markdown.Parser.render consoleRenderer body
-    --             |> Result.map (List.foldl (++) "")
-    --             |> Result.withDefault ""
-    -- in
-    -- String.fromInt code
-    --     ++ " : "
-    --     ++ title
-    --     ++ "\n\n"
-    --     ++ bodyResult
     String.fromInt code
         ++ " : "
         ++ title
 
 
+consoleRenderer : Renderer String
+consoleRenderer =
+    { annotatedSource = consoleAnnotatedSource
+    , renderTitle = consoleRenderTitle
+    , styleText = consoleStyleText
+    , textsToParagraph = consoleTextsToParagraph
+    }
 
--- consoleRenderer : Renderer String
--- consoleRenderer =
---     { heading = \{ level, children, rawText } -> List.foldl (++) "" children
---     , raw = List.foldl (++) ""
---     , blockQuote = List.foldl (++) ""
---     , html = Markdown.Html.oneOf []
---     , plain = \content -> content
---     , code = \content -> "" ++ content
---     , bold = \content -> "" ++ content
---     , italic = \content -> "" ++ content
---     , link = \link content -> link.destination |> Ok
---     , image = \image content -> content |> Ok
---     , unorderedList =
---         \items ->
---             items
---                 |> List.map (\(ListItem _ itemBlocks) -> List.foldl (++) "" itemBlocks)
---                 |> List.foldl (++) ""
---     , orderedList =
---         \startingIndex items ->
---             items
---                 |> List.map (List.foldl (++) "")
---                 |> List.foldl (++) ""
---     , codeBlock = \{ body, language } -> "" ++ body
---     , thematicBreak = ""
---     }
+
+consoleAnnotatedSource : List String -> Int -> String -> String
+consoleAnnotatedSource label pos source =
+    consoleTextsToParagraph label ++ "\n" ++ source
+
+
+consoleRenderTitle : String -> String
+consoleRenderTitle val =
+    val
+
+
+consoleStyleText : Mark.Styles -> String -> String
+consoleStyleText styles string =
+    if styles.bold || styles.italic || styles.strike then
+        string
+
+    else
+        string
+
+
+consoleTextsToParagraph : List String -> String
+consoleTextsToParagraph texts =
+    List.foldl (++) "" texts
