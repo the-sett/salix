@@ -6,6 +6,7 @@ import Dict exposing (Dict)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attr
 import Mark
+import Mark.Error
 
 
 
@@ -145,11 +146,41 @@ htmlTextsToParagraph texts =
 -- Console rendering of error messages.
 
 
+example =
+    """
+You got it wrong, maybe you aren't as clever as you think?
+
+|> Source
+    label = The first time you screwed up:
+    pos = 0
+    source = "source code location 0"
+
+|> Source
+    label = Then here you did it again:
+    pos = 0
+    source = source code location 1
+
+Fix this by reading the manual. Idiot.
+"""
+
+
 asConsoleString : Error -> String
-asConsoleString (Error { code, title, body }) =
-    String.fromInt code
-        ++ " : "
-        ++ title
+asConsoleString error =
+    let
+        markupErrors : List Mark.Error.Error -> String
+        markupErrors errors =
+            List.map Mark.Error.toString errors
+                |> String.join "\n"
+    in
+    case Mark.compile (document consoleRenderer error) example of
+        Mark.Success success ->
+            consoleTextsToParagraph success
+
+        Mark.Almost { result, errors } ->
+            markupErrors errors
+
+        Mark.Failure errors ->
+            markupErrors errors
 
 
 consoleRenderer : Renderer String
