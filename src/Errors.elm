@@ -174,7 +174,7 @@ asConsoleString error =
     in
     case Mark.compile (document consoleRenderer error) example of
         Mark.Success success ->
-            consoleTextsToParagraph success
+            String.join "\n\n" success
 
         Mark.Almost { result, errors } ->
             markupErrors errors
@@ -199,7 +199,7 @@ consoleAnnotatedSource label pos source =
 
 consoleRenderTitle : String -> String
 consoleRenderTitle val =
-    val
+    "-- " ++ String.toUpper val ++ " --"
 
 
 consoleStyleText : Mark.Styles -> String -> String
@@ -213,4 +213,4 @@ consoleStyleText styles string =
 
 consoleTextsToParagraph : List String -> String
 consoleTextsToParagraph texts =
-    List.foldl (++) "" texts
+    List.foldr (++) "" texts
