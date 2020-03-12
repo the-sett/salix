@@ -34,8 +34,9 @@ message. The body is written in `mdgriffith/elm-markup` and looks like this:
 type alias Error =
     { code : Int
     , title : String
-    , sources : List SourceLines
     , body : String
+    , args : Dict String String
+    , sources : List SourceLines
     }
 
 
@@ -102,6 +103,7 @@ defaultError =
     { code = -1
     , title = defaultErrorMessage.title
     , body = defaultErrorMessage.body
+    , args = Dict.empty
     , sources = []
     }
 
@@ -131,19 +133,34 @@ type alias ErrorBuilder pos err =
     (pos -> SourceLines) -> err -> Error
 
 
-lookupError : Dict Int ErrorMessage -> Int -> List SourceLines -> Error
-lookupError errorDict code sourceLines =
+lookupError :
+    Dict Int ErrorMessage
+    -> Int
+    -> Dict String String
+    -> List SourceLines
+    -> Error
+lookupError errorDict code args sourceLines =
     let
         makeError message =
             { code = code
             , title = message.title
             , body = message.body
+            , args = args
             , sources = sourceLines
             }
     in
     Dict.get code errorDict
         |> Maybe.map makeError
         |> Maybe.withDefault defaultError
+
+
+lookupErrorNoArgs :
+    Dict Int ErrorMessage
+    -> Int
+    -> List SourceLines
+    -> Error
+lookupErrorNoArgs errorDict code sourceLines =
+    lookupError errorDict code Dict.empty sourceLines
 
 
 

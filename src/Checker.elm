@@ -86,20 +86,34 @@ type ModelCheckingError pos
 errorBuilder : ErrorBuilder pos (ModelCheckingError pos)
 errorBuilder posFn err =
     case err of
-        UnresolvedRef pos hint ->
-            Errors.lookupError errorCatalogue 201 [ posFn pos ]
+        UnresolvedRef pos name ->
+            Errors.lookupError errorCatalogue
+                201
+                (Dict.fromList [ ( "name", name ) ])
+                [ posFn pos ]
 
         MapKeyTypeNotAllowed pos ->
-            Errors.lookupError errorCatalogue 202 [ posFn pos ]
+            Errors.lookupErrorNoArgs errorCatalogue
+                202
+                [ posFn pos ]
 
         BadFieldName pos name ->
-            Errors.lookupError errorCatalogue 203 [ posFn pos ]
+            Errors.lookupError errorCatalogue
+                203
+                (Dict.fromList [ ( "name", name ) ])
+                [ posFn pos ]
 
         BadDeclarationName pos name ->
-            Errors.lookupError errorCatalogue 204 [ posFn pos ]
+            Errors.lookupError errorCatalogue
+                204
+                (Dict.fromList [ ( "name", name ) ])
+                [ posFn pos ]
 
         DeclaredMoreThanOnce pos name ->
-            Errors.lookupError errorCatalogue 205 [ posFn pos ]
+            Errors.lookupError errorCatalogue
+                205
+                (Dict.fromList [ ( "name", name ) ])
+                [ posFn pos ]
 
 
 {-| Runs checks on an L1 model and lowers it to L2 if all the checks pass.
