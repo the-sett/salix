@@ -120,6 +120,10 @@ Fix this by reading the manual. Idiot.
     }
 
 
+type alias ErrorBuilder pos err =
+    (pos -> SourceLines) -> err -> Error
+
+
 lookupError : Dict Int ErrorMessage -> Int -> List SourceLines -> Error
 lookupError errorDict code sourceLines =
     let
@@ -136,14 +140,6 @@ lookupError errorDict code sourceLines =
 
 
 
--- TODO: Need the source, a pos that extracts from that source and produces
--- elements of the `sources` field in `Error`. Which is to say that the pos
--- info may be present to describe which parts of the lines of the quoted
--- source need to be highlighted.
--- type alias ErrorBuilder pos err =
---     (pos -> String) -> err -> Error
---
---
 -- Structural formatting of error messages as elm-markup.
 
 

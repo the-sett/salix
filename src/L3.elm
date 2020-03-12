@@ -29,7 +29,7 @@ processing by a code generator are being met.
 
 import Dict exposing (Dict)
 import Enum exposing (Enum)
-import Errors exposing (Error, ErrorBuilder)
+import Errors exposing (Error, ErrorBuilder, SourceLines)
 import L1 exposing (Declarable(..), PropSpec(..), PropSpecs, Properties, Property(..), Type(..))
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
@@ -77,7 +77,7 @@ type alias Processor pos =
     }
 
 
-builder : (pos -> String) -> ProcessorImpl pos err -> Processor pos
+builder : (pos -> SourceLines) -> ProcessorImpl pos err -> Processor pos
 builder posFn impl =
     { name = impl.name
     , defaults = impl.defaults
@@ -91,7 +91,7 @@ type alias ProcessorImpl pos err =
     { name : String
     , defaults : DefaultProperties
     , check : L3 pos -> ResultME err (L3 pos)
-    , buildError : (pos -> String) -> err -> Error
+    , buildError : ErrorBuilder pos err
     }
 
 
@@ -184,15 +184,13 @@ makePropertyGet defaults props =
 errorCatalogue =
     Dict.fromList
         [ ( 301
-          , { code = 301
-            , title = "Required Property Missing"
-            , body = []
+          , { title = "Required Property Missing"
+            , body = ""
             }
           )
         , ( 302
-          , { code = 302
-            , title = "Property has Wrong Kind"
-            , body = []
+          , { title = "Property has Wrong Kind"
+            , body = ""
             }
           )
         ]
@@ -216,11 +214,11 @@ type PropCheckError
 errorBuilder : ErrorBuilder pos PropCheckError
 errorBuilder posFn err =
     case err of
-        CheckedPropertyMissing _ _ ->
-            Errors.lookupError errorCatalogue 301
+        CheckedPropertyMissing name propSpec ->
+            Errors.lookupError errorCatalogue 301 []
 
-        CheckedPropertyWrongKind _ _ ->
-            Errors.lookupError errorCatalogue 302
+        CheckedPropertyWrongKind name propSpec ->
+            Errors.lookupError errorCatalogue 302 []
 
 
 getWithDefault : Properties -> Properties -> String -> Maybe Property

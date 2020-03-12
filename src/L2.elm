@@ -26,7 +26,7 @@ regard to specific code generation.
 -}
 
 import Dict exposing (Dict)
-import Errors exposing (Error)
+import Errors exposing (Error, ErrorBuilder, SourceLines)
 import L1 exposing (Declarable, L1)
 import ResultME exposing (ResultME)
 
@@ -65,7 +65,7 @@ type alias Processor pos =
     }
 
 
-builder : (pos -> String) -> ProcessorImpl pos err -> Processor pos
+builder : (pos -> SourceLines) -> ProcessorImpl pos err -> Processor pos
 builder posFn impl =
     { name = impl.name
     , check = impl.check >> ResultME.mapError (impl.buildError posFn)
@@ -77,5 +77,5 @@ builder posFn impl =
 type alias ProcessorImpl pos err =
     { name : String
     , check : L1 pos -> ResultME err (L2 pos)
-    , buildError : (pos -> String) -> err -> Error
+    , buildError : ErrorBuilder pos err
     }
