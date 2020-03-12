@@ -52,6 +52,13 @@ type alias SourceLines =
     }
 
 
+emptySourceLines : SourceLines
+emptySourceLines =
+    { lines = Dict.empty
+    , highlight = Nothing
+    }
+
+
 {-| Defines the content of an error message.
 
 The body is written in `mdgriffith/elm-markup` and looks like this:
