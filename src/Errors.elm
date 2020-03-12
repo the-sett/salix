@@ -182,8 +182,28 @@ document renderer error =
 
 errorDocs : Renderer content -> Error -> Mark.Block content
 errorDocs renderer err =
-    Mark.text renderer.styleText
+    Mark.textWith
+        { view = renderer.styleText
+        , replacements = Mark.commonReplacements
+        , inlines =
+            [ inlineArg renderer err
+                |> Mark.annotation "arg"
+                |> Mark.field "key" Mark.string
+            ]
+        }
         |> Mark.map renderer.textsToParagraph
+
+
+inlineArg : Renderer content -> Error -> List ( Mark.Styles, String ) -> String -> content
+inlineArg renderer error texts key =
+    let
+        arg =
+            Dict.get key error.args
+                |> Maybe.withDefault ""
+    in
+    List.map (\( styles, val ) -> renderer.styleText styles val)
+        (texts ++ [ ( { bold = False, italic = True, strike = False }, arg ) ])
+        |> renderer.textsInLine
 
 
 quoteSource : Renderer content -> Error -> Mark.Block content
@@ -213,6 +233,7 @@ type alias Renderer content =
     , renderTitle : String -> content
     , styleText : Mark.Styles -> String -> content
     , textsToParagraph : List content -> content
+    , textsInLine : List content -> content
     }
 
 
@@ -226,6 +247,7 @@ htmlRenderer =
     , renderTitle = htmlRenderTitle
     , styleText = htmlStyleText
     , textsToParagraph = htmlTextsToParagraph
+    , textsInLine = htmlTextsInLine
     }
 
 
@@ -248,7 +270,8 @@ htmlRenderTitle val =
 htmlStyleText : Mark.Styles -> String -> Html msg
 htmlStyleText styles string =
     if styles.bold || styles.italic || styles.strike then
-        Html.span
+        Html.styled Html.span
+            [ Css.fontStyle Css.italic ]
             [ Attr.classList
                 [ ( "bold", styles.bold )
                 , ( "italic", styles.italic )
@@ -264,6 +287,11 @@ htmlStyleText styles string =
 htmlTextsToParagraph : List (Html msg) -> Html msg
 htmlTextsToParagraph texts =
     Html.p [] texts
+
+
+htmlTextsInLine : List (Html msg) -> Html msg
+htmlTextsInLine texts =
+    Html.span [] texts
 
 
 
@@ -295,6 +323,7 @@ consoleRenderer =
     , renderTitle = consoleRenderTitle
     , styleText = consoleStyleText
     , textsToParagraph = consoleTextsToParagraph
+    , textsInLine = consoleTextsInLine
     }
 
 
@@ -321,4 +350,9 @@ consoleStyleText styles string =
 
 consoleTextsToParagraph : List String -> String
 consoleTextsToParagraph texts =
+    List.foldr (++) "" texts
+
+
+consoleTextsInLine : List String -> String
+consoleTextsInLine texts =
     List.foldr (++) "" texts
