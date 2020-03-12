@@ -185,7 +185,7 @@ errorCatalogue =
     Dict.fromList
         [ ( 301
           , { title = "Required Property Missing"
-            , body = "Dude it was missing! But what? I cannot say."
+            , body = "The required property []{arg|key=name } was not set."
             }
           )
         , ( 302
