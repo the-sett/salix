@@ -14,6 +14,7 @@ import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attr
 import Mark
 import Mark.Error
+import SourcePos exposing (Region, RowCol)
 
 
 {-| Common Error definition, for reporting errors to users.
@@ -33,19 +34,21 @@ message. The body is written in `mdgriffith/elm-markup` and looks like this:
 type alias Error =
     { code : Int
     , title : String
-
-    -- TODO: Needs to allow position info here to be able to highlight the error
-    -- in the correct place.
-    -- This should be optional, for example if the source is a JSON path, rather
-    -- than a set of line/row locations.
-    -- Each item in the list should be an instance of quoted source code.
-    -- Within each item:
-    -- How about Dict Int String? for the lines of code.
-    -- Then the pos spec is (row1, column1) - (row2, column2), this should also
-    -- be kept in the item as it is needed for highlighting. This is also
-    -- optional.
-    , sources : List String
+    , sources : List SourceLines
     , body : String
+    }
+
+
+{-| Captures a set of source code lines which are indexed by their line numbers,
+
+A highlight region may also be specified, and if set is used to indicate where
+within the source lines an error is located. All lines within the highlight
+region are expected to be in the line dict.
+
+-}
+type alias SourceLines =
+    { lines : Dict Int String
+    , highlight : Maybe Region
     }
 
 
@@ -75,26 +78,32 @@ type alias ErrorMessage =
 -- Support for error catalogues.
 
 
-defaultError : Error
-defaultError =
-    { code = -1
-    , title = "Unhandled Error"
+defaultErrorMessage : ErrorMessage
+defaultErrorMessage =
+    { title = "Unhandled Error"
     , body = """
 This is a bug and should be reported to the development team. If you see
 this error message, it is because the correct error message was not found.
 It may be that adding a more helpful message for an error condition has been
 overlooked.
     """
+    }
+
+
+defaultError : Error
+defaultError =
+    { code = -1
+    , title = defaultErrorMessage.title
+    , body = defaultErrorMessage.body
     , sources = []
     }
 
 
 {-| Using this as an example. TODO: Remove before production release!.
 -}
-rudeExampleError : Error
-rudeExampleError =
-    { code = -1
-    , title = "Unhandled Error"
+rudeExampleErrorMessage : ErrorMessage
+rudeExampleErrorMessage =
+    { title = "Unhandled Error"
     , body = """
 You got it wrong, maybe you aren't as clever as you think?
 
@@ -108,13 +117,21 @@ You got it wrong, maybe you aren't as clever as you think?
 
 Fix this by reading the manual. Idiot.
       """
-    , sources = [ "source code location 0", "source code location 1" ]
     }
 
 
-lookupError : Dict Int Error -> Int -> Error
-lookupError errorDict code =
+lookupError : Dict Int ErrorMessage -> Int -> List SourceLines -> Error
+lookupError errorDict code sourceLines =
+    let
+        makeError message =
+            { code = code
+            , title = message.title
+            , body = message.body
+            , sources = sourceLines
+            }
+    in
     Dict.get code errorDict
+        |> Maybe.map makeError
         |> Maybe.withDefault defaultError
 
 
@@ -155,7 +172,6 @@ quoteSource renderer err =
         source n =
             List.drop n err.sources
                 |> List.head
-                |> Maybe.withDefault ""
 
         quote label pos =
             renderer.annotatedSource label (source pos)
@@ -237,7 +253,26 @@ asConsoleString : Error -> String
 asConsoleString _ =
     let
         error =
-            rudeExampleError
+            { code = -1
+            , title = rudeExampleErrorMessage.title
+            , body = rudeExampleErrorMessage.body
+            , sources =
+                [ { lines = Dict.fromList [ ( 0, "Source code position 0" ) ]
+                  , highlight =
+                        Just
+                            { start = { row = 0, col = 0 }
+                            , end = { row = 0, col = 3 }
+                            }
+                  }
+                , { lines = Dict.fromList [ ( 0, "Source code position 1" ) ]
+                  , highlight =
+                        Just
+                            { start = { row = 0, col = 0 }
+                            , end = { row = 0, col = 3 }
+                            }
+                  }
+                ]
+            }
 
         markupErrors : List Mark.Error.Error -> String
         markupErrors errors =
