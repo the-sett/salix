@@ -215,10 +215,16 @@ errorBuilder : ErrorBuilder pos PropCheckError
 errorBuilder posFn err =
     case err of
         CheckedPropertyMissing name propSpec ->
-            Errors.lookupError errorCatalogue 301 (Dict.fromList [ ( "name", name ) ]) []
+            Errors.lookupError errorCatalogue
+                301
+                (Dict.fromList [ ( "name", name ) ])
+                []
 
         CheckedPropertyWrongKind name propSpec ->
-            Errors.lookupError errorCatalogue 302 (Dict.fromList [ ( "name", name ) ]) []
+            Errors.lookupError errorCatalogue
+                302
+                (Dict.fromList [ ( "name", name ) ])
+                []
 
 
 getWithDefault : Properties -> Properties -> String -> Maybe Property
