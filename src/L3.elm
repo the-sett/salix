@@ -29,7 +29,7 @@ processing by a code generator are being met.
 
 import Dict exposing (Dict)
 import Enum exposing (Enum)
-import Errors exposing (Error(..), ErrorBuilder)
+import Errors exposing (Error, ErrorBuilder)
 import L1 exposing (Declarable(..), PropSpec(..), PropSpecs, Properties, Property(..), Type(..))
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
@@ -184,18 +184,16 @@ makePropertyGet defaults props =
 errorCatalogue =
     Dict.fromList
         [ ( 301
-          , Error
-                { code = 301
-                , title = "Required Property Missing"
-                , body = []
-                }
+          , { code = 301
+            , title = "Required Property Missing"
+            , body = []
+            }
           )
         , ( 302
-          , Error
-                { code = 302
-                , title = "Property has Wrong Kind"
-                , body = []
-                }
+          , { code = 302
+            , title = "Property has Wrong Kind"
+            , body = []
+            }
           )
         ]
 

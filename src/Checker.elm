@@ -11,7 +11,7 @@ construct.
 -}
 
 import Dict exposing (Dict)
-import Errors exposing (Error(..), ErrorBuilder)
+import Errors exposing (Error, ErrorBuilder)
 import L1 exposing (Basic(..), Container(..), Declarable(..), L1, Restricted(..), Type(..), Unchecked)
 import L2 exposing (L2, ProcessorImpl, RefChecked(..))
 import List.Nonempty exposing (Nonempty(..))
@@ -36,49 +36,44 @@ processorImpl =
 errorCatalogue =
     Dict.fromList
         [ ( 201
-          , Error
-                { code = 201
-                , title = "Unresolved Reference"
+          , { code = 201
+            , title = "Unresolved Reference"
 
-                --hint ++ " reference did not resolve."
-                , body = []
-                }
+            --hint ++ " reference did not resolve."
+            , body = []
+            }
           )
         , ( 202
-          , Error
-                { code = 202
-                , title = "Dict Key Type Not Allowed"
+          , { code = 202
+            , title = "Dict Key Type Not Allowed"
 
-                -- "Map .key is not an enum, restricted, or basic."
-                , body = []
-                }
+            -- "Map .key is not an enum, restricted, or basic."
+            , body = []
+            }
           )
         , ( 203
-          , Error
-                { code = 203
-                , title = "Bad Field Name"
+          , { code = 203
+            , title = "Bad Field Name"
 
-                -- name ++ " is not allowed as a field name."
-                , body = []
-                }
+            -- name ++ " is not allowed as a field name."
+            , body = []
+            }
           )
         , ( 204
-          , Error
-                { code = 204
-                , title = "Bad Declaration Name"
+          , { code = 204
+            , title = "Bad Declaration Name"
 
-                -- name ++ " is not allows as a declaration name."
-                , body = []
-                }
+            -- name ++ " is not allows as a declaration name."
+            , body = []
+            }
           )
         , ( 205
-          , Error
-                { code = 205
-                , title = "Declared More Than Once"
+          , { code = 205
+            , title = "Declared More Than Once"
 
-                -- name ++ " cannot be declared more than once."
-                , body = []
-                }
+            -- name ++ " cannot be declared more than once."
+            , body = []
+            }
           )
         ]
 

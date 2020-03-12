@@ -13,12 +13,11 @@ import Mark.Error
 -- Common Error definition, for reporting errors to users.
 
 
-type Error
-    = Error
-        { code : Int
-        , title : String
-        , body : List String
-        }
+type alias Error =
+    { code : Int
+    , title : String
+    , body : List String
+    }
 
 
 
@@ -27,11 +26,10 @@ type Error
 
 defaultError : Error
 defaultError =
-    Error
-        { code = -1
-        , title = "Unhandled Error"
-        , body = []
-        }
+    { code = -1
+    , title = "Unhandled Error"
+    , body = []
+    }
 
 
 lookupError : Dict Int Error -> Int -> Error
@@ -51,7 +49,7 @@ type alias ErrorBuilder pos err =
 document : Renderer content -> Error -> Mark.Document (List content)
 document renderer error =
     let
-        (Error err) =
+        err =
             error
     in
     Mark.manyOf
@@ -68,7 +66,7 @@ errorDocs renderer err =
 
 
 quoteSource : Renderer content -> Error -> Mark.Block content
-quoteSource renderer (Error err) =
+quoteSource renderer err =
     Mark.record "Source"
         renderer.annotatedSource
         |> Mark.field "label" (Mark.text renderer.styleText)
@@ -153,11 +151,11 @@ You got it wrong, maybe you aren't as clever as you think?
 |> Source
     label = The first time you screwed up:
     pos = 0
-    source = "source code location 0"
+    source = source code location 0
 
 |> Source
     label = Then here you did it again:
-    pos = 0
+    pos = 1
     source = source code location 1
 
 Fix this by reading the manual. Idiot.
