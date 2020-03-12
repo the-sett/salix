@@ -1,5 +1,12 @@
 module Errors exposing (..)
 
+{-| Errors defines a format for describing human readable error messages,
+that can also quote some source, in order to identify the source of an error.
+
+@docs Error
+
+-}
+
 import Console
 import Css
 import Dict exposing (Dict)
@@ -9,14 +16,58 @@ import Mark
 import Mark.Error
 
 
+{-| Common Error definition, for reporting errors to users.
 
--- Common Error definition, for reporting errors to users.
+This contains all the information needed to build a nice human readable error
+message. The body is written in `mdgriffith/elm-markup` and looks like this:
 
+    There was an error in your code.
 
+    |> Source
+        label = Look, here it is:
+        pos = 0
+
+    Please fix it. This is not a helpful error message.
+
+-}
 type alias Error =
     { code : Int
     , title : String
-    , body : List String
+
+    -- TODO: Needs to allow position info here to be able to highlight the error
+    -- in the correct place.
+    -- This should be optional, for example if the source is a JSON path, rather
+    -- than a set of line/row locations.
+    -- Each item in the list should be an instance of quoted source code.
+    -- Within each item:
+    -- How about Dict Int String? for the lines of code.
+    -- Then the pos spec is (row1, column1) - (row2, column2), this should also
+    -- be kept in the item as it is needed for highlighting. This is also
+    -- optional.
+    , sources : List String
+    , body : String
+    }
+
+
+{-| Defines the content of an error message.
+
+The body is written in `mdgriffith/elm-markup` and looks like this:
+
+    There was an error in your code.
+
+    |> Source
+        label = Look, here it is:
+        pos = 0
+
+    Please fix it. This is not a helpful error message.
+
+An `ErrorMessage` will be combined with some lines of source code that it can
+quote, in order to produce an `Error`.
+
+-}
+type alias ErrorMessage =
+    { title : String
+    , body : String
     }
 
 
@@ -28,7 +79,36 @@ defaultError : Error
 defaultError =
     { code = -1
     , title = "Unhandled Error"
-    , body = []
+    , body = """
+This is a bug and should be reported to the development team. If you see
+this error message, it is because the correct error message was not found.
+It may be that adding a more helpful message for an error condition has been
+overlooked.
+    """
+    , sources = []
+    }
+
+
+{-| Using this as an example. TODO: Remove before production release!.
+-}
+rudeExampleError : Error
+rudeExampleError =
+    { code = -1
+    , title = "Unhandled Error"
+    , body = """
+You got it wrong, maybe you aren't as clever as you think?
+
+|> Source
+    label = The first time you screwed up:
+    pos = 0
+
+|> Source
+    label = Then here you did it again:
+    pos = 1
+
+Fix this by reading the manual. Idiot.
+      """
+    , sources = [ "source code location 0", "source code location 1" ]
     }
 
 
@@ -38,11 +118,15 @@ lookupError errorDict code =
         |> Maybe.withDefault defaultError
 
 
-type alias ErrorBuilder pos err =
-    (pos -> String) -> err -> Error
 
-
-
+-- TODO: Need the source, a pos that extracts from that source and produces
+-- elements of the `sources` field in `Error`. Which is to say that the pos
+-- info may be present to describe which parts of the lines of the quoted
+-- source need to be highlighted.
+-- type alias ErrorBuilder pos err =
+--     (pos -> String) -> err -> Error
+--
+--
 -- Structural formatting of error messages as elm-markup.
 
 
@@ -67,11 +151,19 @@ errorDocs renderer err =
 
 quoteSource : Renderer content -> Error -> Mark.Block content
 quoteSource renderer err =
+    let
+        source n =
+            List.drop n err.sources
+                |> List.head
+                |> Maybe.withDefault ""
+
+        quote label pos =
+            renderer.annotatedSource label (source pos)
+    in
     Mark.record "Source"
-        renderer.annotatedSource
+        quote
         |> Mark.field "label" (Mark.text renderer.styleText)
         |> Mark.field "pos" Mark.int
-        |> Mark.field "source" Mark.string
         |> Mark.toBlock
 
 
@@ -80,7 +172,7 @@ quoteSource renderer err =
 
 
 type alias Renderer content =
-    { annotatedSource : List content -> Int -> String -> content
+    { annotatedSource : List content -> String -> content
     , renderTitle : String -> content
     , styleText : Mark.Styles -> String -> content
     , textsToParagraph : List content -> content
@@ -100,14 +192,11 @@ htmlRenderer =
     }
 
 
-htmlAnnotatedSource : List (Html msg) -> Int -> String -> Html msg
-htmlAnnotatedSource label pos source =
+htmlAnnotatedSource : List (Html msg) -> String -> Html msg
+htmlAnnotatedSource label source =
     Html.div []
         [ Html.div [] label
-        , Html.pre []
-            [ Html.text "source code for location "
-            , Html.text (String.fromInt pos)
-            ]
+        , Html.pre [] [ Html.text source ]
         ]
 
 
@@ -144,33 +233,18 @@ htmlTextsToParagraph texts =
 -- Console rendering of error messages.
 
 
-example =
-    """
-You got it wrong, maybe you aren't as clever as you think?
-
-|> Source
-    label = The first time you screwed up:
-    pos = 0
-    source = source code location 0
-
-|> Source
-    label = Then here you did it again:
-    pos = 1
-    source = source code location 1
-
-Fix this by reading the manual. Idiot.
-"""
-
-
 asConsoleString : Error -> String
-asConsoleString error =
+asConsoleString _ =
     let
+        error =
+            rudeExampleError
+
         markupErrors : List Mark.Error.Error -> String
         markupErrors errors =
             List.map Mark.Error.toString errors
                 |> String.join "\n"
     in
-    case Mark.compile (document consoleRenderer error) example of
+    case Mark.compile (document consoleRenderer error) error.body of
         Mark.Success success ->
             String.join "\n\n" success
 
@@ -190,8 +264,8 @@ consoleRenderer =
     }
 
 
-consoleAnnotatedSource : List String -> Int -> String -> String
-consoleAnnotatedSource label pos source =
+consoleAnnotatedSource : List String -> String -> String
+consoleAnnotatedSource label source =
     consoleTextsToParagraph label ++ "\n" ++ source
 
 
