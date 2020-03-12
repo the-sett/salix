@@ -254,30 +254,8 @@ htmlTextsToParagraph texts =
 
 
 asConsoleString : Error -> String
-asConsoleString _ =
+asConsoleString error =
     let
-        error =
-            { code = -1
-            , title = rudeExampleErrorMessage.title
-            , body = rudeExampleErrorMessage.body
-            , sources =
-                [ { lines = Dict.fromList [ ( 0, "Source code position 0" ) ]
-                  , highlight =
-                        Just
-                            { start = { row = 0, col = 0 }
-                            , end = { row = 0, col = 3 }
-                            }
-                  }
-                , { lines = Dict.fromList [ ( 0, "Source code position 1" ) ]
-                  , highlight =
-                        Just
-                            { start = { row = 0, col = 0 }
-                            , end = { row = 0, col = 3 }
-                            }
-                  }
-                ]
-            }
-
         markupErrors : List Mark.Error.Error -> String
         markupErrors errors =
             List.map Mark.Error.toString errors
