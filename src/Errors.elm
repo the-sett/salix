@@ -172,6 +172,7 @@ quoteSource renderer err =
         source n =
             List.drop n err.sources
                 |> List.head
+                |> Maybe.withDefault { lines = Dict.empty, highlight = Nothing }
 
         quote label pos =
             renderer.annotatedSource label (source pos)
@@ -188,7 +189,7 @@ quoteSource renderer err =
 
 
 type alias Renderer content =
-    { annotatedSource : List content -> String -> content
+    { annotatedSource : List content -> SourceLines -> content
     , renderTitle : String -> content
     , styleText : Mark.Styles -> String -> content
     , textsToParagraph : List content -> content
@@ -208,11 +209,11 @@ htmlRenderer =
     }
 
 
-htmlAnnotatedSource : List (Html msg) -> String -> Html msg
-htmlAnnotatedSource label source =
+htmlAnnotatedSource : List (Html msg) -> SourceLines -> Html msg
+htmlAnnotatedSource label lines =
     Html.div []
         [ Html.div [] label
-        , Html.pre [] [ Html.text source ]
+        , Html.pre [] (Dict.values lines.lines |> List.map Html.text)
         ]
 
 
@@ -299,9 +300,11 @@ consoleRenderer =
     }
 
 
-consoleAnnotatedSource : List String -> String -> String
-consoleAnnotatedSource label source =
-    consoleTextsToParagraph label ++ "\n" ++ source
+consoleAnnotatedSource : List String -> SourceLines -> String
+consoleAnnotatedSource label lines =
+    consoleTextsToParagraph label
+        ++ "\n"
+        ++ consoleTextsToParagraph (Dict.values lines.lines)
 
 
 consoleRenderTitle : String -> String
