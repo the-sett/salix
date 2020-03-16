@@ -148,15 +148,11 @@ lookupErrorNoArgs errorDict code sourceLines =
 
 document : Renderer content -> Error -> Mark.Document (List content)
 document renderer error =
-    let
-        err =
-            error
-    in
     Mark.manyOf
         [ errorDocs renderer error
         , quoteSource renderer error
         ]
-        |> Mark.document (\parts -> renderer.renderTitle err.title :: parts)
+        |> Mark.document (\parts -> renderer.renderTitle error.title :: parts)
 
 
 errorDocs : Renderer content -> Error -> Mark.Block content
