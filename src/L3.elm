@@ -2,7 +2,7 @@ module L3 exposing
     ( L3
     , DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
     , Processor, ProcessorImpl, builder
-    , PropCheckError, errorBuilder
+    , PropCheckError(..), errorBuilder
     )
 
 {-| Defines the level 3 language for data models that have been annotated with
@@ -180,6 +180,10 @@ makePropertyGet defaults props =
 
 
 {-| The error catalogue for this property checking.
+
+The error message here are quite generic, and you likely want to re-write
+this error catalogue for specific modules in order to give better messages.
+
 -}
 errorCatalogue =
     Dict.fromList
@@ -189,8 +193,8 @@ errorCatalogue =
             }
           )
         , ( 302
-          , { title = "Property has Wrong Kind"
-            , body = ""
+          , { title = "Property is the Wrong Kind"
+            , body = "The required property []{arg|key=name } is the wrong kind."
             }
           )
         ]
