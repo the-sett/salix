@@ -29,10 +29,11 @@ processing by a code generator are being met.
 
 import Dict exposing (Dict)
 import Enum exposing (Enum)
-import Errors exposing (Error, ErrorBuilder, SourceLines)
+import Errors exposing (Error, ErrorBuilder)
 import L1 exposing (Declarable(..), PropSpec(..), PropSpecs, Properties, Property(..), Type(..))
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
+import SourcePos exposing (SourceLines)
 
 
 {-| Allows the default properties on parts of the model to be defined.

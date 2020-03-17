@@ -26,9 +26,10 @@ regard to specific code generation.
 -}
 
 import Dict exposing (Dict)
-import Errors exposing (Error, ErrorBuilder, SourceLines)
+import Errors exposing (Error, ErrorBuilder)
 import L1 exposing (Declarable, L1)
 import ResultME exposing (ResultME)
+import SourcePos exposing (SourceLines)
 
 
 {-| Indicates that named type in the model have been reference checked to

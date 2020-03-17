@@ -14,7 +14,7 @@ import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes as Attr
 import Mark
 import Mark.Error
-import SourcePos exposing (Region, RowCol)
+import SourcePos exposing (Region, RowCol, SourceLines)
 
 
 {-| Common Error definition, for reporting errors to users.
@@ -37,19 +37,6 @@ type alias Error =
     , body : String
     , args : Dict String String
     , sources : List SourceLines
-    }
-
-
-{-| Captures a set of source code lines which are indexed by their line numbers,
-
-A highlight region may also be specified, and if set is used to indicate where
-within the source lines an error is located. All lines within the highlight
-region are expected to be in the line dict.
-
--}
-type alias SourceLines =
-    { lines : Dict Int String
-    , highlight : Maybe Region
     }
 
 
