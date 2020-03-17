@@ -1,9 +1,26 @@
-module Errors exposing (..)
+module Errors exposing
+    ( Error, ErrorMessage
+    , ErrorBuilder, lookupError, lookupErrorNoArgs, emptySourceLines
+    , document, asConsoleString, htmlRenderer
+    )
 
 {-| Errors defines a format for describing human readable error messages,
 that can also quote some source, in order to identify the source of an error.
 
-@docs Error
+
+# Errors and Error Messages
+
+@docs Error, ErrorMessage
+
+
+# Instantiating Error Messages into Errors
+
+@docs ErrorBuilder, lookupError, lookupErrorNoArgs, emptySourceLines
+
+
+# Error formatting and printing
+
+@docs document, asConsoleString, htmlRenderer
 
 -}
 
@@ -95,10 +112,21 @@ defaultError =
     }
 
 
+{-| Defines the signature of a function for building Errors. This keeps the
+positional information variable, but requires a function to turn source code
+positions into quotes lines of source code.
+
+Typically implementation of this will use the `lookupError` functions and an
+error catalogue of error messages.
+
+-}
 type alias ErrorBuilder pos err =
     (pos -> SourceLines) -> err -> Error
 
 
+{-| Looks up an ErrorMessage in an error catalogue and fills in its quoted
+source code and parameters to produce an Error.
+-}
 lookupError :
     Dict Int ErrorMessage
     -> Int
@@ -120,6 +148,9 @@ lookupError errorDict code args sourceLines =
         |> Maybe.withDefault defaultError
 
 
+{-| Looks up an ErrorMessage in an error catalogue and fills in its quoted
+source code to produce an Error.
+-}
 lookupErrorNoArgs :
     Dict Int ErrorMessage
     -> Int
@@ -133,6 +164,8 @@ lookupErrorNoArgs errorDict code sourceLines =
 -- Structural formatting of error messages as elm-markup.
 
 
+{-| elm-markup Document describing the format of an error.
+-}
 document : Renderer content -> Error -> Mark.Document (List content)
 document renderer error =
     Mark.manyOf
@@ -203,6 +236,8 @@ type alias Renderer content =
 -- Html rendering of error messages.
 
 
+{-| Renders an Error as HTML.
+-}
 htmlRenderer : Renderer (Html msg)
 htmlRenderer =
     { annotatedSource = htmlAnnotatedSource
@@ -260,6 +295,8 @@ htmlTextsInLine texts =
 -- Console rendering of error messages.
 
 
+{-| Renders an Error as a String for printing to the console with ANSI colours.
+-}
 asConsoleString : Error -> String
 asConsoleString error =
     let
