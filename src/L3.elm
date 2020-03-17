@@ -2,7 +2,7 @@ module L3 exposing
     ( L3
     , DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
     , Processor, ProcessorImpl, builder
-    , PropCheckError, errorBuilder
+    , PropCheckError(..), errorBuilder, errorCatalogue
     )
 
 {-| Defines the level 3 language for data models that have been annotated with
@@ -33,6 +33,7 @@ import Errors exposing (Error, ErrorBuilder)
 import L1 exposing (Declarable(..), PropSpec(..), PropSpecs, Properties, Property(..), Type(..))
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
+import SourcePos exposing (SourceLines)
 
 
 {-| Allows the default properties on parts of the model to be defined.
@@ -77,7 +78,7 @@ type alias Processor pos =
     }
 
 
-builder : (pos -> String) -> ProcessorImpl pos err -> Processor pos
+builder : (pos -> SourceLines) -> ProcessorImpl pos err -> Processor pos
 builder posFn impl =
     { name = impl.name
     , defaults = impl.defaults
@@ -91,7 +92,7 @@ type alias ProcessorImpl pos err =
     { name : String
     , defaults : DefaultProperties
     , check : L3 pos -> ResultME err (L3 pos)
-    , buildError : (pos -> String) -> err -> Error
+    , buildError : ErrorBuilder pos err
     }
 
 
@@ -180,19 +181,21 @@ makePropertyGet defaults props =
 
 
 {-| The error catalogue for this property checking.
+
+The error message here are quite generic, and you likely want to re-write
+this error catalogue for specific modules in order to give better messages.
+
 -}
 errorCatalogue =
     Dict.fromList
         [ ( 301
-          , { code = 301
-            , title = "Required Property Missing"
-            , body = []
+          , { title = "Required Property Missing"
+            , body = "The required property []{arg|key=name } was not set."
             }
           )
         , ( 302
-          , { code = 302
-            , title = "Property has Wrong Kind"
-            , body = []
+          , { title = "Property is the Wrong Kind"
+            , body = "The required property []{arg|key=name } is the wrong kind."
             }
           )
         ]
@@ -216,11 +219,17 @@ type PropCheckError
 errorBuilder : ErrorBuilder pos PropCheckError
 errorBuilder posFn err =
     case err of
-        CheckedPropertyMissing _ _ ->
-            Errors.lookupError errorCatalogue 301
+        CheckedPropertyMissing name propSpec ->
+            Errors.lookupError errorCatalogue
+                301
+                (Dict.fromList [ ( "name", name ) ])
+                []
 
-        CheckedPropertyWrongKind _ _ ->
-            Errors.lookupError errorCatalogue 302
+        CheckedPropertyWrongKind name propSpec ->
+            Errors.lookupError errorCatalogue
+                302
+                (Dict.fromList [ ( "name", name ) ])
+                []
 
 
 getWithDefault : Properties -> Properties -> String -> Maybe Property

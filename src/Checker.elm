@@ -36,43 +36,38 @@ processorImpl =
 errorCatalogue =
     Dict.fromList
         [ ( 201
-          , { code = 201
-            , title = "Unresolved Reference"
+          , { title = "Unresolved Reference"
 
             --hint ++ " reference did not resolve."
-            , body = []
+            , body = ""
             }
           )
         , ( 202
-          , { code = 202
-            , title = "Dict Key Type Not Allowed"
+          , { title = "Dict Key Type Not Allowed"
 
             -- "Map .key is not an enum, restricted, or basic."
-            , body = []
+            , body = ""
             }
           )
         , ( 203
-          , { code = 203
-            , title = "Bad Field Name"
+          , { title = "Bad Field Name"
 
             -- name ++ " is not allowed as a field name."
-            , body = []
+            , body = ""
             }
           )
         , ( 204
-          , { code = 204
-            , title = "Bad Declaration Name"
+          , { title = "Bad Declaration Name"
 
             -- name ++ " is not allows as a declaration name."
-            , body = []
+            , body = ""
             }
           )
         , ( 205
-          , { code = 205
-            , title = "Declared More Than Once"
+          , { title = "Declared More Than Once"
 
             -- name ++ " cannot be declared more than once."
-            , body = []
+            , body = ""
             }
           )
         ]
@@ -91,20 +86,34 @@ type ModelCheckingError pos
 errorBuilder : ErrorBuilder pos (ModelCheckingError pos)
 errorBuilder posFn err =
     case err of
-        UnresolvedRef _ hint ->
-            Errors.lookupError errorCatalogue 201
+        UnresolvedRef pos name ->
+            Errors.lookupError errorCatalogue
+                201
+                (Dict.fromList [ ( "name", name ) ])
+                [ posFn pos ]
 
-        MapKeyTypeNotAllowed _ ->
-            Errors.lookupError errorCatalogue 202
+        MapKeyTypeNotAllowed pos ->
+            Errors.lookupErrorNoArgs errorCatalogue
+                202
+                [ posFn pos ]
 
-        BadFieldName _ name ->
-            Errors.lookupError errorCatalogue 203
+        BadFieldName pos name ->
+            Errors.lookupError errorCatalogue
+                203
+                (Dict.fromList [ ( "name", name ) ])
+                [ posFn pos ]
 
-        BadDeclarationName _ name ->
-            Errors.lookupError errorCatalogue 204
+        BadDeclarationName pos name ->
+            Errors.lookupError errorCatalogue
+                204
+                (Dict.fromList [ ( "name", name ) ])
+                [ posFn pos ]
 
-        DeclaredMoreThanOnce _ name ->
-            Errors.lookupError errorCatalogue 205
+        DeclaredMoreThanOnce pos name ->
+            Errors.lookupError errorCatalogue
+                205
+                (Dict.fromList [ ( "name", name ) ])
+                [ posFn pos ]
 
 
 {-| Runs checks on an L1 model and lowers it to L2 if all the checks pass.
