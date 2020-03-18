@@ -25,11 +25,16 @@ processing by a code generator are being met.
 
 @docs Processor, ProcessorImpl, builder
 
+
+# Default error catalogue for property errors.
+
+@docs PropCheckError, errorBuilder, errorCatalogue
+
 -}
 
 import Dict exposing (Dict)
 import Enum exposing (Enum)
-import Errors exposing (Error, ErrorBuilder)
+import Errors exposing (Error, ErrorBuilder, ErrorMessage)
 import L1 exposing (Declarable(..), PropSpec(..), PropSpecs, Properties, Property(..), Type(..))
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
@@ -78,6 +83,9 @@ type alias Processor pos =
     }
 
 
+{-| Builds an L3 Processor API from an implementation. A function to turn
+source code positions into quoted lines of source code needs to be supplued.
+-}
 builder : (pos -> SourceLines) -> ProcessorImpl pos err -> Processor pos
 builder posFn impl =
     { name = impl.name
@@ -186,6 +194,7 @@ The error message here are quite generic, and you likely want to re-write
 this error catalogue for specific modules in order to give better messages.
 
 -}
+errorCatalogue : Dict Int ErrorMessage
 errorCatalogue =
     Dict.fromList
         [ ( 301

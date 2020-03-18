@@ -66,6 +66,9 @@ type alias Processor pos =
     }
 
 
+{-| Builds an L2 Processor API from an implementation. A function to turn
+source code positions into quoted lines of source code needs to be supplued.
+-}
 builder : (pos -> SourceLines) -> ProcessorImpl pos err -> Processor pos
 builder posFn impl =
     { name = impl.name

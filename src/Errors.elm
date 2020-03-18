@@ -1,6 +1,6 @@
 module Errors exposing
     ( Error, ErrorMessage
-    , ErrorBuilder, lookupError, lookupErrorNoArgs, emptySourceLines
+    , ErrorBuilder, lookupError, lookupErrorNoArgs
     , document, asConsoleString, htmlRenderer
     )
 
@@ -15,7 +15,7 @@ that can also quote some source, in order to identify the source of an error.
 
 # Instantiating Error Messages into Errors
 
-@docs ErrorBuilder, lookupError, lookupErrorNoArgs, emptySourceLines
+@docs ErrorBuilder, lookupError, lookupErrorNoArgs
 
 
 # Error formatting and printing

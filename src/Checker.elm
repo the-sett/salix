@@ -11,7 +11,7 @@ construct.
 -}
 
 import Dict exposing (Dict)
-import Errors exposing (Error, ErrorBuilder)
+import Errors exposing (Error, ErrorBuilder, ErrorMessage)
 import L1 exposing (Basic(..), Container(..), Declarable(..), L1, Restricted(..), Type(..), Unchecked)
 import L2 exposing (L2, ProcessorImpl, RefChecked(..))
 import List.Nonempty exposing (Nonempty(..))
@@ -33,13 +33,14 @@ processorImpl =
 
 {-| The error catalogue for this checker.
 -}
+errorCatalogue : Dict Int ErrorMessage
 errorCatalogue =
     Dict.fromList
         [ ( 201
           , { title = "Unresolved Reference"
 
             --hint ++ " reference did not resolve."
-            , body = ""
+            , body = "Blah blah blah"
             }
           )
         , ( 202
