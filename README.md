@@ -13,7 +13,7 @@ https://github.com/the-sett/elm-aws-codegen
 
 # Salix
 
-Salix is a data modelling language that is designed to support code generation in across many different situations. It aims to provide a fairly rich data modelling capability that can be used as the foundation to generate functional, object-oriented, database code, data interchange formats or remote APIs and their specifications.
+Salix is a data modelling language that is designed to support code generation across many different situations. It aims to provide a fairly rich data modelling capability that can be used as the foundation to generate functional, object-oriented, database code, data interchange formats or remote APIs and their specifications.
 
 The modelling language is split into 3 layers. Layer 1 deals with the pure modelling language. Layer 2 deals with checking that the model is well-formed and deriving information from it that is potentially of use for code generation without specifically targeting any particular code generator. Layer 3 deals with attaching additional properties to the model that enable specific code generators to work with the model to understand how to generate from it.
 
