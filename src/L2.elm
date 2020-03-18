@@ -6,7 +6,7 @@ module L2 exposing
 
 {-| Defines the level 2 language for data models that have been checked for
 consitency, and have been processed for general data modelling concerns without
-regard to specific code generation.
+regard to specific code generators.
 
 
 # The L2 data modelling language.
@@ -32,11 +32,13 @@ import ResultME exposing (ResultME)
 import SourcePos exposing (SourceLines)
 
 
-{-| Indicates that named type in the model have been reference checked to
-enusure that they name something that actually exists.
+{-| Indicates that named types in the model have been reference checked to
+enusure that they name something that actually exists in the L2 dictionary.
 
 Some summary information of what they refer to is also cached during ref
-checking.
+checking. This can be very convenient during code generation to avoid having
+to look up in the dictionary all the time, to find out what kind of thing a
+named type is.
 
 -}
 type RefChecked
@@ -52,7 +54,9 @@ type RefChecked
     | RcTFunction
 
 
-{-| The L2 model
+{-| L2 is a dictionary of named data model components, which has also been
+reference checked to ensure that all references in the model have named
+entries in the dictionary.
 -}
 type alias L2 pos =
     Dict String (Declarable pos RefChecked)
@@ -67,7 +71,7 @@ type alias Processor pos =
 
 
 {-| Builds an L2 Processor API from an implementation. A function to turn
-source code positions into quoted lines of source code needs to be supplued.
+source code positions into quoted lines of source code needs to be supplied.
 -}
 builder : (pos -> SourceLines) -> ProcessorImpl pos err -> Processor pos
 builder posFn impl =
@@ -76,7 +80,8 @@ builder posFn impl =
     }
 
 
-{-| SPI for an L2 model processor.
+{-| SPI for an L2 model processor. Use the `builder` to turn one of these into
+a `Processor`.
 -}
 type alias ProcessorImpl pos err =
     { name : String

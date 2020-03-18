@@ -21,7 +21,8 @@ import ResultME exposing (ResultME)
 import Set exposing (Set)
 
 
-{-| SPI for this L2 checker.
+{-| SPI for this L2 checker. Use `L2.builder` to create an `L2.Processor` out
+of this.
 -}
 processorImpl : ProcessorImpl pos (ModelCheckingError pos)
 processorImpl =

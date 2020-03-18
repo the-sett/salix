@@ -3,13 +3,15 @@ module Templates.Elm exposing
     , lowerType, lowerFun
     )
 
-{-| Elm code generation from L1 models.
+{-| Elm code generation from L2 models. This can be used when writing an L3 code
+generator that output Elm code. It can be used to generate type declarations,
+type annotations and JSON codecs for Elm data models.
 
 Type declarations:
 
 @docs typeDecl, codec
 
-Lowerings of L1 into Elm type annotations:
+Lowerings of L2 into Elm type annotations:
 
 @docs lowerType, lowerFun
 

@@ -6,9 +6,11 @@ module L3 exposing
     )
 
 {-| Defines the level 3 language for data models that have been annotated with
-predicates indicating that the model has particular features needed by particular
-code generators. A level 3 language ensures the specific requirements for futher
-processing by a code generator are being met.
+properties indicating that the model has particular features needed by particular
+code generators.
+
+A level 3 language ensures the specific requirements for processing by a specific
+code generator are being met.
 
 
 # The L3 data modelling language.
@@ -16,7 +18,7 @@ processing by a code generator are being met.
 @docs L3
 
 
-# Defaulting of properties accross the data model, and APIs to read properties.
+# Defaulting of properties across the data model, and APIs to read properties.
 
 @docs DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
 
@@ -66,7 +68,8 @@ type alias DefaultProperties =
     }
 
 
-{-| The L3 model
+{-| The L3 model. This consists of an L2 model and a set of top-level properties
+that a code generator needs to know.
 -}
 type alias L3 pos =
     { properties : Properties
@@ -84,7 +87,7 @@ type alias Processor pos =
 
 
 {-| Builds an L3 Processor API from an implementation. A function to turn
-source code positions into quoted lines of source code needs to be supplued.
+source code positions into quoted lines of source code needs to be supplied.
 -}
 builder : (pos -> SourceLines) -> ProcessorImpl pos err -> Processor pos
 builder posFn impl =
@@ -94,7 +97,8 @@ builder posFn impl =
     }
 
 
-{-| SPI for an L2 model processor.
+{-| SPI for an L3 model processor. Use the `builder` to turn one of these into
+a `Processor`.
 -}
 type alias ProcessorImpl pos err =
     { name : String

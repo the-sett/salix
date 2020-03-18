@@ -1,15 +1,41 @@
-module SourcePos exposing (Region, RowCol, SourceLines, sourceLinesForRegions)
+module SourcePos exposing
+    ( Region, RowCol
+    , SourceLines, sourceLinesForRegions
+    )
+
+{-| SourcePos provides a way of defining regions of text to quote or to
+highlight mainly for the purpose of showing where errors exist within some
+source code.
+
+The code is treated as lines of text, and positions within that described by row
+and column number.
+
+
+# Regions of text
+
+@docs Region, RowCol
+
+
+# Quoted and highlighted blocks of text
+
+@docs SourceLines, sourceLinesForRegions
+
+-}
 
 import Dict exposing (Dict)
 import Seq
 
 
+{-| Describes a region of text running from a start to an end position.
+-}
 type alias Region =
     { start : RowCol
     , end : RowCol
     }
 
 
+{-| Describes a position within some lines of text.
+-}
 type alias RowCol =
     { row : Int
     , col : Int
@@ -29,6 +55,8 @@ type alias SourceLines =
     }
 
 
+{-| Quotes a region of text as `SourceLines`.
+-}
 sourceLinesForRegions : Dict Int String -> List Region -> List SourceLines
 sourceLinesForRegions lines regions =
     List.foldl
