@@ -45,7 +45,7 @@ checkName val =
 {-| Checks if a name matches an Elm keyword, and proposes a different name to
 use instead, which is the original with an underscore appended.
 
-    cleanupName "type" == "type_"
+    safeName "type" == "type_"
 
 -}
 safeName : String -> String
@@ -83,12 +83,17 @@ safeName val =
         val
 
 
-{-| Checks if a name matches an Elm keyword, and proposes a different name to
-use instead, which is the original with an underscore appended.
+{-| CCL stands for camel-case-lower. This puts a name into camel case lower
+format.
 
-    cleanupName "type" == "type_"
+Additional it checks if the name matches an Elm keyword, and proposes a
+different name to use instead, which is the original with an underscore appended.
 
-The name is put into camel case starting with a lower case letter.
+    safeCCL "type" == "type_"
+
+    safeCCL "someVar" == "someVar"
+
+    safeCCL "MyList" == "myList"
 
 -}
 safeCCL : String -> String
@@ -96,12 +101,17 @@ safeCCL =
     Case.toCamelCaseLower >> safeName
 
 
-{-| Checks if a name matches an Elm keyword, and proposes a different name to
-use instead, which is the original with an underscore appended.
+{-| CCL stands for camel-case-upper. This puts a name into camel case upper
+format.
 
-    cleanupName "type" == "type_"
+Additional it checks if the name matches an Elm keyword, and proposes a
+different name to use instead, which is the original with an underscore appended.
 
-The name is put into camel case starting with an upper case letter.
+    safeCCL "type" == "Type_"
+
+    safeCCL "someVar" == "SomeVar"
+
+    safeCCL "MyList" == "MyList"
 
 -}
 safeCCU : String -> String
@@ -109,14 +119,14 @@ safeCCU =
     Case.toCamelCaseUpper >> safeName
 
 
-{-| Sorts a list of named things.
+{-| Sorts a list of named things alphabetically.
 -}
 sortNamed : List ( String, a ) -> List ( String, a )
 sortNamed =
     List.sortBy Tuple.first
 
 
-{-| Sorts an non-empty list of named things.
+{-| Sorts an non-empty list of named things alphabetically.
 -}
 sortNonemptyNamed : Nonempty ( String, a, b ) -> Nonempty ( String, a, b )
 sortNonemptyNamed =
