@@ -3,7 +3,8 @@ module L1 exposing
     , PropSpec(..), Property(..), Properties, PropSpecs
     , defineProperties, emptyProperties
     , Unchecked(..)
-    , positionOfDeclarable, positionOfType, propertiesOfDeclarable
+    , positionOfDeclarable, positionOfType, propertiesOfDeclarable, propertiesOfType
+    , updatePropertiesOfType
     )
 
 {-| Defines the level 1 language for data modelling.
@@ -27,7 +28,8 @@ module L1 exposing
 
 # Helper functions for extracting info from the L1 model.
 
-@docs positionOfDeclarable, positionOfType, propertiesOfDeclarable
+@docs positionOfDeclarable, positionOfType, propertiesOfDeclarable, propertiesOfType
+@docs updatePropertiesOfType
 
 -}
 
@@ -220,6 +222,60 @@ propertiesOfDeclarable decl =
 
         DRestricted _ props _ ->
             props
+
+
+{-| Gets the properties from a Type.
+-}
+propertiesOfType : Type pos ref -> Properties
+propertiesOfType type_ =
+    case type_ of
+        TUnit _ props ->
+            props
+
+        TBasic _ props _ ->
+            props
+
+        TNamed _ props _ _ ->
+            props
+
+        TProduct _ props _ ->
+            props
+
+        TEmptyProduct _ props ->
+            props
+
+        TContainer _ props _ ->
+            props
+
+        TFunction _ props _ _ ->
+            props
+
+
+{-| Updates the properties from a Type.
+-}
+updatePropertiesOfType : (Properties -> Properties) -> Type pos ref -> Type pos ref
+updatePropertiesOfType propsFn type_ =
+    case type_ of
+        TUnit pos props ->
+            TUnit pos (propsFn props)
+
+        TBasic pos props basic ->
+            TBasic pos (propsFn props) basic
+
+        TNamed pos props name ref ->
+            TNamed pos (propsFn props) name ref
+
+        TProduct pos props fields ->
+            TProduct pos (propsFn props) fields
+
+        TEmptyProduct pos props ->
+            TEmptyProduct pos (propsFn props)
+
+        TContainer pos props inner ->
+            TContainer pos (propsFn props) inner
+
+        TFunction pos props arg res ->
+            TFunction pos (propsFn props) arg res
 
 
 {-| Gets the position context from a Declarable.
