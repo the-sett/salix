@@ -4,7 +4,7 @@ module L1 exposing
     , defineProperties, emptyProperties
     , Unchecked(..)
     , positionOfDeclarable, positionOfType, propertiesOfDeclarable, propertiesOfType
-    , updatePropertiesOfType
+    , updatePropertiesOfDeclarable, updatePropertiesOfType
     )
 
 {-| Defines the level 1 language for data modelling.
@@ -29,7 +29,7 @@ module L1 exposing
 # Helper functions for extracting info from the L1 model.
 
 @docs positionOfDeclarable, positionOfType, propertiesOfDeclarable, propertiesOfType
-@docs updatePropertiesOfType
+@docs updatePropertiesOfDeclarable, updatePropertiesOfType
 
 -}
 
@@ -249,6 +249,24 @@ propertiesOfType type_ =
 
         TFunction _ props _ _ ->
             props
+
+
+{-| Updates the properties from a Declarable.
+-}
+updatePropertiesOfDeclarable : (Properties -> Properties) -> Declarable pos ref -> Declarable pos ref
+updatePropertiesOfDeclarable propsFn decl =
+    case decl of
+        DAlias pos props def ->
+            DAlias pos (propsFn props) def
+
+        DSum pos props constructors ->
+            DSum pos (propsFn props) constructors
+
+        DEnum pos props enums ->
+            DEnum pos (propsFn props) enums
+
+        DRestricted pos props def ->
+            DRestricted pos (propsFn props) def
 
 
 {-| Updates the properties from a Type.
