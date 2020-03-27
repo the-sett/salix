@@ -1,5 +1,5 @@
 module Templates.Elm exposing
-    ( typeDecl, codec
+    ( typeDecl, codec, codecAsLetDecl
     , lowerType, lowerFun
     )
 
@@ -9,7 +9,7 @@ type annotations and JSON codecs for Elm data models.
 
 Type declarations:
 
-@docs typeDecl, codec
+@docs typeDecl, codec, codecAsLetDecl
 
 Lowerings of L2 into Elm type annotations:
 
@@ -565,12 +565,20 @@ lowerFun fromType toType =
 --== Decoders and Encoders
 
 
-{-| Generates a Codec for an L1 type declaration.
+{-| Generates a Codec for a type declaration.
 -}
 codec : String -> Declarable pos RefChecked -> ( Declaration, Linkage )
 codec name decl =
     codecAsFunDecl name decl
         |> Tuple.mapFirst funDeclAsTopLevel
+
+
+{-| Generates a Codec for a type declaration.
+-}
+codecAsLetDecl : String -> Declarable pos RefChecked -> ( LetDeclaration, Linkage )
+codecAsLetDecl name decl =
+    codecAsFunDecl name decl
+        |> Tuple.mapFirst funDeclAsLetDecl
 
 
 codecAsFunDecl : String -> Declarable pos RefChecked -> ( FunDecl, Linkage )
