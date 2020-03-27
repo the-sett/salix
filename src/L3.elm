@@ -97,6 +97,59 @@ builder posFn impl =
     }
 
 
+{-| The error catalogue for this property checking.
+
+The error message here are quite generic, and you likely want to re-write
+this error catalogue for specific modules in order to give better messages.
+
+-}
+errorCatalogue : Dict Int ErrorMessage
+errorCatalogue =
+    Dict.fromList
+        [ ( 301
+          , { title = "Required Property Missing"
+            , body = "The required property []{arg|key=name } was not set."
+            }
+          )
+        , ( 302
+          , { title = "Property is the Wrong Kind"
+            , body = "The required property []{arg|key=name } is the wrong kind."
+            }
+          )
+        ]
+
+
+{-| Once properties have been checked, then reading properties as per the property
+specification should always succeed, since those properties have been verified to be
+present and of the correct kind.
+
+If reading a property fails, it is a coding error and should be reported as a bug.
+This error type enumerates the possible properties bugs.
+
+-}
+type PropCheckError
+    = CheckedPropertyMissing String PropSpec
+    | CheckedPropertyWrongKind String PropSpec
+
+
+{-| Convert prop check errors to standard errors.
+-}
+errorBuilder : ErrorBuilder pos PropCheckError
+errorBuilder posFn err =
+    case err of
+        CheckedPropertyMissing name propSpec ->
+            Errors.lookupError errorCatalogue
+                301
+                (Dict.fromList [ ( "name", name ) ])
+                []
+
+        CheckedPropertyWrongKind name propSpec ->
+            Errors.lookupError errorCatalogue
+                302
+                (Dict.fromList [ ( "name", name ) ])
+                []
+
+
 {-| SPI for an L3 model processor. Use the `builder` to turn one of these into
 a `Processor`.
 -}
@@ -190,59 +243,6 @@ makePropertyGet defaults props =
 
 
 --== Reading properties.
-
-
-{-| The error catalogue for this property checking.
-
-The error message here are quite generic, and you likely want to re-write
-this error catalogue for specific modules in order to give better messages.
-
--}
-errorCatalogue : Dict Int ErrorMessage
-errorCatalogue =
-    Dict.fromList
-        [ ( 301
-          , { title = "Required Property Missing"
-            , body = "The required property []{arg|key=name } was not set."
-            }
-          )
-        , ( 302
-          , { title = "Property is the Wrong Kind"
-            , body = "The required property []{arg|key=name } is the wrong kind."
-            }
-          )
-        ]
-
-
-{-| Once properties have been checked, then reading properties as per the property
-specification should always succeed, since those properties have been verified to be
-present and of the correct kind.
-
-If reading a property fails, it is a coding error and should be reported as a bug.
-This error type enumerates the possible properties bugs.
-
--}
-type PropCheckError
-    = CheckedPropertyMissing String PropSpec
-    | CheckedPropertyWrongKind String PropSpec
-
-
-{-| Convert prop check errors to standard errors.
--}
-errorBuilder : ErrorBuilder pos PropCheckError
-errorBuilder posFn err =
-    case err of
-        CheckedPropertyMissing name propSpec ->
-            Errors.lookupError errorCatalogue
-                301
-                (Dict.fromList [ ( "name", name ) ])
-                []
-
-        CheckedPropertyWrongKind name propSpec ->
-            Errors.lookupError errorCatalogue
-                302
-                (Dict.fromList [ ( "name", name ) ])
-                []
 
 
 getWithDefault : Properties -> Properties -> String -> Maybe Property
