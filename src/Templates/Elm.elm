@@ -17,7 +17,7 @@ Lowerings of L2 into Elm type annotations:
 
 -}
 
-import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, Linkage, TypeAnnotation)
+import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, LetDeclaration, Linkage, Pattern, TypeAnnotation)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Restricted(..), Type(..))
 import L2 exposing (RefChecked(..))
 import List.Nonempty
@@ -25,6 +25,33 @@ import Maybe.Extra
 import Naming
 import Set exposing (Set)
 import Templates.Helper as Util
+
+
+
+--== Function Declarations
+
+
+{-| Captures everything needed to make a function declaration either at top-level or inside
+a let block. This allows the decision to build a function as a top-level or a let expression
+to be deferred, which allows the same code to be used to generate both.
+-}
+type alias FunDecl =
+    { doc : Maybe (Comment DocComment)
+    , sig : Maybe TypeAnnotation
+    , name : String
+    , args : List Pattern
+    , impl : Expression
+    }
+
+
+funDeclAsTopLevel : FunDecl -> Declaration
+funDeclAsTopLevel funDecl =
+    CG.funDecl funDecl.doc funDecl.sig funDecl.name funDecl.args funDecl.impl
+
+
+funDeclAsLetDecl : FunDecl -> LetDeclaration
+funDeclAsLetDecl funDecl =
+    CG.letFunction funDecl.name funDecl.args funDecl.impl
 
 
 
@@ -542,6 +569,12 @@ lowerFun fromType toType =
 -}
 codec : String -> Declarable pos RefChecked -> ( Declaration, Linkage )
 codec name decl =
+    codecAsFunDecl name decl
+        |> Tuple.mapFirst funDeclAsTopLevel
+
+
+codecAsFunDecl : String -> Declarable pos RefChecked -> ( FunDecl, Linkage )
+codecAsFunDecl name decl =
     case decl of
         DAlias _ _ l1Type ->
             typeAliasCodec name l1Type
@@ -558,7 +591,7 @@ codec name decl =
 
 {-| Generates a Codec for an L1 type alias.
 -}
-typeAliasCodec : String -> Type pos RefChecked -> ( Declaration, Linkage )
+typeAliasCodec : String -> Type pos RefChecked -> ( FunDecl, Linkage )
 typeAliasCodec name l1Type =
     let
         codecFnName =
@@ -577,7 +610,7 @@ typeAliasCodec name l1Type =
             CG.emptyDocComment
                 |> CG.markdown ("Codec for " ++ typeName ++ ".")
     in
-    ( CG.funDecl
+    ( FunDecl
         (Just doc)
         (Just sig)
         codecFnName
@@ -591,7 +624,7 @@ typeAliasCodec name l1Type =
 
 {-| Generates a Codec for an L1 sum type.
 -}
-customTypeCodec : String -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> ( Declaration, Linkage )
+customTypeCodec : String -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> ( FunDecl, Linkage )
 customTypeCodec name constructors =
     let
         codecFnName =
@@ -610,7 +643,7 @@ customTypeCodec name constructors =
             CG.emptyDocComment
                 |> CG.markdown ("Codec for " ++ typeName ++ ".")
     in
-    ( CG.funDecl
+    ( FunDecl
         (Just doc)
         (Just sig)
         codecFnName
@@ -622,7 +655,7 @@ customTypeCodec name constructors =
     )
 
 
-enumCodec : String -> List String -> ( Declaration, Linkage )
+enumCodec : String -> List String -> ( FunDecl, Linkage )
 enumCodec name constructors =
     let
         codecFnName =
@@ -648,7 +681,7 @@ enumCodec name constructors =
             CG.emptyDocComment
                 |> CG.markdown ("Codec for " ++ typeName ++ ".")
     in
-    ( CG.funDecl
+    ( FunDecl
         (Just doc)
         (Just sig)
         codecFnName
@@ -661,7 +694,7 @@ enumCodec name constructors =
     )
 
 
-restrictedCodec : String -> Restricted -> ( Declaration, Linkage )
+restrictedCodec : String -> Restricted -> ( FunDecl, Linkage )
 restrictedCodec name _ =
     let
         codecFnName =
@@ -687,7 +720,7 @@ restrictedCodec name _ =
             CG.emptyDocComment
                 |> CG.markdown ("Codec for " ++ typeName ++ ".")
     in
-    ( CG.funDecl
+    ( FunDecl
         (Just doc)
         (Just sig)
         codecFnName
