@@ -2,7 +2,7 @@ module L3 exposing
     ( L3
     , DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
     , Processor, ProcessorImpl, builder
-    , PropCheckError(..), errorBuilder, errorCatalogue
+    , L3Error(..), errorBuilder, errorCatalogue
     )
 
 {-| Defines the level 3 language for data models that have been annotated with
@@ -30,7 +30,7 @@ code generator are being met.
 
 # Default error catalogue for property errors.
 
-@docs PropCheckError, errorBuilder, errorCatalogue
+@docs L3Error, errorBuilder, errorCatalogue
 
 -}
 
@@ -119,22 +119,23 @@ errorCatalogue =
         ]
 
 
-{-| Once properties have been checked, then reading properties as per the property
-specification should always succeed, since those properties have been verified to be
-present and of the correct kind.
+{-| Common Errors that L3 processors may run into when fetching properties or
+dereferencing declarations from the model. One the model has been reference and
+property checked these error should not be possible, but we have to allow for the
+error code branches anyway.
 
-If reading a property fails, it is a coding error and should be reported as a bug.
-This error type enumerates the possible properties bugs.
+As these errors should generally not happen, they should be reported as bugs when
+they do. This error type enumerates the possible dereferecning and property bugs.
 
 -}
-type PropCheckError
+type L3Error
     = CheckedPropertyMissing String PropSpec
     | CheckedPropertyWrongKind String PropSpec
 
 
 {-| Convert prop check errors to standard errors.
 -}
-errorBuilder : ErrorBuilder pos PropCheckError
+errorBuilder : ErrorBuilder pos L3Error
 errorBuilder posFn err =
     case err of
         CheckedPropertyMissing name propSpec ->
@@ -164,12 +165,12 @@ type alias ProcessorImpl pos err =
 {-| An API for reading properties of various expected kinds.
 -}
 type alias PropertyGet =
-    { getStringProperty : String -> ResultME PropCheckError String
-    , getEnumProperty : Enum String -> String -> ResultME PropCheckError String
-    , getQNameProperty : String -> ResultME PropCheckError (List String)
-    , getBoolProperty : String -> ResultME PropCheckError Bool
-    , getOptionalStringProperty : String -> ResultME PropCheckError (Maybe String)
-    , getOptionalEnumProperty : Enum String -> String -> ResultME PropCheckError (Maybe String)
+    { getStringProperty : String -> ResultME L3Error String
+    , getEnumProperty : Enum String -> String -> ResultME L3Error String
+    , getQNameProperty : String -> ResultME L3Error (List String)
+    , getBoolProperty : String -> ResultME L3Error Bool
+    , getOptionalStringProperty : String -> ResultME L3Error (Maybe String)
+    , getOptionalEnumProperty : Enum String -> String -> ResultME L3Error (Maybe String)
     }
 
 
@@ -255,7 +256,7 @@ getWithDefault defaults props name =
             justVal
 
 
-getProperty : Properties -> Properties -> PropSpec -> String -> ResultME PropCheckError Property
+getProperty : Properties -> Properties -> PropSpec -> String -> ResultME L3Error Property
 getProperty defaults props spec name =
     let
         maybeProp =
@@ -284,7 +285,7 @@ getProperty defaults props spec name =
             CheckedPropertyWrongKind name spec |> ResultME.error
 
 
-getStringProperty : Properties -> Properties -> String -> ResultME PropCheckError String
+getStringProperty : Properties -> Properties -> String -> ResultME L3Error String
 getStringProperty defaults props name =
     case getProperty defaults props PSString name of
         Ok (PString val) ->
@@ -297,7 +298,7 @@ getStringProperty defaults props name =
             Err err
 
 
-getEnumProperty : Properties -> Properties -> Enum String -> String -> ResultME PropCheckError String
+getEnumProperty : Properties -> Properties -> Enum String -> String -> ResultME L3Error String
 getEnumProperty defaults props enum name =
     case getProperty defaults props (PSEnum enum) name of
         Ok (PEnum _ val) ->
@@ -310,7 +311,7 @@ getEnumProperty defaults props enum name =
             Err err
 
 
-getQNameProperty : Properties -> Properties -> String -> ResultME PropCheckError (List String)
+getQNameProperty : Properties -> Properties -> String -> ResultME L3Error (List String)
 getQNameProperty defaults props name =
     case getProperty defaults props PSQName name of
         Ok (PQName path) ->
@@ -323,7 +324,7 @@ getQNameProperty defaults props name =
             Err err
 
 
-getBoolProperty : Properties -> Properties -> String -> ResultME PropCheckError Bool
+getBoolProperty : Properties -> Properties -> String -> ResultME L3Error Bool
 getBoolProperty defaults props name =
     case getProperty defaults props PSBool name of
         Ok (PBool val) ->
@@ -336,7 +337,7 @@ getBoolProperty defaults props name =
             Err err
 
 
-getOptionalStringProperty : Properties -> Properties -> String -> ResultME PropCheckError (Maybe String)
+getOptionalStringProperty : Properties -> Properties -> String -> ResultME L3Error (Maybe String)
 getOptionalStringProperty defaults props name =
     case getProperty defaults props (PSOptional PSString) name of
         Ok (POptional PSString maybeProp) ->
@@ -357,7 +358,7 @@ getOptionalStringProperty defaults props name =
             Err err
 
 
-getOptionalEnumProperty : Properties -> Properties -> Enum String -> String -> ResultME PropCheckError (Maybe String)
+getOptionalEnumProperty : Properties -> Properties -> Enum String -> String -> ResultME L3Error (Maybe String)
 getOptionalEnumProperty defaults props enum name =
     case getProperty defaults props (PSOptional (PSEnum enum)) name of
         Ok (POptional (PSEnum _) maybeProp) ->
