@@ -1,8 +1,9 @@
 module L3 exposing
     ( L3
-    , DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
     , Processor, ProcessorImpl, builder
     , L3Error(..), errorBuilder, errorCatalogue
+    , deref
+    , DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
     )
 
 {-| Defines the level 3 language for data models that have been annotated with
@@ -18,19 +19,24 @@ code generator are being met.
 @docs L3
 
 
-# Defaulting of properties across the data model, and APIs to read properties.
-
-@docs DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
-
-
 # Standardized interface to an L3 processor.
 
 @docs Processor, ProcessorImpl, builder
 
 
-# Default error catalogue for property errors.
+# Common L3 error catalogue for property and dereferncing errors.
 
 @docs L3Error, errorBuilder, errorCatalogue
+
+
+# Dereferencing named type aliases.
+
+@docs deref
+
+
+# Defaulting of properties across the data model, and APIs to read properties.
+
+@docs DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
 
 -}
 
@@ -41,6 +47,138 @@ import L1 exposing (Declarable(..), PropSpec(..), PropSpecs, Properties, Propert
 import L2 exposing (L2, RefChecked)
 import ResultME exposing (ResultME)
 import SourcePos exposing (SourceLines)
+
+
+{-| The L3 model. This consists of an L2 model and a set of top-level properties
+that a code generator needs to know.
+-}
+type alias L3 pos =
+    { properties : Properties
+    , declarations : Dict String (Declarable pos RefChecked)
+    }
+
+
+
+-- Standardized interface to an L3 processor.
+
+
+{-| API for an L3 model processor.
+-}
+type alias Processor pos =
+    { name : String
+    , defaults : DefaultProperties
+    , check : L3 pos -> ResultME Error (L3 pos)
+    }
+
+
+{-| Builds an L3 Processor API from an implementation. A function to turn
+source code positions into quoted lines of source code needs to be supplied.
+-}
+builder : (pos -> SourceLines) -> ProcessorImpl pos err -> Processor pos
+builder posFn impl =
+    { name = impl.name
+    , defaults = impl.defaults
+    , check = impl.check >> ResultME.mapError (impl.buildError posFn)
+    }
+
+
+{-| SPI for an L3 model processor. Use the `builder` to turn one of these into
+a `Processor`.
+-}
+type alias ProcessorImpl pos err =
+    { name : String
+    , defaults : DefaultProperties
+    , check : L3 pos -> ResultME err (L3 pos)
+    , buildError : ErrorBuilder pos err
+    }
+
+
+
+-- Common L3 error catalogue for property and dereferncing errors.
+
+
+{-| The error catalogue for this property checking.
+
+The error message here are quite generic, and you likely want to re-write
+this error catalogue for specific modules in order to give better messages.
+
+-}
+errorCatalogue : Dict Int ErrorMessage
+errorCatalogue =
+    Dict.fromList
+        [ ( 301
+          , { title = "Required Property Missing"
+            , body = "The required property []{arg|key=name } was not set."
+            }
+          )
+        , ( 302
+          , { title = "Property is the Wrong Kind"
+            , body = "The required property []{arg|key=name } is the wrong kind."
+            }
+          )
+        , ( 303
+          , { title = "Name Type Alias Could Not Be Found"
+            , body = "The type alias []{arg|key=name } could not be found."
+            }
+          )
+        ]
+
+
+{-| Common Errors that L3 processors may run into when fetching properties or
+dereferencing declarations from the model. One the model has been reference and
+property checked these error should not be possible, but we have to allow for the
+error code branches anyway.
+
+As these errors should generally not happen, they should be reported as bugs when
+they do. This error type enumerates the possible dereferecning and property bugs.
+
+-}
+type L3Error
+    = CheckedPropertyMissing String PropSpec
+    | CheckedPropertyWrongKind String PropSpec
+    | DerefDeclMissing String
+
+
+{-| Convert prop check errors to standard errors.
+-}
+errorBuilder : ErrorBuilder pos L3Error
+errorBuilder posFn err =
+    case err of
+        CheckedPropertyMissing name propSpec ->
+            Errors.lookupError errorCatalogue
+                301
+                (Dict.fromList [ ( "name", name ) ])
+                []
+
+        CheckedPropertyWrongKind name propSpec ->
+            Errors.lookupError errorCatalogue
+                302
+                (Dict.fromList [ ( "name", name ) ])
+                []
+
+        DerefDeclMissing name ->
+            Errors.lookupError errorCatalogue
+                303
+                (Dict.fromList [ ( "name", name ) ])
+                []
+
+
+
+-- Dereferencing named type aliases.
+
+
+deref : String -> L3 pos -> ResultME L3Error (Declarable pos RefChecked)
+deref name model =
+    case Dict.get name model.declarations of
+        Just val ->
+            Ok val
+
+        Nothing ->
+            DerefDeclMissing name |> ResultME.error
+
+
+
+-- Defaulting of properties across the data model, and APIs to read properties.
 
 
 {-| Allows the default properties on parts of the model to be defined.
@@ -65,100 +203,6 @@ type alias DefaultProperties =
     , emptyProduct : ( PropSpecs, Properties )
     , container : ( PropSpecs, Properties )
     , function : ( PropSpecs, Properties )
-    }
-
-
-{-| The L3 model. This consists of an L2 model and a set of top-level properties
-that a code generator needs to know.
--}
-type alias L3 pos =
-    { properties : Properties
-    , declarations : Dict String (Declarable pos RefChecked)
-    }
-
-
-{-| API for an L3 model processor.
--}
-type alias Processor pos =
-    { name : String
-    , defaults : DefaultProperties
-    , check : L3 pos -> ResultME Error (L3 pos)
-    }
-
-
-{-| Builds an L3 Processor API from an implementation. A function to turn
-source code positions into quoted lines of source code needs to be supplied.
--}
-builder : (pos -> SourceLines) -> ProcessorImpl pos err -> Processor pos
-builder posFn impl =
-    { name = impl.name
-    , defaults = impl.defaults
-    , check = impl.check >> ResultME.mapError (impl.buildError posFn)
-    }
-
-
-{-| The error catalogue for this property checking.
-
-The error message here are quite generic, and you likely want to re-write
-this error catalogue for specific modules in order to give better messages.
-
--}
-errorCatalogue : Dict Int ErrorMessage
-errorCatalogue =
-    Dict.fromList
-        [ ( 301
-          , { title = "Required Property Missing"
-            , body = "The required property []{arg|key=name } was not set."
-            }
-          )
-        , ( 302
-          , { title = "Property is the Wrong Kind"
-            , body = "The required property []{arg|key=name } is the wrong kind."
-            }
-          )
-        ]
-
-
-{-| Common Errors that L3 processors may run into when fetching properties or
-dereferencing declarations from the model. One the model has been reference and
-property checked these error should not be possible, but we have to allow for the
-error code branches anyway.
-
-As these errors should generally not happen, they should be reported as bugs when
-they do. This error type enumerates the possible dereferecning and property bugs.
-
--}
-type L3Error
-    = CheckedPropertyMissing String PropSpec
-    | CheckedPropertyWrongKind String PropSpec
-
-
-{-| Convert prop check errors to standard errors.
--}
-errorBuilder : ErrorBuilder pos L3Error
-errorBuilder posFn err =
-    case err of
-        CheckedPropertyMissing name propSpec ->
-            Errors.lookupError errorCatalogue
-                301
-                (Dict.fromList [ ( "name", name ) ])
-                []
-
-        CheckedPropertyWrongKind name propSpec ->
-            Errors.lookupError errorCatalogue
-                302
-                (Dict.fromList [ ( "name", name ) ])
-                []
-
-
-{-| SPI for an L3 model processor. Use the `builder` to turn one of these into
-a `Processor`.
--}
-type alias ProcessorImpl pos err =
-    { name : String
-    , defaults : DefaultProperties
-    , check : L3 pos -> ResultME err (L3 pos)
-    , buildError : ErrorBuilder pos err
     }
 
 
