@@ -1,6 +1,7 @@
 module Templates.Elm exposing
     ( typeDecl, codec
     , lowerType, lowerFun
+    , codecNamedType
     )
 
 {-| Elm code generation from L2 models. This can be used when writing an L3 code
