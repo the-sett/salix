@@ -13,6 +13,7 @@
         "Checker",
         "SourcePos",
         "Elm.Codec",
+        "Elm.Encode",
         "Elm.Lang",
         "Elm.FunDecl"
     ],
