@@ -19,13 +19,13 @@ Lowerings of L2 into Elm type annotations:
 
 import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, LetDeclaration, Linkage, Pattern, TypeAnnotation)
 import Elm.FunDecl as FunDecl exposing (FunDecl)
+import Elm.Helper as Util
 import L1 exposing (Basic(..), Container(..), Declarable(..), Restricted(..), Type(..))
 import L2 exposing (RefChecked(..))
 import List.Nonempty
 import Maybe.Extra
 import Naming
 import Set exposing (Set)
-import Templates.Helper as Util
 
 
 

@@ -1,4 +1,4 @@
-module Templates.Helper exposing (mChain, mChainMaybe, mChainResult)
+module Elm.Helper exposing (mChain, mChainMaybe, mChainResult)
 
 import Elm.CodeGen as CG exposing (Expression)
 
