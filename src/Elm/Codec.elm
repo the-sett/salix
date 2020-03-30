@@ -26,7 +26,7 @@ import Templates.Helper as Util
 codec : String -> Declarable pos RefChecked -> ( Declaration, Linkage )
 codec name decl =
     codecAsFunDecl name decl
-        |> Tuple.mapFirst funDeclAsTopLevel
+        |> Tuple.mapFirst FunDecl.funDeclAsTopLevel
 
 
 {-| Generates a Codec for a type declaration.
@@ -34,7 +34,7 @@ codec name decl =
 codecAsLetDecl : String -> Declarable pos RefChecked -> ( LetDeclaration, Linkage )
 codecAsLetDecl name decl =
     codecAsFunDecl name decl
-        |> Tuple.mapFirst funDeclAsLetDecl
+        |> Tuple.mapFirst FunDecl.funDeclAsLetDecl
 
 
 codecAsFunDecl : String -> Declarable pos RefChecked -> ( FunDecl, Linkage )

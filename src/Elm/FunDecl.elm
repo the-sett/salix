@@ -1,9 +1,14 @@
 module Elm.FunDecl exposing (FunDecl, funDeclAsLetDecl, funDeclAsTopLevel)
 
-{-| Captures everything needed to make a function declaration either at top-level or inside
-a let block. This allows the decision to build a function as a top-level or a let expression
-to be deferred, which allows the same code to be used to generate both.
+{-| FunDecl captures everything needed to make a function declaration either at
+top-level or inside a let block. This allows the decision to build a function as
+a top-level or a let expression to be deferred, which allows the same code to be
+used to generate both.
 -}
+
+import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, LetDeclaration, Linkage, Pattern, TypeAnnotation)
+
+
 
 --== Function Declarations
 

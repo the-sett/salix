@@ -535,6 +535,16 @@ lowerFun fromType toType =
     )
 
 
+decodeMod : List String
+decodeMod =
+    [ "Json", "Decode" ]
+
+
+encodeMod : List String
+encodeMod =
+    [ "Json", "Encode" ]
+
+
 dictEnumMod : List String
 dictEnumMod =
     [ "Dict", "Enum" ]
@@ -563,6 +573,16 @@ refinedMod =
 resultMod : List String
 resultMod =
     [ "Result" ]
+
+
+decodeImport : Import
+decodeImport =
+    CG.importStmt decodeMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Decoder" ])
+
+
+encodeImport : Import
+encodeImport =
+    CG.importStmt encodeMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Value" ])
 
 
 setImport : Import
