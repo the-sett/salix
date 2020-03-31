@@ -1,4 +1,4 @@
-module Elm.FunDecl exposing (FunDecl, funDeclAsLetDecl, funDeclAsTopLevel)
+module Elm.FunDecl exposing (FunDecl, funDeclAsExpression, funDeclAsLetDecl, funDeclAsTopLevel)
 
 {-| FunDecl captures everything needed to make a function declaration either at
 top-level or inside a let block. This allows the decision to build a function as
@@ -30,3 +30,8 @@ funDeclAsTopLevel funDecl =
 funDeclAsLetDecl : FunDecl -> LetDeclaration
 funDeclAsLetDecl funDecl =
     CG.letFunction funDecl.name funDecl.args funDecl.impl
+
+
+funDeclAsExpression : FunDecl -> Expression
+funDeclAsExpression funDecl =
+    funDecl.impl

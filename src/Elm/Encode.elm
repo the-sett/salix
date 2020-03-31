@@ -1,4 +1,7 @@
-module Elm.Encode exposing (encoder, encoderAsLetDecl)
+module Elm.Encode exposing
+    ( encoder, encoderAsLetDecl
+    , encoderAsExpression
+    )
 
 {-| Elm code generation for Encoders using `elm/json` from L2 models.
 
@@ -35,6 +38,12 @@ encoderAsLetDecl : String -> Declarable pos RefChecked -> ( LetDeclaration, Link
 encoderAsLetDecl name decl =
     encoderAsFunDecl name decl
         |> Tuple.mapFirst FunDecl.funDeclAsLetDecl
+
+
+encoderAsExpression : String -> Declarable pos RefChecked -> ( Expression, Linkage )
+encoderAsExpression name decl =
+    encoderAsFunDecl name decl
+        |> Tuple.mapFirst FunDecl.funDeclAsExpression
 
 
 encoderAsFunDecl : String -> Declarable pos RefChecked -> ( FunDecl, Linkage )
