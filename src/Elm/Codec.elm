@@ -1,13 +1,13 @@
-module Elm.Codec exposing (codec, codecAsLetDecl)
+module Elm.Codec exposing (codec)
 
 {-| Elm code generation for Codecs using `minibill/elm-codec` from L2 models.
 
-@docs codec, codecAsLetDecl
+@docs codec
 
 -}
 
 import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, LetDeclaration, Linkage, Pattern, TypeAnnotation)
-import Elm.FunDecl as FunDecl exposing (FunDecl)
+import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Helper as Util
 import L1 exposing (Basic(..), Container(..), Declarable(..), Restricted(..), Type(..))
 import L2 exposing (RefChecked(..))
@@ -23,22 +23,8 @@ import Set exposing (Set)
 
 {-| Generates a Codec for a type declaration.
 -}
-codec : String -> Declarable pos RefChecked -> ( Declaration, Linkage )
+codec : String -> Declarable pos RefChecked -> FunGen
 codec name decl =
-    codecAsFunDecl name decl
-        |> Tuple.mapFirst FunDecl.funDeclAsTopLevel
-
-
-{-| Generates a Codec for a type declaration.
--}
-codecAsLetDecl : String -> Declarable pos RefChecked -> ( LetDeclaration, Linkage )
-codecAsLetDecl name decl =
-    codecAsFunDecl name decl
-        |> Tuple.mapFirst FunDecl.funDeclAsLetDecl
-
-
-codecAsFunDecl : String -> Declarable pos RefChecked -> ( FunDecl, Linkage )
-codecAsFunDecl name decl =
     case decl of
         DAlias _ _ l1Type ->
             typeAliasCodec name l1Type

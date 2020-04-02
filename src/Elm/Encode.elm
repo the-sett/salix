@@ -1,16 +1,13 @@
-module Elm.Encode exposing
-    ( encoder, encoderAsLetDecl
-    , encoderAsExpression
-    )
+module Elm.Encode exposing (encoder)
 
 {-| Elm code generation for Encoders using `elm/json` from L2 models.
 
-@docs encoder, encoderAsLetDecl
+@docs encoder
 
 -}
 
 import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, LetDeclaration, Linkage, Pattern, TypeAnnotation)
-import Elm.FunDecl as FunDecl exposing (FunDecl)
+import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Helper as Util
 import L1 exposing (Basic(..), Container(..), Declarable(..), Restricted(..), Type(..))
 import L2 exposing (RefChecked(..))
@@ -26,28 +23,8 @@ import Set exposing (Set)
 
 {-| Generates a Encoder for a type declaration.
 -}
-encoder : String -> Declarable pos RefChecked -> ( Declaration, Linkage )
+encoder : String -> Declarable pos RefChecked -> FunGen
 encoder name decl =
-    encoderAsFunDecl name decl
-        |> Tuple.mapFirst FunDecl.funDeclAsTopLevel
-
-
-{-| Generates a Encoder for a type declaration.
--}
-encoderAsLetDecl : String -> Declarable pos RefChecked -> ( LetDeclaration, Linkage )
-encoderAsLetDecl name decl =
-    encoderAsFunDecl name decl
-        |> Tuple.mapFirst FunDecl.funDeclAsLetDecl
-
-
-encoderAsExpression : String -> Declarable pos RefChecked -> ( Expression, Linkage )
-encoderAsExpression name decl =
-    encoderAsFunDecl name decl
-        |> Tuple.mapFirst FunDecl.funDeclAsExpression
-
-
-encoderAsFunDecl : String -> Declarable pos RefChecked -> ( FunDecl, Linkage )
-encoderAsFunDecl name decl =
     case decl of
         DAlias _ _ l1Type ->
             typeAliasEncoder name l1Type
