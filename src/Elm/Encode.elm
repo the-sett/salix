@@ -44,7 +44,7 @@ encoder name decl =
 typeAliasEncoder : String -> Type pos RefChecked -> ( FunDecl, Linkage )
 typeAliasEncoder name l1Type =
     let
-        encoderFnName =
+        encodeFnName =
             Naming.safeCCL (name ++ "Encoder")
 
         typeName =
@@ -63,12 +63,12 @@ typeAliasEncoder name l1Type =
     ( FunDecl
         (Just doc)
         (Just sig)
-        encoderFnName
+        encodeFnName
         []
         impl
     , CG.emptyLinkage
-        |> CG.addImport encoderImport
-        |> CG.addExposing (CG.funExpose encoderFnName)
+        |> CG.addImport encodeImport
+        |> CG.addExposing (CG.funExpose encodeFnName)
     )
 
 
@@ -77,7 +77,7 @@ typeAliasEncoder name l1Type =
 customTypeEncoder : String -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> ( FunDecl, Linkage )
 customTypeEncoder name constructors =
     let
-        encoderFnName =
+        encodeFnName =
             Naming.safeCCL (name ++ "Encoder")
 
         typeName =
@@ -96,19 +96,19 @@ customTypeEncoder name constructors =
     ( FunDecl
         (Just doc)
         (Just sig)
-        encoderFnName
+        encodeFnName
         []
         impl
     , CG.emptyLinkage
-        |> CG.addImport encoderImport
-        |> CG.addExposing (CG.funExpose encoderFnName)
+        |> CG.addImport encodeImport
+        |> CG.addExposing (CG.funExpose encodeFnName)
     )
 
 
 enumEncoder : String -> List String -> ( FunDecl, Linkage )
 enumEncoder name constructors =
     let
-        encoderFnName =
+        encodeFnName =
             Naming.safeCCL (name ++ "Encoder")
 
         typeName =
@@ -122,7 +122,7 @@ enumEncoder name constructors =
 
         impl =
             CG.apply
-                [ CG.fqFun encoderMod "build"
+                [ CG.fqFun encodeMod "build"
                 , CG.parens (CG.apply [ CG.fqFun enumMod "encoder", CG.val enumName ])
                 , CG.parens (CG.apply [ CG.fqFun enumMod "decoder", CG.val enumName ])
                 ]
@@ -134,20 +134,20 @@ enumEncoder name constructors =
     ( FunDecl
         (Just doc)
         (Just sig)
-        encoderFnName
+        encodeFnName
         []
         impl
     , CG.emptyLinkage
-        |> CG.addImport encoderImport
+        |> CG.addImport encodeImport
         |> CG.addImport enumImport
-        |> CG.addExposing (CG.funExpose encoderFnName)
+        |> CG.addExposing (CG.funExpose encodeFnName)
     )
 
 
 restrictedEncoder : String -> Restricted -> ( FunDecl, Linkage )
 restrictedEncoder name _ =
     let
-        encoderFnName =
+        encodeFnName =
             Naming.safeCCL (name ++ "Encoder")
 
         typeName =
@@ -161,7 +161,7 @@ restrictedEncoder name _ =
 
         impl =
             CG.apply
-                [ CG.fqFun encoderMod "build"
+                [ CG.fqFun encodeMod "build"
                 , CG.parens (CG.apply [ CG.fqFun refinedMod "encoder", CG.val enumName ])
                 , CG.parens (CG.apply [ CG.fqFun refinedMod "decoder", CG.val enumName ])
                 ]
@@ -173,13 +173,13 @@ restrictedEncoder name _ =
     ( FunDecl
         (Just doc)
         (Just sig)
-        encoderFnName
+        encodeFnName
         []
         impl
     , CG.emptyLinkage
-        |> CG.addImport encoderImport
+        |> CG.addImport encodeImport
         |> CG.addImport enumImport
-        |> CG.addExposing (CG.funExpose encoderFnName)
+        |> CG.addExposing (CG.funExpose encodeFnName)
     )
 
 
@@ -191,18 +191,18 @@ encoderCustomType constructors =
                 (\( _, l1Type, _ ) accum -> encoderType l1Type :: accum)
                 [ Naming.safeCCU name |> CG.fun
                 , Naming.safeCCU name |> CG.string
-                , encoderFn ("variant" ++ String.fromInt (List.length args))
+                , encodeFn ("variant" ++ String.fromInt (List.length args))
                 ]
                 args
                 |> List.reverse
                 |> CG.apply
     in
     List.foldr (\( name, consArgs ) accum -> encoderVariant name consArgs :: accum)
-        [ CG.apply [ encoderFn "buildCustom" ] ]
+        [ CG.apply [ encodeFn "buildCustom" ] ]
         constructors
         |> CG.pipe
             (CG.apply
-                [ encoderFn "custom"
+                [ encodeFn "custom"
                 , encoderMatchFn constructors
                 ]
             )
@@ -322,7 +322,7 @@ Decodes `()`, and encodes to JSON `null`.
 -}
 encoderUnit =
     CG.apply
-        [ encoderFn "constant"
+        [ encodeFn "constant"
         , CG.unit
         ]
 
@@ -333,16 +333,16 @@ encoderBasic : Basic -> Expression
 encoderBasic basic =
     case basic of
         BBool ->
-            encoderFn "bool"
+            encodeFn "bool"
 
         BInt ->
-            encoderFn "int"
+            encodeFn "int"
 
         BReal ->
-            encoderFn "float"
+            encodeFn "float"
 
         BString ->
-            encoderFn "string"
+            encodeFn "string"
 
 
 encoderNamed named =
@@ -353,18 +353,18 @@ encoderContainer : Container pos RefChecked -> Expression
 encoderContainer container =
     case container of
         CList l1Type ->
-            CG.apply [ encoderFn "list", encoderType l1Type ]
+            CG.apply [ encodeFn "list", encoderType l1Type ]
                 |> CG.parens
 
         CSet l1Type ->
-            CG.apply [ encoderFn "set", encoderType l1Type ]
+            CG.apply [ encodeFn "set", encoderType l1Type ]
                 |> CG.parens
 
         CDict l1keyType l1valType ->
             encoderDict l1keyType l1valType
 
         COptional l1Type ->
-            CG.apply [ encoderFn "maybe", encoderType l1Type ]
+            CG.apply [ encodeFn "maybe", encoderType l1Type ]
                 |> CG.parens
 
 
@@ -373,18 +373,18 @@ encoderDict l1keyType l1valType =
     case l1keyType of
         TNamed _ _ name (RcRestricted basic) ->
             CG.apply
-                [ encoderFn "build"
+                [ encodeFn "build"
                 , CG.apply
                     [ CG.fqFun refinedMod "dictEncoder"
                     , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encoderFn "encoder", encoderType l1valType ]
+                    , CG.apply [ encodeFn "encoder", encoderType l1valType ]
                         |> CG.parens
                     ]
                     |> CG.parens
                 , CG.apply
                     [ CG.fqFun refinedMod "dictDecoder"
                     , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encoderFn "decoder", encoderType l1valType ]
+                    , CG.apply [ encodeFn "decoder", encoderType l1valType ]
                         |> CG.parens
                     ]
                     |> CG.parens
@@ -392,25 +392,25 @@ encoderDict l1keyType l1valType =
 
         TNamed _ _ name RcEnum ->
             CG.apply
-                [ encoderFn "build"
+                [ encodeFn "build"
                 , CG.apply
                     [ CG.fqFun enumMod "dictEncoder"
                     , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encoderFn "encoder", encoderType l1valType ]
+                    , CG.apply [ encodeFn "encoder", encoderType l1valType ]
                         |> CG.parens
                     ]
                     |> CG.parens
                 , CG.apply
                     [ CG.fqFun enumMod "dictDecoder"
                     , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encoderFn "decoder", encoderType l1valType ]
+                    , CG.apply [ encodeFn "decoder", encoderType l1valType ]
                         |> CG.parens
                     ]
                     |> CG.parens
                 ]
 
         _ ->
-            CG.apply [ encoderFn "dict", encoderType l1valType ]
+            CG.apply [ encodeFn "dict", encoderType l1valType ]
                 |> CG.parens
 
 
@@ -425,7 +425,7 @@ encoderNamedProduct name fields =
 
         impl =
             CG.apply
-                [ encoderFn "object"
+                [ encodeFn "object"
                 , encoderFields fields |> CG.list
                 ]
     in
@@ -448,12 +448,12 @@ encoderContainerField : String -> Container pos RefChecked -> Expression
 encoderContainerField name container =
     case container of
         CList l1Type ->
-            CG.apply [ encoderFn "list", encoderType l1Type ]
+            CG.apply [ encodeFn "list", encoderType l1Type ]
                 |> CG.parens
                 |> encoderField name
 
         CSet l1Type ->
-            CG.apply [ encoderFn "set", encoderType l1Type ]
+            CG.apply [ encodeFn "set", encoderType l1Type ]
                 |> CG.parens
                 |> encoderField name
 
@@ -500,16 +500,6 @@ encoderOptionalField name expr =
         ]
 
 
-encoderMod : List String
-encoderMod =
-    [ "Encoder" ]
-
-
-decodeMod : List String
-decodeMod =
-    [ "Json", "Decode" ]
-
-
 encodeMod : List String
 encodeMod =
     [ "Json", "Encode" ]
@@ -525,11 +515,6 @@ enumMod =
     [ "Enum" ]
 
 
-maybeMod : List String
-maybeMod =
-    [ "Maybe" ]
-
-
 dictRefinedMod : List String
 dictRefinedMod =
     [ "Dict", "Refined" ]
@@ -540,24 +525,9 @@ refinedMod =
     [ "Refined" ]
 
 
-resultMod : List String
-resultMod =
-    [ "Result" ]
-
-
-encoderFn : String -> Expression
-encoderFn =
-    CG.fqFun encoderMod
-
-
-encoderImport : Import
-encoderImport =
-    CG.importStmt encoderMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Encoder" ])
-
-
-decodeImport : Import
-decodeImport =
-    CG.importStmt decodeMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Decoder" ])
+encodeFn : String -> Expression
+encodeFn =
+    CG.fqFun encodeMod
 
 
 encodeImport : Import
@@ -565,36 +535,6 @@ encodeImport =
     CG.importStmt encodeMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Value" ])
 
 
-setImport : Import
-setImport =
-    CG.importStmt [ "Set" ] Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Set" ])
-
-
-dictImport : Import
-dictImport =
-    CG.importStmt [ "Dict" ] Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Dict" ])
-
-
 enumImport : Import
 enumImport =
     CG.importStmt enumMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Enum" ])
-
-
-dictEnumImport : Import
-dictEnumImport =
-    CG.importStmt dictEnumMod Nothing Nothing
-
-
-refinedImport : Import
-refinedImport =
-    CG.importStmt refinedMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Refined" ])
-
-
-dictRefinedImport : Import
-dictRefinedImport =
-    CG.importStmt dictRefinedMod Nothing Nothing
-
-
-guardedImportExposing : List String -> Import
-guardedImportExposing exposings =
-    CG.importStmt refinedMod Nothing (Just <| CG.exposeExplicit (List.map CG.typeOrAliasExpose exposings))
