@@ -18,6 +18,8 @@ import ResultME exposing (ResultME)
 
 
 
+-- Maybe this should all just go in the L3 module?
+--
 -- Dereferencing named type aliases.
 
 
@@ -32,6 +34,23 @@ deref name model =
 
 
 
+-- type Declarable pos ref
+--     = DAlias pos Properties (Type pos ref)
+--     | DSum pos Properties (Nonempty ( String, List ( String, Type pos ref, Properties ) ))
+--     | DEnum pos Properties (Nonempty String)
+--     | DRestricted pos Properties Restricted
+--
+--expectAlias : Declarable pos ref -> ResultME L3Error ( pos, Properties, Type pos ref )
+--
+-- = TUnit pos Properties
+-- | TBasic pos Properties Basic
+-- | TNamed pos Properties String ref
+-- | TProduct pos Properties (Nonempty ( String, Type pos ref, Properties ))
+-- | TEmptyProduct pos Properties
+-- | TContainer pos Properties (Container pos ref)
+-- | TFunction pos Properties (Type pos ref) (Type pos ref)
+--expectProduct : Type pos ref -> ResultME L3Error ( pos, Properties, Nonempty ( String, Type pos ref, Properties ) )
+--
 -- Filtering by properties.
 
 
