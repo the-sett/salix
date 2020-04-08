@@ -127,7 +127,6 @@ type Property
     | PEnum (Enum String) String
     | PQName (List String)
     | PBool Bool
-    | POptional PropSpec (Maybe Property)
 
 
 {-| A set of additional properties on the model.
@@ -185,9 +184,6 @@ defineProperties notSet set =
 
                 PBool _ ->
                     PSBool
-
-                POptional spec _ ->
-                    PSOptional spec
     in
     ( fullPropSpecs, properties )
 

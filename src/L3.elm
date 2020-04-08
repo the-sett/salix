@@ -300,38 +300,88 @@ getWithDefault defaults props name =
             justVal
 
 
-getProperty : Properties -> Properties -> PropSpec -> String -> ResultME L3Error Property
-getProperty defaults props spec name =
+{-| Extracts a property from a set of properties. The property must be present
+and must match the given specification - otherwise an error will be returned.
+-}
+getRequiredProperty : Properties -> Properties -> PropSpec -> String -> ResultME L3Error Property
+getRequiredProperty defaults props spec name =
     let
         maybeProp =
             getWithDefault defaults props name
+
+        checkSpec propSpec prop =
+            case ( spec, prop ) of
+                ( PSString, PString val ) ->
+                    PString val |> Ok
+
+                ( PSEnum _, PEnum enum val ) ->
+                    PEnum enum val |> Ok
+
+                ( PSQName, PQName path ) ->
+                    PQName path |> Ok
+
+                ( PSBool, PBool val ) ->
+                    PBool val |> Ok
+
+                ( PSOptional optSpec, val ) ->
+                    checkSpec optSpec val
+
+                ( unmatched, _ ) ->
+                    CheckedPropertyWrongKind name unmatched |> ResultME.error
     in
-    case ( spec, maybeProp ) of
-        ( PSString, Just (PString val) ) ->
-            PString val |> Ok
-
-        ( PSEnum _, Just (PEnum enum val) ) ->
-            PEnum enum val |> Ok
-
-        ( PSQName, Just (PQName path) ) ->
-            PQName path |> Ok
-
-        ( PSBool, Just (PBool val) ) ->
-            PBool val |> Ok
-
-        ( PSOptional _, Just (POptional optSpec maybe) ) ->
-            POptional optSpec maybe |> Ok
-
-        ( _, Nothing ) ->
+    case maybeProp of
+        Nothing ->
             CheckedPropertyMissing name spec |> ResultME.error
 
-        ( _, _ ) ->
-            CheckedPropertyWrongKind name spec |> ResultME.error
+        Just prop ->
+            checkSpec spec prop
+
+
+{-| Extracts a property from a set of properties. The property if present
+and must match the given specification - otherwise an error will be returned.
+
+The result is a `Maybe` allowing for the property to be not set, in which case
+`Nothing` is returned.
+
+-}
+getOptionalProperty : Properties -> Properties -> PropSpec -> String -> ResultME L3Error (Maybe Property)
+getOptionalProperty defaults props spec name =
+    let
+        maybeProp =
+            getWithDefault defaults props name
+
+        checkSpec propSpec prop =
+            case ( spec, prop ) of
+                ( PSString, PString val ) ->
+                    PString val |> Ok
+
+                ( PSEnum _, PEnum enum val ) ->
+                    PEnum enum val |> Ok
+
+                ( PSQName, PQName path ) ->
+                    PQName path |> Ok
+
+                ( PSBool, PBool val ) ->
+                    PBool val |> Ok
+
+                ( PSOptional optSpec, val ) ->
+                    checkSpec optSpec val
+
+                ( unmatched, _ ) ->
+                    CheckedPropertyWrongKind name unmatched |> ResultME.error
+    in
+    case maybeProp of
+        Nothing ->
+            Ok Nothing
+
+        Just prop ->
+            checkSpec spec prop
+                |> Result.map Just
 
 
 getStringProperty : Properties -> Properties -> String -> ResultME L3Error String
 getStringProperty defaults props name =
-    case getProperty defaults props PSString name of
+    case getRequiredProperty defaults props PSString name of
         Ok (PString val) ->
             Ok val
 
@@ -344,7 +394,7 @@ getStringProperty defaults props name =
 
 getEnumProperty : Properties -> Properties -> Enum String -> String -> ResultME L3Error String
 getEnumProperty defaults props enum name =
-    case getProperty defaults props (PSEnum enum) name of
+    case getRequiredProperty defaults props (PSEnum enum) name of
         Ok (PEnum _ val) ->
             Ok val
 
@@ -357,7 +407,7 @@ getEnumProperty defaults props enum name =
 
 getQNameProperty : Properties -> Properties -> String -> ResultME L3Error (List String)
 getQNameProperty defaults props name =
-    case getProperty defaults props PSQName name of
+    case getRequiredProperty defaults props PSQName name of
         Ok (PQName path) ->
             Ok path
 
@@ -370,7 +420,7 @@ getQNameProperty defaults props name =
 
 getBoolProperty : Properties -> Properties -> String -> ResultME L3Error Bool
 getBoolProperty defaults props name =
-    case getProperty defaults props PSBool name of
+    case getRequiredProperty defaults props PSBool name of
         Ok (PBool val) ->
             Ok val
 
@@ -383,17 +433,12 @@ getBoolProperty defaults props name =
 
 getOptionalStringProperty : Properties -> Properties -> String -> ResultME L3Error (Maybe String)
 getOptionalStringProperty defaults props name =
-    case getProperty defaults props (PSOptional PSString) name of
-        Ok (POptional PSString maybeProp) ->
-            case maybeProp of
-                Nothing ->
-                    Ok Nothing
+    case getOptionalProperty defaults props PSString name of
+        Ok (Just (PString val)) ->
+            Just val |> Ok
 
-                Just (PString val) ->
-                    Just val |> Ok
-
-                _ ->
-                    CheckedPropertyWrongKind name (PSOptional PSString) |> ResultME.error
+        Ok Nothing ->
+            Ok Nothing
 
         Ok _ ->
             CheckedPropertyWrongKind name (PSOptional PSString) |> ResultME.error
@@ -404,18 +449,12 @@ getOptionalStringProperty defaults props name =
 
 getOptionalEnumProperty : Properties -> Properties -> Enum String -> String -> ResultME L3Error (Maybe String)
 getOptionalEnumProperty defaults props enum name =
-    case getProperty defaults props (PSOptional (PSEnum enum)) name of
-        Ok (POptional (PSEnum _) maybeProp) ->
-            case maybeProp of
-                Nothing ->
-                    Ok Nothing
+    case getOptionalProperty defaults props (PSEnum enum) name of
+        Ok (Just (PEnum _ val)) ->
+            Just val |> Ok
 
-                Just (PEnum _ val) ->
-                    Just val |> Ok
-
-                _ ->
-                    CheckedPropertyWrongKind name (PSOptional (PSEnum enum))
-                        |> ResultME.error
+        Ok Nothing ->
+            Ok Nothing
 
         Ok _ ->
             CheckedPropertyWrongKind name (PSOptional (PSEnum enum))
