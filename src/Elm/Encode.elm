@@ -1,15 +1,15 @@
-module Elm.Encode exposing (encoder, encoderNamedProduct)
+module Elm.Encode exposing (encoder, partialEncoder)
 
 {-| Elm code generation for Encoders using `elm/json` from L2 models.
 
-@docs encoder, encoderNamedProduct
+@docs encoder, partialEncoder
 
 -}
 
 import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, LetDeclaration, Linkage, Pattern, TypeAnnotation)
 import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Helper as Util
-import L1 exposing (Basic(..), Container(..), Declarable(..), Restricted(..), Type(..))
+import L1 exposing (Basic(..), Container(..), Declarable(..), Field, Restricted(..), Type(..))
 import L2 exposing (RefChecked(..))
 import List.Nonempty
 import Maybe.Extra
@@ -37,6 +37,37 @@ encoder name decl =
 
         DRestricted _ _ res ->
             restrictedEncoder name res
+
+
+partialEncoder : String -> List (Field pos RefChecked) -> FunGen
+partialEncoder name fields =
+    let
+        encodeFnName =
+            Naming.safeCCL (name ++ "Encoder")
+
+        typeName =
+            Naming.safeCCU name
+
+        sig =
+            CG.typed "Encoder" [ CG.typed typeName [] ]
+
+        impl =
+            encoderNamedProduct name fields
+
+        doc =
+            CG.emptyDocComment
+                |> CG.markdown ("Encoder for " ++ typeName ++ ".")
+    in
+    ( FunDecl
+        (Just doc)
+        (Just sig)
+        encodeFnName
+        []
+        impl
+    , CG.emptyLinkage
+        |> CG.addImport encodeImport
+        |> CG.addExposing (CG.funExpose encodeFnName)
+    )
 
 
 {-| Generates a Encoder for an L1 type alias.
