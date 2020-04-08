@@ -71,7 +71,20 @@ expectProduct l1type =
             Ok ( pos, props, fields )
 
         _ ->
-            NotExpectedKind (typeConsName l1type) "TProduct" |> ResultME.error
+            NotExpectedKind "TProduct" (typeConsName l1type) |> ResultME.error
+
+
+expectProductOrEmpty : Type pos ref -> ResultME L3Error ( pos, Properties, List (Field pos ref) )
+expectProductOrEmpty l1type =
+    case l1type of
+        TProduct pos props fields ->
+            Ok ( pos, props, Nonempty.toList fields )
+
+        TEmptyProduct pos props ->
+            Ok ( pos, props, [] )
+
+        _ ->
+            NotExpectedKind "TProduct" (typeConsName l1type) |> ResultME.error
 
 
 

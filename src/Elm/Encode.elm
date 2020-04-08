@@ -1,8 +1,8 @@
-module Elm.Encode exposing (encoder)
+module Elm.Encode exposing (encoder, encoderNamedProduct)
 
 {-| Elm code generation for Encoders using `elm/json` from L2 models.
 
-@docs encoder
+@docs encoder, encoderNamedProduct
 
 -}
 
