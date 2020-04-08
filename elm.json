@@ -11,6 +11,7 @@
         "L3",
         "Naming",
         "Checker",
+        "Query",
         "SourcePos",
         "Elm.Codec",
         "Elm.Encode",
