@@ -10,7 +10,7 @@ module Query exposing (..)
 -}
 
 import Dict exposing (Dict)
-import L1 exposing (Declarable(..), Properties, Type(..))
+import L1 exposing (Declarable(..), Field, Properties, Type(..))
 import L2 exposing (L2, RefChecked)
 import L3 exposing (L3, L3Error(..), PropertiesAPI)
 import List.Nonempty as Nonempty exposing (Nonempty(..))
@@ -50,7 +50,7 @@ expectAlias decl =
             Ok ( pos, props, l1type )
 
         _ ->
-            NotExpectedKind "" "" |> ResultME.error
+            NotExpectedKind (declarableConsName decl) "DAlias" |> ResultME.error
 
 
 
@@ -62,8 +62,19 @@ expectAlias decl =
 -- | TEmptyProduct pos Properties
 -- | TContainer pos Properties (Container pos ref)
 -- | TFunction pos Properties (Type pos ref) (Type pos ref)
---expectProduct : Type pos ref -> ResultME L3Error ( pos, Properties, Nonempty ( String, Type pos ref, Properties ) )
---
+
+
+expectProduct : Type pos ref -> ResultME L3Error ( pos, Properties, Nonempty (Field pos ref) )
+expectProduct l1type =
+    case l1type of
+        TProduct pos props fields ->
+            Ok ( pos, props, fields )
+
+        _ ->
+            NotExpectedKind (typeConsName l1type) "TProduct" |> ResultME.error
+
+
+
 -- Filtering by properties.
 
 
@@ -182,3 +193,48 @@ filterNonemptyByProps :
     -> ResultME L3.L3Error (List a)
 filterNonemptyByProps propertiesApi filter vals =
     filterListByProps propertiesApi filter (Nonempty.toList vals)
+
+
+
+-- Helpers
+
+
+declarableConsName : Declarable pos ref -> String
+declarableConsName decl =
+    case decl of
+        DAlias _ _ _ ->
+            "DAlias"
+
+        DSum _ _ _ ->
+            "DSum"
+
+        DEnum _ _ _ ->
+            "DEnum"
+
+        DRestricted _ _ _ ->
+            "DRestricted"
+
+
+typeConsName : Type pos ref -> String
+typeConsName l1type =
+    case l1type of
+        TUnit _ _ ->
+            "TUnit"
+
+        TBasic _ _ _ ->
+            "TBasic"
+
+        TNamed _ _ _ _ ->
+            "TNamed"
+
+        TProduct _ _ _ ->
+            "TProduct"
+
+        TEmptyProduct _ _ ->
+            "TEmptyProduct"
+
+        TContainer _ _ _ ->
+            "TContainer"
+
+        TFunction _ _ _ _ ->
+            "TFunction"
