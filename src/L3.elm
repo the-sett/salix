@@ -2,7 +2,6 @@ module L3 exposing
     ( L3
     , Processor, ProcessorImpl, builder
     , L3Error(..), errorBuilder, errorCatalogue
-    , deref
     , DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
     )
 
@@ -27,11 +26,6 @@ code generator are being met.
 # Common L3 error catalogue for property and dereferncing errors.
 
 @docs L3Error, errorBuilder, errorCatalogue
-
-
-# Dereferencing named type aliases.
-
-@docs deref
 
 
 # Defaulting of properties across the data model, and APIs to read properties.
@@ -161,20 +155,6 @@ errorBuilder posFn err =
                 303
                 (Dict.fromList [ ( "name", name ) ])
                 []
-
-
-
--- Dereferencing named type aliases.
-
-
-deref : String -> L3 pos -> ResultME L3Error (Declarable pos RefChecked)
-deref name model =
-    case Dict.get name model.declarations of
-        Just val ->
-            Ok val
-
-        Nothing ->
-            DerefDeclMissing name |> ResultME.error
 
 
 

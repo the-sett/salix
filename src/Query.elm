@@ -1,12 +1,34 @@
 module Query exposing (..)
 
 {-| Functions for querying Salix models.
+
+
+# Dereferencing named type aliases.
+
+@docs deref
+
 -}
 
 import Dict exposing (Dict)
-import L3 exposing (L3Error(..), PropertiesAPI)
+import L1 exposing (Declarable(..))
+import L2 exposing (L2, RefChecked)
+import L3 exposing (L3, L3Error(..), PropertiesAPI)
 import List.Nonempty as Nonempty exposing (Nonempty(..))
 import ResultME exposing (ResultME)
+
+
+
+-- Dereferencing named type aliases.
+
+
+deref : String -> L3 pos -> ResultME L3Error (Declarable pos RefChecked)
+deref name model =
+    case Dict.get name model.declarations of
+        Just val ->
+            Ok val
+
+        Nothing ->
+            DerefDeclMissing name |> ResultME.error
 
 
 
