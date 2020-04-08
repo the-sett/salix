@@ -5,6 +5,8 @@ module Query exposing (..)
 
 # Dereferencing named type aliases.
 
+-- Maybe this should all just go in the L3 module?
+
 @docs deref
 
 -}
@@ -18,8 +20,6 @@ import ResultME exposing (ResultME)
 
 
 
--- Maybe this should all just go in the L3 module?
---
 -- Dereferencing named type aliases.
 -- TODO: This should recurse on named types, as there may be a chain of aliases.
 
@@ -35,6 +35,8 @@ deref name model =
 
 
 
+-- Partial projections as expectations.
+--
 -- type Declarable pos ref
 --     = DAlias pos Properties (Type pos ref)
 --     | DSum pos Properties (Nonempty ( String, List ( String, Type pos ref, Properties ) ))
@@ -54,7 +56,6 @@ expectAlias decl =
 
 
 
---
 -- = TUnit pos Properties
 -- | TBasic pos Properties Basic
 -- | TNamed pos Properties String ref
