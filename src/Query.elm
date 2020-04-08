@@ -10,7 +10,7 @@ module Query exposing (..)
 -}
 
 import Dict exposing (Dict)
-import L1 exposing (Declarable(..))
+import L1 exposing (Declarable(..), Properties, Type(..))
 import L2 exposing (L2, RefChecked)
 import L3 exposing (L3, L3Error(..), PropertiesAPI)
 import List.Nonempty as Nonempty exposing (Nonempty(..))
@@ -21,6 +21,7 @@ import ResultME exposing (ResultME)
 -- Maybe this should all just go in the L3 module?
 --
 -- Dereferencing named type aliases.
+-- TODO: This should recurse on named types, as there may be a chain of aliases.
 
 
 deref : String -> L3 pos -> ResultME L3Error (Declarable pos RefChecked)
@@ -40,7 +41,19 @@ deref name model =
 --     | DEnum pos Properties (Nonempty String)
 --     | DRestricted pos Properties Restricted
 --
---expectAlias : Declarable pos ref -> ResultME L3Error ( pos, Properties, Type pos ref )
+
+
+expectAlias : Declarable pos ref -> ResultME L3Error ( pos, Properties, Type pos ref )
+expectAlias decl =
+    case decl of
+        DAlias pos props l1type ->
+            Ok ( pos, props, l1type )
+
+        _ ->
+            NotExpectedKind "" "" |> ResultME.error
+
+
+
 --
 -- = TUnit pos Properties
 -- | TBasic pos Properties Basic

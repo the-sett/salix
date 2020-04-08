@@ -124,13 +124,14 @@ property checked these error should not be possible, but we have to allow for th
 error code branches anyway.
 
 As these errors should generally not happen, they should be reported as bugs when
-they do. This error type enumerates the possible dereferecning and property bugs.
+they do. This error type enumerates the possible dereferencing and property bugs.
 
 -}
 type L3Error
     = CheckedPropertyMissing String PropSpec
     | CheckedPropertyWrongKind String PropSpec
     | DerefDeclMissing String
+    | NotExpectedKind String String
 
 
 {-| Convert prop check errors to standard errors.
@@ -154,6 +155,16 @@ errorBuilder posFn err =
             Errors.lookupError errorCatalogue
                 303
                 (Dict.fromList [ ( "name", name ) ])
+                []
+
+        NotExpectedKind expected actual ->
+            Errors.lookupError errorCatalogue
+                304
+                (Dict.fromList
+                    [ ( "expected", expected )
+                    , ( "actual", actual )
+                    ]
+                )
                 []
 
 
