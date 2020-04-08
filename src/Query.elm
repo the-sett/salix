@@ -37,8 +37,7 @@ deref name model =
 
 -- Partial projections as expectations.
 --
--- type Declarable pos ref
---     = DAlias pos Properties (Type pos ref)
+-- TODO:
 --     | DSum pos Properties (Nonempty ( String, List ( String, Type pos ref, Properties ) ))
 --     | DEnum pos Properties (Nonempty String)
 --     | DRestricted pos Properties Restricted
@@ -56,11 +55,10 @@ expectAlias decl =
 
 
 
+-- TODO:
 -- = TUnit pos Properties
 -- | TBasic pos Properties Basic
 -- | TNamed pos Properties String ref
--- | TProduct pos Properties (Nonempty ( String, Type pos ref, Properties ))
--- | TEmptyProduct pos Properties
 -- | TContainer pos Properties (Container pos ref)
 -- | TFunction pos Properties (Type pos ref) (Type pos ref)
 
