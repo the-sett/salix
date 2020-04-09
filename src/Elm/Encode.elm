@@ -62,7 +62,7 @@ partialEncoder name fields =
         (Just doc)
         (Just sig)
         encodeFnName
-        []
+        [ CG.varPattern "val" ]
         impl
     , CG.emptyLinkage
         |> CG.addImport encodeImport
