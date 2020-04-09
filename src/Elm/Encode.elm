@@ -18,6 +18,33 @@ import Set exposing (Set)
 
 
 
+--== Options for generating encoders
+
+
+{-| When generating an encoder for something with a named type nested in it,
+we assume that an encoder for that is also being generated, and simply call it.
+
+It may have been generated as a codec, or as an encoder, and this allows this
+assumption to be captured as an option.
+
+-}
+type AssumedEncoderForNamedType
+    = AssumeCodec
+    | AssumeEncoder
+
+
+type alias EncoderOptions =
+    { namedTypeEncoder : AssumedEncoderForNamedType
+    }
+
+
+defaultEncoderOptions : EncoderOptions
+defaultEncoderOptions =
+    { namedTypeEncoder = AssumeEncoder
+    }
+
+
+
 --== Encoders
 
 
@@ -376,6 +403,7 @@ encoderBasic basic =
             encodeFn "string"
 
 
+encoderNamed : String -> Expression
 encoderNamed named =
     CG.fun (Naming.safeCCL (named ++ "Encoder"))
 
