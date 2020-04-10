@@ -1,8 +1,16 @@
-module Elm.Encode exposing (encoder, partialEncoder)
+module Elm.Encode exposing
+    ( encoder, partialEncoder
+    , EncoderOptions, AssumedEncoderForNamedType(..), defaultEncoderOptions
+    )
 
 {-| Elm code generation for Encoders using `elm/json` from L2 models.
 
 @docs encoder, partialEncoder
+
+
+# Options for generating encoders.
+
+@docs EncoderOptions, AssumedEncoderForNamedType, defaultEncoderOptions
 
 -}
 
@@ -93,6 +101,7 @@ partialEncoder options name fields =
         impl
     , CG.emptyLinkage
         |> CG.addImport encodeImport
+        |> CG.addImport maybeExtraImport
         |> CG.addExposing (CG.funExpose encodeFnName)
     )
 
@@ -411,6 +420,7 @@ encoderNamed options named =
                 [ CG.fqFun codecMod "encoder"
                 , CG.val (Naming.safeCCL (named ++ "Codec"))
                 ]
+                |> CG.parens
 
         AssumeEncoder ->
             CG.fun (Naming.safeCCL (named ++ "Encoder"))
@@ -491,9 +501,10 @@ encoderNamedProduct options name fields =
             Naming.safeCCU name
 
         impl =
-            CG.apply
-                [ encodeFn "object"
-                , encoderFields options fields |> CG.list
+            CG.pipe
+                (encoderFields options fields |> CG.list)
+                [ CG.fqFun maybeExtraMod "values"
+                , encodeFn "object"
                 ]
     in
     impl
@@ -551,9 +562,12 @@ encoderFields options fields =
 -}
 encoderField : EncoderOptions -> String -> Expression -> Expression
 encoderField options name expr =
-    CG.tuple
-        [ CG.string name
-        , CG.apply [ expr, CG.access (CG.val "val") (Naming.safeCCL name) ]
+    CG.apply
+        [ CG.val "Just"
+        , CG.tuple
+            [ CG.string name
+            , CG.applyBinOp (CG.access (CG.val "val") (Naming.safeCCL name)) CG.piper expr
+            ]
         ]
 
 
@@ -561,9 +575,15 @@ encoderField options name expr =
 -}
 encoderOptionalField : EncoderOptions -> String -> Expression -> Expression
 encoderOptionalField options name expr =
-    CG.tuple
-        [ CG.string name
-        , CG.apply [ expr, CG.access (CG.val "val") (Naming.safeCCL name) ]
+    CG.apply
+        [ CG.fqFun maybeMod "map"
+        , CG.lambda [ CG.varPattern "fld" ]
+            (CG.tuple
+                [ CG.string name
+                , CG.applyBinOp (CG.val "fld") CG.piper expr
+                ]
+            )
+        , CG.access (CG.val "val") (Naming.safeCCL name)
         ]
 
 
@@ -585,6 +605,16 @@ dictEnumMod =
 enumMod : List String
 enumMod =
     [ "Enum" ]
+
+
+maybeMod : List String
+maybeMod =
+    [ "Maybe" ]
+
+
+maybeExtraMod : List String
+maybeExtraMod =
+    [ "Maybe", "Extra" ]
 
 
 dictRefinedMod : List String
@@ -610,3 +640,8 @@ encodeImport =
 enumImport : Import
 enumImport =
     CG.importStmt enumMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Enum" ])
+
+
+maybeExtraImport : Import
+maybeExtraImport =
+    CG.importStmt maybeExtraMod Nothing Nothing
