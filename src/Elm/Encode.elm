@@ -50,14 +50,14 @@ defaultEncoderOptions =
 
 {-| Generates a Encoder for a type declaration.
 -}
-encoder : String -> Declarable pos RefChecked -> FunGen
-encoder name decl =
+encoder : EncoderOptions -> String -> Declarable pos RefChecked -> FunGen
+encoder options name decl =
     case decl of
         DAlias _ _ l1Type ->
-            typeAliasEncoder name l1Type
+            typeAliasEncoder options name l1Type
 
         DSum _ _ constructors ->
-            customTypeEncoder name (List.Nonempty.toList constructors)
+            customTypeEncoder options name (List.Nonempty.toList constructors)
 
         DEnum _ _ labels ->
             enumEncoder name (List.Nonempty.toList labels)
@@ -66,8 +66,8 @@ encoder name decl =
             restrictedEncoder name res
 
 
-partialEncoder : String -> List (Field pos RefChecked) -> FunGen
-partialEncoder name fields =
+partialEncoder : EncoderOptions -> String -> List (Field pos RefChecked) -> FunGen
+partialEncoder options name fields =
     let
         encodeFnName =
             Naming.safeCCL (name ++ "Encoder")
@@ -79,7 +79,7 @@ partialEncoder name fields =
             CG.typed "Encoder" [ CG.typed typeName [] ]
 
         impl =
-            encoderNamedProduct name fields
+            encoderNamedProduct options name fields
 
         doc =
             CG.emptyDocComment
@@ -99,8 +99,8 @@ partialEncoder name fields =
 
 {-| Generates a Encoder for an L1 type alias.
 -}
-typeAliasEncoder : String -> Type pos RefChecked -> ( FunDecl, Linkage )
-typeAliasEncoder name l1Type =
+typeAliasEncoder : EncoderOptions -> String -> Type pos RefChecked -> ( FunDecl, Linkage )
+typeAliasEncoder options name l1Type =
     let
         encodeFnName =
             Naming.safeCCL (name ++ "Encoder")
@@ -112,7 +112,7 @@ typeAliasEncoder name l1Type =
             CG.typed "Encoder" [ CG.typed typeName [] ]
 
         impl =
-            encoderNamedType name l1Type
+            encoderNamedType options name l1Type
 
         doc =
             CG.emptyDocComment
@@ -132,8 +132,8 @@ typeAliasEncoder name l1Type =
 
 {-| Generates a Encoder for an L1 sum type.
 -}
-customTypeEncoder : String -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> ( FunDecl, Linkage )
-customTypeEncoder name constructors =
+customTypeEncoder : EncoderOptions -> String -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> ( FunDecl, Linkage )
+customTypeEncoder options name constructors =
     let
         encodeFnName =
             Naming.safeCCL (name ++ "Encoder")
@@ -145,7 +145,7 @@ customTypeEncoder name constructors =
             CG.typed "Encoder" [ CG.typed typeName [] ]
 
         impl =
-            encoderCustomType constructors
+            encoderCustomType options constructors
 
         doc =
             CG.emptyDocComment
@@ -241,12 +241,12 @@ restrictedEncoder name _ =
     )
 
 
-encoderCustomType : List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> Expression
-encoderCustomType constructors =
+encoderCustomType : EncoderOptions -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> Expression
+encoderCustomType options constructors =
     let
         encoderVariant name args =
             List.foldr
-                (\( _, l1Type, _ ) accum -> encoderType l1Type :: accum)
+                (\( _, l1Type, _ ) accum -> encoderType options l1Type :: accum)
                 [ Naming.safeCCU name |> CG.fun
                 , Naming.safeCCU name |> CG.string
                 , encodeFn ("variant" ++ String.fromInt (List.length args))
@@ -296,26 +296,26 @@ encoderMatchFn constructors =
 
 {-| Generates a Encoder for an L1 type that has been named as an alias.
 -}
-encoderNamedType : String -> Type pos RefChecked -> Expression
-encoderNamedType name l1Type =
+encoderNamedType : EncoderOptions -> String -> Type pos RefChecked -> Expression
+encoderNamedType options name l1Type =
     case l1Type of
         TUnit _ _ ->
             encoderUnit
 
         TBasic _ _ basic ->
-            encoderType l1Type
+            encoderType options l1Type
 
         TNamed _ _ named _ ->
             CG.string "encoderNamedType_TNamed"
 
         TProduct _ _ fields ->
-            encoderNamedProduct name (List.Nonempty.toList fields)
+            encoderNamedProduct options name (List.Nonempty.toList fields)
 
         TEmptyProduct _ _ ->
-            encoderNamedProduct name []
+            encoderNamedProduct options name []
 
         TContainer _ _ container ->
-            encoderType l1Type
+            encoderType options l1Type
 
         TFunction _ _ arg res ->
             CG.unit
@@ -323,20 +323,20 @@ encoderNamedType name l1Type =
 
 {-| Generates a Encoder for an L1 type.
 -}
-encoderType : Type pos RefChecked -> Expression
-encoderType l1Type =
+encoderType : EncoderOptions -> Type pos RefChecked -> Expression
+encoderType options l1Type =
     case l1Type of
         TBasic _ _ basic ->
             encoderBasic basic
 
         TNamed _ _ named _ ->
-            encoderNamed named
+            encoderNamed options named
 
         TProduct _ _ fields ->
             encoderProduct (List.Nonempty.toList fields)
 
         TContainer _ _ container ->
-            encoderContainer container
+            encoderContainer options container
 
         _ ->
             CG.unit
@@ -344,30 +344,30 @@ encoderType l1Type =
 
 {-| Generates a field encoder for a named field with an L1 type.
 -}
-encoderTypeField : String -> Type pos RefChecked -> Expression
-encoderTypeField name l1Type =
+encoderTypeField : EncoderOptions -> String -> Type pos RefChecked -> Expression
+encoderTypeField options name l1Type =
     case l1Type of
         TUnit _ _ ->
-            encoderUnit |> encoderField name
+            encoderUnit |> encoderField options name
 
         TBasic _ _ basic ->
             encoderBasic basic
-                |> encoderField name
+                |> encoderField options name
 
         TNamed _ _ named _ ->
-            encoderNamed named
-                |> encoderField name
+            encoderNamed options named
+                |> encoderField options name
 
         TProduct _ _ fields ->
             encoderProduct (List.Nonempty.toList fields)
-                |> encoderField name
+                |> encoderField options name
 
         TEmptyProduct _ _ ->
             encoderProduct []
-                |> encoderField name
+                |> encoderField options name
 
         TContainer _ _ container ->
-            encoderContainerField name container
+            encoderContainerField options name container
 
         TFunction _ _ arg res ->
             CG.unit
@@ -403,32 +403,40 @@ encoderBasic basic =
             encodeFn "string"
 
 
-encoderNamed : String -> Expression
-encoderNamed named =
-    CG.fun (Naming.safeCCL (named ++ "Encoder"))
+encoderNamed : EncoderOptions -> String -> Expression
+encoderNamed options named =
+    case options.namedTypeEncoder of
+        AssumeCodec ->
+            CG.apply
+                [ CG.fqFun codecMod "encoder"
+                , CG.val (Naming.safeCCL (named ++ "Codec"))
+                ]
+
+        AssumeEncoder ->
+            CG.fun (Naming.safeCCL (named ++ "Encoder"))
 
 
-encoderContainer : Container pos RefChecked -> Expression
-encoderContainer container =
+encoderContainer : EncoderOptions -> Container pos RefChecked -> Expression
+encoderContainer options container =
     case container of
         CList l1Type ->
-            CG.apply [ encodeFn "list", encoderType l1Type ]
+            CG.apply [ encodeFn "list", encoderType options l1Type ]
                 |> CG.parens
 
         CSet l1Type ->
-            CG.apply [ encodeFn "set", encoderType l1Type ]
+            CG.apply [ encodeFn "set", encoderType options l1Type ]
                 |> CG.parens
 
         CDict l1keyType l1valType ->
-            encoderDict l1keyType l1valType
+            encoderDict options l1keyType l1valType
 
         COptional l1Type ->
-            CG.apply [ encodeFn "maybe", encoderType l1Type ]
+            CG.apply [ encodeFn "maybe", encoderType options l1Type ]
                 |> CG.parens
 
 
-encoderDict : Type pos RefChecked -> Type pos RefChecked -> Expression
-encoderDict l1keyType l1valType =
+encoderDict : EncoderOptions -> Type pos RefChecked -> Type pos RefChecked -> Expression
+encoderDict options l1keyType l1valType =
     case l1keyType of
         TNamed _ _ name (RcRestricted basic) ->
             CG.apply
@@ -436,14 +444,14 @@ encoderDict l1keyType l1valType =
                 , CG.apply
                     [ CG.fqFun refinedMod "dictEncoder"
                     , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encodeFn "encoder", encoderType l1valType ]
+                    , CG.apply [ encodeFn "encoder", encoderType options l1valType ]
                         |> CG.parens
                     ]
                     |> CG.parens
                 , CG.apply
                     [ CG.fqFun refinedMod "dictDecoder"
                     , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encodeFn "decoder", encoderType l1valType ]
+                    , CG.apply [ encodeFn "decoder", encoderType options l1valType ]
                         |> CG.parens
                     ]
                     |> CG.parens
@@ -455,29 +463,29 @@ encoderDict l1keyType l1valType =
                 , CG.apply
                     [ CG.fqFun enumMod "dictEncoder"
                     , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encodeFn "encoder", encoderType l1valType ]
+                    , CG.apply [ encodeFn "encoder", encoderType options l1valType ]
                         |> CG.parens
                     ]
                     |> CG.parens
                 , CG.apply
                     [ CG.fqFun enumMod "dictDecoder"
                     , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encodeFn "decoder", encoderType l1valType ]
+                    , CG.apply [ encodeFn "decoder", encoderType options l1valType ]
                         |> CG.parens
                     ]
                     |> CG.parens
                 ]
 
         _ ->
-            CG.apply [ encodeFn "dict", encoderType l1valType ]
+            CG.apply [ encodeFn "dict", encoderType options l1valType ]
                 |> CG.parens
 
 
 {-| Generates a encoder for an L1 product type that has been named as an alias.
 The alias name is also the constructor function for the type.
 -}
-encoderNamedProduct : String -> List ( String, Type pos RefChecked, L1.Properties ) -> Expression
-encoderNamedProduct name fields =
+encoderNamedProduct : EncoderOptions -> String -> List ( String, Type pos RefChecked, L1.Properties ) -> Expression
+encoderNamedProduct options name fields =
     let
         typeName =
             Naming.safeCCU name
@@ -485,7 +493,7 @@ encoderNamedProduct name fields =
         impl =
             CG.apply
                 [ encodeFn "object"
-                , encoderFields fields |> CG.list
+                , encoderFields options fields |> CG.list
                 ]
     in
     impl
@@ -503,26 +511,26 @@ encoderProduct fields =
 {-| Generates a field encoder for an L1 container type. The 'optional' type is mapped
 onto `Maybe` and makes use of `Encoder.optionalField`.
 -}
-encoderContainerField : String -> Container pos RefChecked -> Expression
-encoderContainerField name container =
+encoderContainerField : EncoderOptions -> String -> Container pos RefChecked -> Expression
+encoderContainerField options name container =
     case container of
         CList l1Type ->
-            CG.apply [ encodeFn "list", encoderType l1Type ]
+            CG.apply [ encodeFn "list", encoderType options l1Type ]
                 |> CG.parens
-                |> encoderField name
+                |> encoderField options name
 
         CSet l1Type ->
-            CG.apply [ encodeFn "set", encoderType l1Type ]
+            CG.apply [ encodeFn "set", encoderType options l1Type ]
                 |> CG.parens
-                |> encoderField name
+                |> encoderField options name
 
         CDict l1keyType l1valType ->
-            encoderDict l1keyType l1valType
-                |> encoderField name
+            encoderDict options l1keyType l1valType
+                |> encoderField options name
 
         COptional l1Type ->
-            encoderType l1Type
-                |> encoderOptionalField name
+            encoderType options l1Type
+                |> encoderOptionalField options name
 
 
 
@@ -532,17 +540,17 @@ encoderContainerField name container =
 {-| Outputs encoders for a list of fields and terminates the list with `Encoder.buildObject`.
 Helper function useful when building record encoders.
 -}
-encoderFields : List ( String, Type pos RefChecked, L1.Properties ) -> List Expression
-encoderFields fields =
-    List.foldr (\( fieldName, l1Type, _ ) accum -> encoderTypeField fieldName l1Type :: accum)
+encoderFields : EncoderOptions -> List ( String, Type pos RefChecked, L1.Properties ) -> List Expression
+encoderFields options fields =
+    List.foldr (\( fieldName, l1Type, _ ) accum -> encoderTypeField options fieldName l1Type :: accum)
         []
         fields
 
 
 {-| Helper function for building field encoders.
 -}
-encoderField : String -> Expression -> Expression
-encoderField name expr =
+encoderField : EncoderOptions -> String -> Expression -> Expression
+encoderField options name expr =
     CG.tuple
         [ CG.string name
         , CG.apply [ expr, CG.access (CG.val "val") (Naming.safeCCL name) ]
@@ -551,12 +559,17 @@ encoderField name expr =
 
 {-| Helper function for building optional field encoders.
 -}
-encoderOptionalField : String -> Expression -> Expression
-encoderOptionalField name expr =
+encoderOptionalField : EncoderOptions -> String -> Expression -> Expression
+encoderOptionalField options name expr =
     CG.tuple
         [ CG.string name
         , CG.apply [ expr, CG.access (CG.val "val") (Naming.safeCCL name) ]
         ]
+
+
+codecMod : List String
+codecMod =
+    [ "Codec" ]
 
 
 encodeMod : List String
