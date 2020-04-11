@@ -101,7 +101,7 @@ partialEncoder options name fields =
         impl
     , CG.emptyLinkage
         |> CG.addImport encodeImport
-        |> CG.addImport maybeExtraImport
+        |> CG.addImport encodeOptionalImport
         |> CG.addExposing (CG.funExpose encodeFnName)
     )
 
@@ -503,8 +503,7 @@ encoderNamedProduct options name fields =
         impl =
             CG.pipe
                 (encoderFields options fields |> CG.list)
-                [ CG.fqFun maybeExtraMod "values"
-                , encodeFn "object"
+                [ CG.fqFun encodeOptionalMod "objectMaySkip"
                 ]
     in
     impl
@@ -562,29 +561,28 @@ encoderFields options fields =
 -}
 encoderField : EncoderOptions -> String -> Expression -> Expression
 encoderField options name expr =
-    CG.apply
-        [ CG.val "Just"
-        , CG.tuple
+    CG.applyBinOp
+        (CG.tuple
             [ CG.string name
-            , CG.applyBinOp (CG.access (CG.val "val") (Naming.safeCCL name)) CG.piper expr
+            , CG.access (CG.val "val") (Naming.safeCCL name)
             ]
-        ]
+        )
+        CG.piper
+        (CG.apply [ CG.fqFun encodeOptionalMod "field", expr ])
 
 
 {-| Helper function for building optional field encoders.
 -}
 encoderOptionalField : EncoderOptions -> String -> Expression -> Expression
 encoderOptionalField options name expr =
-    CG.apply
-        [ CG.fqFun maybeMod "map"
-        , CG.lambda [ CG.varPattern "fld" ]
-            (CG.tuple
-                [ CG.string name
-                , CG.applyBinOp (CG.val "fld") CG.piper expr
-                ]
-            )
-        , CG.access (CG.val "val") (Naming.safeCCL name)
-        ]
+    CG.applyBinOp
+        (CG.tuple
+            [ CG.string name
+            , CG.access (CG.val "val") (Naming.safeCCL name)
+            ]
+        )
+        CG.piper
+        (CG.apply [ CG.fqFun encodeOptionalMod "optionalField", expr ])
 
 
 codecMod : List String
@@ -595,6 +593,11 @@ codecMod =
 encodeMod : List String
 encodeMod =
     [ "Json", "Encode" ]
+
+
+encodeOptionalMod : List String
+encodeOptionalMod =
+    [ "EncodeOpt" ]
 
 
 dictEnumMod : List String
@@ -610,11 +613,6 @@ enumMod =
 maybeMod : List String
 maybeMod =
     [ "Maybe" ]
-
-
-maybeExtraMod : List String
-maybeExtraMod =
-    [ "Maybe", "Extra" ]
 
 
 dictRefinedMod : List String
@@ -637,11 +635,11 @@ encodeImport =
     CG.importStmt encodeMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Value" ])
 
 
+encodeOptionalImport : Import
+encodeOptionalImport =
+    CG.importStmt [ "Json", "Encode", "Optional" ] (Just encodeOptionalMod) Nothing
+
+
 enumImport : Import
 enumImport =
     CG.importStmt enumMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Enum" ])
-
-
-maybeExtraImport : Import
-maybeExtraImport =
-    CG.importStmt maybeExtraMod Nothing Nothing
