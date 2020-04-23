@@ -46,7 +46,7 @@ type RefChecked
     | RcRestricted L1.Basic
     | RcSum
     | RcTUnit
-    | RcTBasic
+    | RcTBasic L1.Basic
     | RcTNamed
     | RcTProduct
     | RcTEmptyProduct
