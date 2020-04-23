@@ -53,7 +53,8 @@ named types, the encoders for those other types also need to be generated. The t
 closure gives the full set of declaration to generate encoders for to complete the code.
 
 -- TODO: Make the buffer a Dict by name. That will automatically remove duplicates. DFS
-over a Dict. Use ai-search.
+over a Dict. Use ai-search? Find all goals as a list of errors or named declarations, combine
+errors, tranform to a dict.
 
 -}
 transitiveClosure : L2 pos -> L2 pos -> ResultME L3Error (L2 pos)
