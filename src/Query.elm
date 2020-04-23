@@ -17,6 +17,7 @@ import L2 exposing (L2, RefChecked)
 import L3 exposing (L3, L3Error(..), PropertiesAPI)
 import List.Nonempty as Nonempty exposing (Nonempty(..))
 import ResultME exposing (ResultME)
+import Search exposing (Step)
 
 
 
@@ -73,6 +74,25 @@ transitiveClosure set model =
     --     Dict.empty
     --     set
     DerefDeclMissing "" |> ResultME.error
+
+
+type alias State pos =
+    Result L3Error ( String, Declarable pos L2.RefChecked )
+
+
+step : L2 pos -> Step (State pos)
+step model state =
+    case state of
+        Err _ ->
+            []
+
+        Ok decl ->
+            case decl of
+                ( name, DAlias _ _ (TNamed _ _ nextName _) ) ->
+                    []
+
+                _ ->
+                    []
 
 
 
