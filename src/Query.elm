@@ -21,11 +21,12 @@ import ResultME exposing (ResultME)
 
 
 -- Dereferencing named type aliases.
--- TODO: This should recurse on named types, as there may be a chain of aliases.
--- TODO: Should make this over L2 not L3? Then it is useful in L2 situations.
--- TODO: Transitive closure over L2.
 
 
+{-| Dereferences an alias. If an alias is to another alias, since it consists only of a named
+type, this name will also be derferences recursively, until something that is not a named type
+is encountered.
+-}
 deref : String -> L2 pos -> ResultME L3Error (Declarable pos RefChecked)
 deref name model =
     case Dict.get name model of
@@ -39,6 +40,38 @@ deref name model =
 
         Nothing ->
             DerefDeclMissing name |> ResultME.error
+
+
+{-| Finds the transitive closure starting from a sub-set of declarations from an L2.
+Any members of the sub-set that are aliases, will pull their referred to declarations
+into the closure, and this process will be continued recursively until no more members
+are added to the closure.
+
+This is useful if some declarations need to be generated from, including anything they
+reference. For example, to code generate an encoder for a declaration that contains other
+named types, the encoders for those other types also need to be generated. The transitive
+closure gives the full set of declaration to generate encoders for to complete the code.
+
+-- TODO: Make the buffer a Dict by name. That will automatically remove duplicates. DFS
+over a Dict. Use ai-search.
+
+-}
+transitiveClosure : L2 pos -> L2 pos -> ResultME L3Error (L2 pos)
+transitiveClosure set model =
+    let
+        doOne name decl accum =
+            case decl of
+                DAlias _ _ (TNamed _ _ nextName _) ->
+                    deref nextName model
+
+                _ ->
+                    Ok decl
+    in
+    -- Dict.foldl
+    --     doOne
+    --     Dict.empty
+    --     set
+    DerefDeclMissing "" |> ResultME.error
 
 
 
