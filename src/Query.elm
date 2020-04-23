@@ -23,11 +23,12 @@ import ResultME exposing (ResultME)
 -- Dereferencing named type aliases.
 -- TODO: This should recurse on named types, as there may be a chain of aliases.
 -- TODO: Should make this over L2 not L3? Then it is useful in L2 situations.
+-- TODO: Transitive closure over L2.
 
 
-deref : String -> L3 pos -> ResultME L3Error (Declarable pos RefChecked)
+deref : String -> L2 pos -> ResultME L3Error (Declarable pos RefChecked)
 deref name model =
-    case Dict.get name model.declarations of
+    case Dict.get name model of
         Just val ->
             case val of
                 DAlias _ _ (TNamed _ _ nextName _) ->
