@@ -47,7 +47,7 @@ type RefChecked
     | RcSum
     | RcTUnit
     | RcTBasic L1.Basic
-    | RcTNamed
+    | RcTNamed -- TODO: Should recursively explore this?
     | RcTProduct
     | RcTEmptyProduct
     | RcTContainer
