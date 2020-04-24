@@ -12,12 +12,12 @@ module Query exposing (..)
 -}
 
 import Dict exposing (Dict)
-import L1 exposing (Declarable(..), Field, Properties, Type(..))
+import L1 exposing (Container(..), Declarable(..), Field, Properties, Type(..))
 import L2 exposing (L2, RefChecked)
 import L3 exposing (L3, L3Error(..), PropertiesAPI)
 import List.Nonempty as Nonempty exposing (Nonempty(..))
 import ResultME exposing (ResultME)
-import Search exposing (Step)
+import Search exposing (SearchResult(..), Step)
 
 
 
@@ -44,40 +44,54 @@ deref name model =
 
 
 {-| Finds the transitive closure starting from a sub-set of declarations from an L2.
-Any members of the sub-set that are aliases, will pull their referred to declarations
+Any type references in these declarations will pull their referred to declarations
 into the closure, and this process will be continued recursively until no more members
 are added to the closure.
 
-This is useful if some declarations need to be generated from, including anything they
-reference. For example, to code generate an encoder for a declaration that contains other
-named types, the encoders for those other types also need to be generated. The transitive
-closure gives the full set of declaration to generate encoders for to complete the code.
+This is useful if some declarations need to be generated from, including all their
+dependencies. For example, to code generate an encoder for a declaration that references
+other types by name, the encoders for those other types also need to be generated. The
+transitive closure gives the full set of declaration to generate encoders for to complete
+the code.
 
--- TODO: Make the buffer a Dict by name. That will automatically remove duplicates. DFS
-over a Dict. Use ai-search? Find all goals as a list of errors or named declarations, combine
-errors, tranform to a dict.
+-- TODO: Make the buffer a Set keyed by declaration name. That will remove duplicates from the
+search but probably not all.
+-- TODO: Add the allGoals function to the Search package.
 
 -}
 transitiveClosure : L2 pos -> L2 pos -> ResultME L3Error (L2 pos)
 transitiveClosure set model =
     let
-        doOne name decl accum =
-            case decl of
-                DAlias _ _ (TNamed _ _ nextName _) ->
-                    deref nextName model
-
-                _ ->
-                    Ok decl
+        start =
+            Dict.toList set
+                |> List.map Ok
+                |> List.map (\val -> ( val, True ))
     in
-    -- Dict.foldl
-    --     doOne
-    --     Dict.empty
-    --     set
-    DerefDeclMissing "" |> ResultME.error
+    Search.depthFirst { cost = always 1.0, step = step model } start
+        |> allGoals
+        |> ResultME.combineList
+        |> ResultME.map Dict.fromList
+
+
+allGoals : SearchResult (State pos) -> List (State pos)
+allGoals result =
+    let
+        innerAllGoals innerResult accum =
+            case innerResult of
+                Complete ->
+                    accum
+
+                Goal state moreFn ->
+                    innerAllGoals (moreFn ()) (state :: accum)
+
+                Ongoing state moreFn ->
+                    innerAllGoals (moreFn ()) accum
+    in
+    innerAllGoals result []
 
 
 type alias State pos =
-    Result L3Error ( String, Declarable pos L2.RefChecked )
+    ResultME L3Error ( String, Declarable pos L2.RefChecked )
 
 
 step : L2 pos -> Step (State pos)
@@ -86,13 +100,72 @@ step model state =
         Err _ ->
             []
 
-        Ok decl ->
-            case decl of
-                ( name, DAlias _ _ (TNamed _ _ nextName _) ) ->
-                    []
+        Ok ( name, decl ) ->
+            stepDecl model decl []
 
-                _ ->
-                    []
+
+stepDecl : L2 pos -> Declarable pos L2.RefChecked -> List ( State pos, Bool ) -> List ( State pos, Bool )
+stepDecl model decl accum =
+    case decl of
+        DAlias _ _ atype ->
+            stepType model atype accum
+
+        DSum _ _ constructors ->
+            Nonempty.foldl
+                (\( _, fields ) consAccum ->
+                    List.foldl
+                        (\( _, fType, _ ) fieldAccum -> stepType model fType fieldAccum)
+                        consAccum
+                        fields
+                )
+                accum
+                constructors
+
+        _ ->
+            accum
+
+
+stepType : L2 pos -> Type pos L2.RefChecked -> List ( State pos, Bool ) -> List ( State pos, Bool )
+stepType model l2type accum =
+    case l2type of
+        TNamed _ _ refName _ ->
+            case Dict.get refName model of
+                Just val ->
+                    ( Ok ( refName, val ), True ) :: accum
+
+                Nothing ->
+                    ( DerefDeclMissing refName |> ResultME.error, True ) :: accum
+
+        TProduct _ _ fields ->
+            Nonempty.foldl
+                (\( _, fType, _ ) fieldAccum -> stepType model fType fieldAccum)
+                accum
+                fields
+
+        TContainer _ _ container ->
+            stepContainer model container accum
+
+        TFunction _ _ fromType toType ->
+            stepType model toType (stepType model fromType accum)
+
+        _ ->
+            accum
+
+
+stepContainer : L2 pos -> Container pos L2.RefChecked -> List ( State pos, Bool ) -> List ( State pos, Bool )
+stepContainer model container accum =
+    case container of
+        CList l2type ->
+            stepType model l2type accum
+
+        CSet l2type ->
+            stepType model l2type accum
+
+        CDict keyType valType ->
+            stepType model valType (stepType model keyType accum)
+
+        COptional l2type ->
+            stepType model l2type accum
 
 
 
