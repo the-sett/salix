@@ -543,10 +543,6 @@ encoderContainerField options name container =
                 |> encoderOptionalField options name
 
 
-
---== Helper Functions
-
-
 {-| Outputs encoders for a list of fields and terminates the list with `Encoder.buildObject`.
 Helper function useful when building record encoders.
 -}
@@ -583,6 +579,10 @@ encoderOptionalField options name expr =
         )
         CG.piper
         (CG.apply [ CG.fqFun encodeOptionalMod "optionalField", expr ])
+
+
+
+--== Helper Functions
 
 
 codecMod : List String
