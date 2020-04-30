@@ -185,7 +185,7 @@ expectAlias decl =
             Ok ( pos, props, l1type )
 
         _ ->
-            NotExpectedKind (declarableConsName decl) "DAlias" |> ResultME.error
+            NotExpectedKind (L1.declarableConsName decl) "DAlias" |> ResultME.error
 
 
 
@@ -204,7 +204,7 @@ expectProduct l1type =
             Ok ( pos, props, fields )
 
         _ ->
-            NotExpectedKind "TProduct" (typeConsName l1type) |> ResultME.error
+            NotExpectedKind "TProduct" (L1.typeConsName l1type) |> ResultME.error
 
 
 expectProductOrEmpty : Type pos ref -> ResultME L3Error ( pos, Properties, List (Field pos ref) )
@@ -217,7 +217,7 @@ expectProductOrEmpty l1type =
             Ok ( pos, props, [] )
 
         _ ->
-            NotExpectedKind "TProduct" (typeConsName l1type) |> ResultME.error
+            NotExpectedKind "TProduct" (L1.typeConsName l1type) |> ResultME.error
 
 
 
@@ -339,48 +339,3 @@ filterNonemptyByProps :
     -> ResultME L3.L3Error (List a)
 filterNonemptyByProps propertiesApi filter vals =
     filterListByProps propertiesApi filter (Nonempty.toList vals)
-
-
-
--- Helpers
-
-
-declarableConsName : Declarable pos ref -> String
-declarableConsName decl =
-    case decl of
-        DAlias _ _ _ ->
-            "DAlias"
-
-        DSum _ _ _ ->
-            "DSum"
-
-        DEnum _ _ _ ->
-            "DEnum"
-
-        DRestricted _ _ _ ->
-            "DRestricted"
-
-
-typeConsName : Type pos ref -> String
-typeConsName l1type =
-    case l1type of
-        TUnit _ _ ->
-            "TUnit"
-
-        TBasic _ _ _ ->
-            "TBasic"
-
-        TNamed _ _ _ _ ->
-            "TNamed"
-
-        TProduct _ _ _ ->
-            "TProduct"
-
-        TEmptyProduct _ _ ->
-            "TEmptyProduct"
-
-        TContainer _ _ _ ->
-            "TContainer"
-
-        TFunction _ _ _ _ ->
-            "TFunction"

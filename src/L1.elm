@@ -5,6 +5,7 @@ module L1 exposing
     , Unchecked(..)
     , positionOfDeclarable, positionOfType, propertiesOfDeclarable, propertiesOfType
     , updatePropertiesOfDeclarable, updatePropertiesOfType
+    , declarableConsName, typeConsName
     )
 
 {-| Defines the level 1 language for data modelling.
@@ -30,6 +31,11 @@ module L1 exposing
 
 @docs positionOfDeclarable, positionOfType, propertiesOfDeclarable, propertiesOfType
 @docs updatePropertiesOfDeclarable, updatePropertiesOfType
+
+
+# Meta information on the model.
+
+@docs declarableConsName, typeConsName
 
 -}
 
@@ -341,3 +347,44 @@ positionOfType type_ =
 
         TFunction pos _ _ _ ->
             pos
+
+
+declarableConsName : Declarable pos ref -> String
+declarableConsName decl =
+    case decl of
+        DAlias _ _ _ ->
+            "DAlias"
+
+        DSum _ _ _ ->
+            "DSum"
+
+        DEnum _ _ _ ->
+            "DEnum"
+
+        DRestricted _ _ _ ->
+            "DRestricted"
+
+
+typeConsName : Type pos ref -> String
+typeConsName l1type =
+    case l1type of
+        TUnit _ _ ->
+            "TUnit"
+
+        TBasic _ _ _ ->
+            "TBasic"
+
+        TNamed _ _ _ _ ->
+            "TNamed"
+
+        TProduct _ _ _ ->
+            "TProduct"
+
+        TEmptyProduct _ _ ->
+            "TEmptyProduct"
+
+        TContainer _ _ _ ->
+            "TContainer"
+
+        TFunction _ _ _ _ ->
+            "TFunction"
