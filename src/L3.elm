@@ -9,8 +9,17 @@ module L3 exposing
 properties indicating that the model has particular features needed by particular
 code generators.
 
-A level 3 language ensures the specific requirements for processing by a specific
-code generator are being met.
+A level 3 processor is something that consumes a data model with particular
+properties. It declares up-front what the properties it consumes are, and this
+allows its input to be checked against it prior to processing it; missing or
+invalid properties can be reported as errors back to the user.
+
+A level 3 language combines together an L2 data model, and optionally a set of
+properties that are understood by a level 3 processor and control how it processes
+the model. An example might be a name property that tells an L3 processor how to
+name some code module that it generates; the L3 language says what value the name
+is to take, and the L3 processor expects that to be set and will consume that value
+when naming the module it generates.
 
 
 # The L3 data modelling language.
