@@ -14,7 +14,6 @@ module Elm.Encode exposing
 
 -}
 
-import Dict
 import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, LetDeclaration, Linkage, Pattern, TypeAnnotation)
 import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Helper as Util
@@ -549,27 +548,6 @@ Helper function useful when building record encoders.
 -}
 encoderFields : EncoderOptions -> List ( String, Type pos RefChecked, L1.Properties ) -> List Expression
 encoderFields options fields =
-    let
-        _ =
-            List.foldl
-                (\( _, _, props ) _ ->
-                    let
-                        maybeLocName =
-                            Dict.get "locationName" props
-
-                        _ =
-                            case maybeLocName of
-                                Just _ ->
-                                    Debug.log "encoder locationName" maybeLocName
-
-                                Nothing ->
-                                    maybeLocName
-                    in
-                    ()
-                )
-                ()
-                fields
-    in
     List.foldr (\( fieldName, l1Type, _ ) accum -> encoderTypeField options fieldName l1Type :: accum)
         []
         fields
