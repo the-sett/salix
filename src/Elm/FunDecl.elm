@@ -2,6 +2,7 @@ module Elm.FunDecl exposing
     ( FunGen, FunDecl
     , Options, defaultOptions
     , asTopLevel, asLetDecl
+    , asExpression
     )
 
 {-| FunDecl captures function declarations along with any associated linkage required.
@@ -127,20 +128,17 @@ asLetDecl options funGen =
         |> (\( fd, linkage ) -> ( CG.letFunction fd.name fd.args fd.impl, linkage ))
 
 
+{-| Generates an `Expression` for a function.
 
-{- Generates an `Expression` for a function.
+Note: As the expression has not been assigned to a name, it cannot be visible
+outside of the module. For this reason the `inExposings` option is always set
+to `False` when using this. If you decide to expose the function you must add
+whatever name you give it back into the linkage.
 
-   Note: As the expression has not been assigned to a name, it cannot be visible
-   outside of the module. For this reason the `inExposings` option is always set
-   to `False` when using this. If you decide to expose the function you must add
-   whatever name you give it back into the linkage.
-
-   An expression will not have any docs or a type signature either.
-
-   TODO: Not sure about this, as won't know what the args are unless returned too?
+An expression will not have any docs or a type signature either.
 
 -}
--- asExpression : Options -> FunGen -> ( LetDeclaration, Expression )
--- asExpression options funDecl =
---     applyOptions options funDecl
---         |> (\fd -> fd.impl)
+asExpression : Options -> FunGen -> ( Expression, Linkage )
+asExpression options funDecl =
+    applyOptions options funDecl
+        |> (\( fd, linkage ) -> ( fd.impl, linkage ))
