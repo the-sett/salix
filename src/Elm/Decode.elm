@@ -19,7 +19,7 @@ import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Helper as Util
 import L1 exposing (Basic(..), Container(..), Declarable(..), Field, Restricted(..), Type(..))
 import L2 exposing (RefChecked(..))
-import List.Nonempty
+import List.Nonempty as Nonempty exposing (Nonempty(..))
 import Maybe.Extra
 import Naming
 import Set exposing (Set)
@@ -65,16 +65,16 @@ decoder options name decl =
             typeAliasDecoder options name l1Type
 
         DSum _ _ constructors ->
-            customTypeDecoder options name (List.Nonempty.toList constructors)
+            customTypeDecoder options name (Nonempty.toList constructors)
 
         DEnum _ _ labels ->
-            enumDecoder name (List.Nonempty.toList labels)
+            enumDecoder name (Nonempty.toList labels)
 
         DRestricted _ _ res ->
             restrictedDecoder name res
 
 
-partialDecoder : DecoderOptions -> String -> List (Field pos RefChecked) -> FunGen
+partialDecoder : DecoderOptions -> String -> Nonempty (Field pos RefChecked) -> FunGen
 partialDecoder options name fields =
     let
         decodeFnName =
@@ -318,10 +318,10 @@ decoderNamedType options name l1Type =
             CG.string "decoderNamedType_TNamed"
 
         TProduct _ _ fields ->
-            decoderNamedProduct options name (List.Nonempty.toList fields)
+            decoderNamedProduct options name fields
 
         TEmptyProduct _ _ ->
-            decoderNamedProduct options name []
+            CG.unit
 
         TContainer _ _ container ->
             decoderType options l1Type
@@ -342,7 +342,7 @@ decoderType options l1Type =
             decoderNamed options named
 
         TProduct _ _ fields ->
-            decoderProduct (List.Nonempty.toList fields)
+            decoderProduct (Nonempty.toList fields)
 
         TContainer _ _ container ->
             decoderContainer options container
@@ -368,7 +368,7 @@ decoderTypeField options name l1Type =
                 |> decoderField options name
 
         TProduct _ _ fields ->
-            decoderProduct (List.Nonempty.toList fields)
+            decoderProduct (Nonempty.toList fields)
                 |> decoderField options name
 
         TEmptyProduct _ _ ->
@@ -494,17 +494,17 @@ decoderDict options l1keyType l1valType =
 {-| Generates a decoder for an L1 product type that has been named as an alias.
 The alias name is also the constructor function for the type.
 -}
-decoderNamedProduct : DecoderOptions -> String -> List ( String, Type pos RefChecked, L1.Properties ) -> Expression
+decoderNamedProduct : DecoderOptions -> String -> Nonempty ( String, Type pos RefChecked, L1.Properties ) -> Expression
 decoderNamedProduct options name fields =
     let
         typeName =
             Naming.safeCCU name
 
+        (Nonempty hdFieldDecoder remFieldDecoders) =
+            decoderFields options fields
+
         impl =
-            CG.pipe
-                (decoderFields options fields |> CG.list)
-                [ CG.fqFun decodeOptionalMod "objectMaySkip"
-                ]
+            CG.pipe hdFieldDecoder remFieldDecoders
     in
     impl
 
@@ -546,10 +546,9 @@ decoderContainerField options name container =
 {-| Outputs decoders for a list of fields and terminates the list with `Decoder.buildObject`.
 Helper function useful when building record decoders.
 -}
-decoderFields : DecoderOptions -> List ( String, Type pos RefChecked, L1.Properties ) -> List Expression
+decoderFields : DecoderOptions -> Nonempty ( String, Type pos RefChecked, L1.Properties ) -> Nonempty Expression
 decoderFields options fields =
-    List.foldr (\( fieldName, l1Type, _ ) accum -> decoderTypeField options fieldName l1Type :: accum)
-        []
+    Nonempty.map (\( fieldName, l1Type, _ ) -> decoderTypeField options fieldName l1Type)
         fields
 
 
@@ -557,28 +556,14 @@ decoderFields options fields =
 -}
 decoderField : DecoderOptions -> String -> Expression -> Expression
 decoderField options name expr =
-    CG.applyBinOp
-        (CG.tuple
-            [ CG.string name
-            , CG.access (CG.val "val") (Naming.safeCCL name)
-            ]
-        )
-        CG.piper
-        (CG.apply [ CG.fqFun decodeOptionalMod "field", expr ])
+    CG.apply [ CG.fqFun jsonDecodePipelineMod "required", CG.string name, expr ]
 
 
 {-| Helper function for building optional field decoders.
 -}
 decoderOptionalField : DecoderOptions -> String -> Expression -> Expression
 decoderOptionalField options name expr =
-    CG.applyBinOp
-        (CG.tuple
-            [ CG.string name
-            , CG.access (CG.val "val") (Naming.safeCCL name)
-            ]
-        )
-        CG.piper
-        (CG.apply [ CG.fqFun decodeOptionalMod "optionalField", expr ])
+    CG.apply [ CG.fqFun jsonDecodePipelineMod "optional", CG.string name, expr ]
 
 
 
@@ -598,6 +583,11 @@ decodeMod =
 decodeOptionalMod : List String
 decodeOptionalMod =
     [ "DecodeOpt" ]
+
+
+jsonDecodePipelineMod : List String
+jsonDecodePipelineMod =
+    [ "Pipeline" ]
 
 
 dictEnumMod : List String
@@ -638,6 +628,11 @@ decodeImport =
 decodeOptionalImport : Import
 decodeOptionalImport =
     CG.importStmt [ "Json", "Decode", "Optional" ] (Just decodeOptionalMod) Nothing
+
+
+jsonDecodePipelineImport : Import
+jsonDecodePipelineImport =
+    CG.importStmt [ "Json", "Decode", "Pipeline" ] (Just jsonDecodePipelineMod) Nothing
 
 
 enumImport : Import
