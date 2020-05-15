@@ -15,6 +15,7 @@
         "SourcePos",
         "Elm.Codec",
         "Elm.Encode",
+        "Elm.Decode",
         "Elm.Lang",
         "Elm.FunDecl"
     ],
