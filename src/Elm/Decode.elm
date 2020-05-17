@@ -563,7 +563,11 @@ decoderField options name expr =
 -}
 decoderOptionalField : DecoderOptions -> String -> Expression -> Expression
 decoderOptionalField options name expr =
-    CG.apply [ CG.fqFun jsonDecodePipelineMod "optional", CG.string name, expr ]
+    let
+        maybeDecoder =
+            CG.apply [ CG.fqFun decodeMod "maybe", expr ] |> CG.parens
+    in
+    CG.apply [ CG.fqFun jsonDecodePipelineMod "optional", CG.string name, maybeDecoder, CG.val "Nothing" ]
 
 
 
