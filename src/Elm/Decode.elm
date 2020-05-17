@@ -101,7 +101,7 @@ partialDecoder options name fields =
         impl
     , CG.emptyLinkage
         |> CG.addImport decodeImport
-        |> CG.addImport decodeOptionalImport
+        |> CG.addImport jsonDecodePipelineImport
         |> CG.addExposing (CG.funExpose decodeFnName)
     )
 
@@ -623,11 +623,6 @@ decodeFn =
 decodeImport : Import
 decodeImport =
     CG.importStmt decodeMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Value" ])
-
-
-decodeOptionalImport : Import
-decodeOptionalImport =
-    CG.importStmt [ "Json", "Decode", "Optional" ] (Just decodeOptionalMod) Nothing
 
 
 jsonDecodePipelineImport : Import

@@ -139,6 +139,6 @@ An expression will not have any docs or a type signature either.
 
 -}
 asExpression : Options -> FunGen -> ( Expression, Linkage )
-asExpression options funDecl =
-    applyOptions options funDecl
+asExpression options funGen =
+    applyOptions { options | inExposings = False } funGen
         |> (\( fd, linkage ) -> ( fd.impl, linkage ))
