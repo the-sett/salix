@@ -1,13 +1,33 @@
-module Query exposing (..)
+module Query exposing
+    ( deref
+    , transitiveClosure
+    , expectAlias, expectProductOrEmpty
+    , PropertyFilter, andPropFilter, notPropFilter, orPropFilter
+    , filterDictByProps, filterListByProps
+    )
 
 {-| Functions for querying Salix models.
 
 
 # Dereferencing named type aliases.
 
--- Maybe this should all just go in the L3 module?
-
 @docs deref
+
+
+# Find dependency sets.
+
+@docs transitiveClosure
+
+
+# Partial projections as expectations.
+
+@docs expectAlias, expectProductOrEmpty
+
+
+# Filtering by properties.
+
+@docs PropertyFilter, andPropFilter, notPropFilter, orPropFilter
+@docs filterDictByProps, filterListByProps
 
 -}
 
