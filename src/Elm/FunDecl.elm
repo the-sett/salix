@@ -1,8 +1,7 @@
 module Elm.FunDecl exposing
     ( FunGen, FunDecl
     , Options, defaultOptions
-    , asTopLevel, asLetDecl
-    , asExpression
+    , asTopLevel, asLetDecl, asExpression
     )
 
 {-| FunDecl captures function declarations along with any associated linkage required.
@@ -24,7 +23,7 @@ function can be used.
 
 @docs Options, defaultOptions
 
-@docs asTopLevel, asLetDecl
+@docs asTopLevel, asLetDecl, asExpression
 
 -}
 
@@ -32,6 +31,8 @@ import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression,
 import Maybe.Extra
 
 
+{-| Options for generating functions.
+-}
 type alias Options =
     { name : Maybe String
     , inExposings : Bool
@@ -41,6 +42,9 @@ type alias Options =
     }
 
 
+{-| The default set of options.
+-}
+defaultOptions : Options
 defaultOptions =
     { name = Nothing
     , inExposings = True
@@ -58,10 +62,14 @@ type alias FunBuilder =
 --== Function Generators
 
 
+{-| A generated function with its linkage.
+-}
 type alias FunGen =
     ( FunDecl, Linkage )
 
 
+{-| All the parts of a function declaration.
+-}
 type alias FunDecl =
     { doc : Maybe (Comment DocComment)
     , sig : Maybe TypeAnnotation

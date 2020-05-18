@@ -96,6 +96,8 @@ type alias ProcessorImpl pos err =
     }
 
 
+{-| Yields the constructor name for a `RefChecked`.
+-}
 refCheckedConsName : RefChecked -> String
 refCheckedConsName refChecked =
     case refChecked of

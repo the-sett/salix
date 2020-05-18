@@ -349,6 +349,8 @@ positionOfType type_ =
             pos
 
 
+{-| Yields the constructor name for a `Declarable`.
+-}
 declarableConsName : Declarable pos ref -> String
 declarableConsName decl =
     case decl of
@@ -365,6 +367,8 @@ declarableConsName decl =
             "DRestricted"
 
 
+{-| Yields the constructor name for a `Type`.
+-}
 typeConsName : Type pos ref -> String
 typeConsName l1type =
     case l1type of
