@@ -90,9 +90,12 @@ search but probably not all.
 transitiveClosure : L2 pos -> L2 pos -> ResultME L3Error (L2 pos)
 transitiveClosure set model =
     let
+        crumbs =
+            Dict.keys set |> Set.fromList
+
         start =
             Dict.toList set
-                |> List.map (\( name, decl ) -> { name = name, decl = decl })
+                |> List.map (\( name, decl ) -> { name = name, decl = decl, crumbs = crumbs })
                 |> List.map Ok
                 |> List.map (\val -> ( val, True ))
     in
@@ -138,21 +141,21 @@ step model state =
         Err _ ->
             []
 
-        Ok { name, decl } ->
-            stepDecl model decl []
+        Ok { name, decl, crumbs } ->
+            stepDecl (Set.insert name crumbs) model decl []
 
 
-stepDecl : L2 pos -> Declarable pos L2.RefChecked -> List ( State pos, Bool ) -> List ( State pos, Bool )
-stepDecl model decl accum =
+stepDecl : Set String -> L2 pos -> Declarable pos L2.RefChecked -> List ( State pos, Bool ) -> List ( State pos, Bool )
+stepDecl crumbs model decl accum =
     case decl of
         DAlias _ _ atype ->
-            stepType model atype accum
+            stepType crumbs model atype accum
 
         DSum _ _ constructors ->
             Nonempty.foldl
                 (\( _, fields ) consAccum ->
                     List.foldl
-                        (\( _, fType, _ ) fieldAccum -> stepType model fType fieldAccum)
+                        (\( _, fType, _ ) fieldAccum -> stepType crumbs model fType fieldAccum)
                         consAccum
                         fields
                 )
@@ -163,47 +166,59 @@ stepDecl model decl accum =
             accum
 
 
-stepType : L2 pos -> Type pos L2.RefChecked -> List ( State pos, Bool ) -> List ( State pos, Bool )
-stepType model l2type accum =
+stepType : Set String -> L2 pos -> Type pos L2.RefChecked -> List ( State pos, Bool ) -> List ( State pos, Bool )
+stepType crumbs model l2type accum =
     case l2type of
         TNamed _ _ refName _ ->
-            case Dict.get refName model of
-                Just val ->
-                    ( Ok { name = refName, decl = val }, True ) :: accum
+            case Set.member refName crumbs of
+                True ->
+                    accum
 
-                Nothing ->
-                    ( DerefDeclMissing refName |> ResultME.error, True ) :: accum
+                False ->
+                    case Dict.get refName model of
+                        Just val ->
+                            ( Ok
+                                { name = refName
+                                , decl = val
+                                , crumbs = crumbs
+                                }
+                            , True
+                            )
+                                :: accum
+
+                        Nothing ->
+                            ( DerefDeclMissing refName |> ResultME.error, True ) :: accum
 
         TProduct _ _ fields ->
             Nonempty.foldl
-                (\( _, fType, _ ) fieldAccum -> stepType model fType fieldAccum)
+                (\( _, fType, _ ) fieldAccum -> stepType crumbs model fType fieldAccum)
                 accum
                 fields
 
         TContainer _ _ container ->
-            stepContainer model container accum
+            stepContainer crumbs model container accum
 
         TFunction _ _ fromType toType ->
-            stepType model toType (stepType model fromType accum)
+            stepType crumbs model toType (stepType crumbs model fromType accum)
 
         _ ->
             accum
 
 
-stepContainer : L2 pos -> Container pos L2.RefChecked -> List ( State pos, Bool ) -> List ( State pos, Bool )
-stepContainer model container accum =
+stepContainer : Set String -> L2 pos -> Container pos L2.RefChecked -> List ( State pos, Bool ) -> List ( State pos, Bool )
+stepContainer crumbs model container accum =
     case container of
         CList l2type ->
-            stepType model l2type accum
+            stepType crumbs model l2type accum
 
         CSet l2type ->
-            stepType model l2type accum
+            stepType crumbs model l2type accum
 
         CDict keyType valType ->
-            stepType model valType (stepType model keyType accum)
+            stepType crumbs model valType (stepType crumbs model keyType accum)
 
         COptional l2type ->
-            stepType model l2type accum
+            stepType crumbs model l2type accum
 
 
 
