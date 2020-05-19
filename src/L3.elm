@@ -2,7 +2,8 @@ module L3 exposing
     ( L3
     , Processor, ProcessorImpl, builder
     , L3Error(..), errorBuilder, errorCatalogue
-    , DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
+    , DefaultProperties, emptyDefaultProperties
+    , PropertiesAPI, PropertyGet, makePropertiesAPI
     )
 
 {-| Defines the level 3 language for data models that have been annotated with
@@ -39,7 +40,8 @@ when naming the module it generates.
 
 # Defaulting of properties across the data model, and APIs to read properties.
 
-@docs DefaultProperties, PropertiesAPI, PropertyGet, makePropertiesAPI
+@docs DefaultProperties, emptyDefaultProperties
+@docs PropertiesAPI, PropertyGet, makePropertiesAPI
 
 -}
 
@@ -203,6 +205,28 @@ type alias DefaultProperties =
     , emptyProduct : ( PropSpecs, Properties )
     , container : ( PropSpecs, Properties )
     , function : ( PropSpecs, Properties )
+    }
+
+
+emptyDefaultProperties : DefaultProperties
+emptyDefaultProperties =
+    let
+        emptySpec =
+            ( Dict.empty, L1.emptyProperties )
+    in
+    { top = emptySpec
+    , alias = emptySpec
+    , sum = emptySpec
+    , enum = emptySpec
+    , restricted = emptySpec
+    , fields = emptySpec
+    , unit = emptySpec
+    , basic = emptySpec
+    , named = emptySpec
+    , product = emptySpec
+    , emptyProduct = emptySpec
+    , container = emptySpec
+    , function = emptySpec
     }
 
 
