@@ -38,6 +38,7 @@ import L3 exposing (L3, L3Error(..), PropertiesAPI)
 import List.Nonempty as Nonempty exposing (Nonempty(..))
 import ResultME exposing (ResultME)
 import Search exposing (SearchResult(..), Step)
+import Set exposing (Set)
 
 
 
@@ -91,12 +92,14 @@ transitiveClosure set model =
     let
         start =
             Dict.toList set
+                |> List.map (\( name, decl ) -> { name = name, decl = decl })
                 |> List.map Ok
                 |> List.map (\val -> ( val, True ))
     in
     Search.depthFirst { cost = always 1.0, step = step model } start
         |> allGoals
         |> ResultME.combineList
+        |> ResultME.map (List.map (\{ name, decl } -> ( name, decl )))
         |> ResultME.map Dict.fromList
 
 
@@ -122,8 +125,11 @@ allGoals result =
 
 
 type alias State pos =
-    -- Breadcrumbs: Set String
-    ResultME L3Error ( String, Declarable pos L2.RefChecked )
+    ResultME L3Error
+        { name : String
+        , decl : Declarable pos L2.RefChecked
+        , crumbs : Set String
+        }
 
 
 step : L2 pos -> Step (State pos)
@@ -132,7 +138,7 @@ step model state =
         Err _ ->
             []
 
-        Ok ( name, decl ) ->
+        Ok { name, decl } ->
             stepDecl model decl []
 
 
@@ -163,7 +169,7 @@ stepType model l2type accum =
         TNamed _ _ refName _ ->
             case Dict.get refName model of
                 Just val ->
-                    ( Ok ( refName, val ), True ) :: accum
+                    ( Ok { name = refName, decl = val }, True ) :: accum
 
                 Nothing ->
                     ( DerefDeclMissing refName |> ResultME.error, True ) :: accum
