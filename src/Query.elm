@@ -79,6 +79,8 @@ select a transitive closure from.
 
     transitiveClosure startingSet model
 
+-- TODO: Circular deps will blow up - need to keep a breadcrumb trail?
+
 -- TODO: Make the buffer a Set keyed by declaration name. That will remove duplicates from the
 search but probably not all.
 -- TODO: Add the allGoals function to the Search package.
@@ -107,6 +109,10 @@ allGoals result =
                     accum
 
                 Goal state moreFn ->
+                    -- let
+                    --     _ =
+                    --         Debug.log "\nFound goal: " state
+                    -- in
                     innerAllGoals (moreFn ()) (state :: accum)
 
                 Ongoing state moreFn ->
@@ -116,6 +122,7 @@ allGoals result =
 
 
 type alias State pos =
+    -- Breadcrumbs: Set String
     ResultME L3Error ( String, Declarable pos L2.RefChecked )
 
 
