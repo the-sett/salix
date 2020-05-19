@@ -74,6 +74,11 @@ other types by name, the encoders for those other types also need to be generate
 transitive closure gives the full set of declaration to generate encoders for to complete
 the code.
 
+The first argument is the starting set, and the second argument is the complete model to
+select a transitive closure from.
+
+    transitiveClosure startingSet model
+
 -- TODO: Make the buffer a Set keyed by declaration name. That will remove duplicates from the
 search but probably not all.
 -- TODO: Add the allGoals function to the Search package.
