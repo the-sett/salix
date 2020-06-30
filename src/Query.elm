@@ -1,9 +1,9 @@
 module Query exposing
     ( deref
     , transitiveClosure
-    , expectAlias, expectProductOrEmpty
+    , expectAlias, expectProduct, expectProductOrEmpty
     , PropertyFilter, andPropFilter, notPropFilter, orPropFilter
-    , filterDictByProps, filterListByProps
+    , filterDictByProps, filterListByProps, filterNonemptyByProps
     )
 
 {-| Functions for querying Salix models.
@@ -21,13 +21,13 @@ module Query exposing
 
 # Partial projections as expectations.
 
-@docs expectAlias, expectProductOrEmpty
+@docs expectAlias, expectProduct, expectProductOrEmpty
 
 
 # Filtering by properties.
 
 @docs PropertyFilter, andPropFilter, notPropFilter, orPropFilter
-@docs filterDictByProps, filterListByProps
+@docs filterDictByProps, filterListByProps, filterNonemptyByProps
 
 -}
 
