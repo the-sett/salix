@@ -4,6 +4,7 @@ module Query exposing
     , expectAlias, expectProduct, expectProductOrEmpty
     , PropertyFilter, andPropFilter, notPropFilter, orPropFilter
     , filterDictByProps, filterListByProps, filterNonemptyByProps
+    , propertiesApiWithoutDefaults
     )
 
 {-| Functions for querying Salix models.
@@ -28,6 +29,7 @@ module Query exposing
 
 @docs PropertyFilter, andPropFilter, notPropFilter, orPropFilter
 @docs filterDictByProps, filterListByProps, filterNonemptyByProps
+@docs propertiesApiWithoutDefaults
 
 -}
 
@@ -392,3 +394,18 @@ filterNonemptyByProps :
     -> ResultME L3.L3Error (List a)
 filterNonemptyByProps propertiesApi filter vals =
     filterListByProps propertiesApi filter (Nonempty.toList vals)
+
+
+{-| This makes a properties API on top of an empty set of defaults and specs.
+
+This is useful when you don't have an L3, but want to run queries over properties.
+There may be intermediate properties that have been created during some processing
+that you need to query over, for example.
+
+-}
+propertiesApiWithoutDefaults : L2 pos -> PropertiesAPI pos
+propertiesApiWithoutDefaults l2 =
+    L3.makePropertiesAPI L3.emptyDefaultProperties
+        { properties = L1.emptyProperties
+        , declarations = l2
+        }
