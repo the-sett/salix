@@ -74,6 +74,8 @@ decoder options name decl =
             restrictedDecoder name res
 
 
+{-| Generates a Decoder for a list of fields (which may be part of a record).
+-}
 partialDecoder : DecoderOptions -> String -> Nonempty (Field pos RefChecked) -> FunGen
 partialDecoder options name fields =
     let

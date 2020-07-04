@@ -56,7 +56,7 @@ defaultEncoderOptions =
 --== Encoders
 
 
-{-| Generates a Encoder for a type declaration.
+{-| Generates an Encoder for a type declaration.
 -}
 encoder : EncoderOptions -> String -> Declarable pos RefChecked -> FunGen
 encoder options name decl =
@@ -74,6 +74,8 @@ encoder options name decl =
             restrictedEncoder name res
 
 
+{-| Generates an Encoder for a list of fields (which may be part of a record).
+-}
 partialEncoder : EncoderOptions -> String -> List (Field pos RefChecked) -> FunGen
 partialEncoder options name fields =
     let
