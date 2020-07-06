@@ -7,6 +7,7 @@ references to needed json coders where data models are nested.
 -}
 
 import Dict exposing (Dict)
+import Enum exposing (Enum)
 import Errors exposing (Error, ErrorBuilder)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Field, PropSpec(..), Properties, Property(..), Restricted(..), Type(..))
 import L3 exposing (DefaultProperties, L3, L3Error(..), ProcessorImpl, PropertiesAPI)
@@ -36,17 +37,31 @@ check l3 =
 
 processorImpl : ProcessorImpl pos JsonCodecError
 processorImpl =
-    { name = "Elm.Json.Codec"
+    { name = "Elm.Json.Coding"
     , defaults = defaultProperties
     , check = check
     , buildError = errorBuilder
     }
 
 
+jsonCodingEnum : Enum String
+jsonCodingEnum =
+    Enum.define
+        [ "Encoder"
+        , "Decoder"
+        , "MiniBillCodec"
+        ]
+        identity
+
+
 defaultProperties : DefaultProperties
 defaultProperties =
     { top = L1.defineProperties [] []
-    , alias = L1.defineProperties [] []
+    , alias =
+        L1.defineProperties
+            [ ( "jsonCoding", PSEnum jsonCodingEnum )
+            ]
+            []
     , sum = L1.defineProperties [] []
     , enum = L1.defineProperties [] []
     , restricted = L1.defineProperties [] []
