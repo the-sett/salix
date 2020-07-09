@@ -1,6 +1,7 @@
 module Elm.Json.Coding exposing
     ( processorImpl
     , JsonCodingError, errorBuilder
+    , jsonCodingEnum
     , coding, partialCoding
     )
 
@@ -14,6 +15,11 @@ references to needed json coders where data models are nested.
 
 @docs processorImpl
 @docs JsonCodingError, errorBuilder
+
+
+# Properties
+
+@docs jsonCodingEnum
 
 
 # The code generation functions.
@@ -120,7 +126,7 @@ coding propertiesApi name decl =
         |> ResultME.mapError L3Error
         |> ResultME.andThen
             (\maybeCodingKind ->
-                case maybeCodingKind of
+                case Debug.log "maybeCodingKind" maybeCodingKind of
                     Just "Encoder" ->
                         Encode.encoder Encode.defaultEncoderOptions name decl
                             |> Ok
