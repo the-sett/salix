@@ -7,20 +7,32 @@ references to needed json coders where data models are nested.
 -}
 
 import Dict exposing (Dict)
+import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
+import Elm.Json.Decode as Decode
+import Elm.Json.Encode as Encode
+import Elm.Json.MinibillCodec as Codec
 import Enum exposing (Enum)
 import Errors exposing (Error, ErrorBuilder)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Field, PropSpec(..), Properties, Property(..), Restricted(..), Type(..))
+import L2 exposing (RefChecked)
 import L3 exposing (DefaultProperties, L3, L3Error(..), ProcessorImpl, PropertiesAPI)
+import List.Nonempty as Nonempty exposing (Nonempty(..))
 import ResultME exposing (ResultME)
 
 
 type JsonCodecError
     = L3Error L3.L3Error
+    | NoCodingSpecified
 
 
 errorCatalogue =
     Dict.fromList
-        []
+        [ ( 701
+          , { title = "No Coding Specified"
+            , body = "The `jsonCodec` property was not defined so I don't know what kind of coding to generate."
+            }
+          )
+        ]
 
 
 errorBuilder : ErrorBuilder pos JsonCodecError
@@ -28,6 +40,9 @@ errorBuilder posFn err =
     case err of
         L3Error l3error ->
             L3.errorBuilder posFn l3error
+
+        NoCodingSpecified ->
+            Errors.lookupError errorCatalogue 701 Dict.empty []
 
 
 check : L3 pos -> ResultME err (L3 pos)
@@ -49,7 +64,7 @@ jsonCodingEnum =
     Enum.define
         [ "Encoder"
         , "Decoder"
-        , "MiniBillCodec"
+        , "MinibillCodec"
         ]
         identity
 
@@ -59,7 +74,7 @@ defaultProperties =
     { top = L1.defineProperties [] []
     , alias =
         L1.defineProperties
-            [ ( "jsonCoding", PSEnum jsonCodingEnum )
+            [ ( "jsonCoding", PSOptional (PSEnum jsonCodingEnum) )
             ]
             []
     , sum = L1.defineProperties [] []
@@ -74,3 +89,23 @@ defaultProperties =
     , container = L1.defineProperties [] []
     , function = L1.defineProperties [] []
     }
+
+
+coding :
+    PropertiesAPI pos
+    -> String
+    -> Declarable pos RefChecked
+    -> ResultME JsonCodecError FunGen
+coding propertiesApi name decl =
+    NoCodingSpecified
+        |> ResultME.error
+
+
+partialCoding :
+    PropertiesAPI pos
+    -> String
+    -> Nonempty (Field pos RefChecked)
+    -> ResultME JsonCodecError FunGen
+partialCoding propertiesApi name fields =
+    NoCodingSpecified
+        |> ResultME.error
