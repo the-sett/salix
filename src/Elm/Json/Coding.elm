@@ -38,14 +38,14 @@ import ResultME exposing (ResultME)
 
 type JsonCodingError
     = L3Error L3.L3Error
-    | NoCodingSpecified
+    | NoCodingSpecified String
 
 
 errorCatalogue =
     Dict.fromList
         [ ( 701
           , { title = "No Coding Specified"
-            , body = "The `jsonCodec` property was not defined so I don't know what kind of coding to generate."
+            , body = "The `jsonCodec` property was not defined on []{arg|key=name } so I don't know what kind of coding to generate."
             }
           )
         ]
@@ -57,8 +57,11 @@ errorBuilder posFn err =
         L3Error l3error ->
             L3.errorBuilder posFn l3error
 
-        NoCodingSpecified ->
-            Errors.lookupError errorCatalogue 701 Dict.empty []
+        NoCodingSpecified name ->
+            Errors.lookupError errorCatalogue
+                701
+                (Dict.fromList [ ( "name", name ) ])
+                []
 
 
 check : L3 pos -> ResultME err (L3 pos)
@@ -131,7 +134,8 @@ coding propertiesApi name decl =
                             |> Ok
 
                     _ ->
-                        ResultME.error NoCodingSpecified
+                        NoCodingSpecified name
+                            |> ResultME.error
             )
 
 
@@ -152,9 +156,9 @@ partialCoding propertiesApi name codingKind fields =
                 |> Ok
 
         "MinibillCodec" ->
-            NoCodingSpecified
+            NoCodingSpecified name
                 |> ResultME.error
 
         _ ->
-            NoCodingSpecified
+            NoCodingSpecified name
                 |> ResultME.error
