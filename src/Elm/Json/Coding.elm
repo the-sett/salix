@@ -126,7 +126,11 @@ coding propertiesApi name decl =
         |> ResultME.mapError L3Error
         |> ResultME.andThen
             (\maybeCodingKind ->
-                case Debug.log "maybeCodingKind" maybeCodingKind of
+                let
+                    _ =
+                        Debug.log "coding" { name = name, codingKind = maybeCodingKind }
+                in
+                case maybeCodingKind of
                     Just "Encoder" ->
                         Encode.encoder Encode.defaultEncoderOptions name decl
                             |> Ok
