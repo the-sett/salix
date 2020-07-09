@@ -1,5 +1,6 @@
 module Elm.Json.Coding exposing
-    ( processorImpl, JsonCodecError
+    ( processorImpl
+    , JsonCodingError, errorBuilder
     , coding, partialCoding
     )
 
@@ -11,7 +12,8 @@ references to needed json coders where data models are nested.
 
 # The L3 processor implementation.
 
-@docs processorImpl, JsonCodecError
+@docs processorImpl
+@docs JsonCodingError, errorBuilder
 
 
 # The code generation functions.
@@ -34,7 +36,7 @@ import List.Nonempty as Nonempty exposing (Nonempty(..))
 import ResultME exposing (ResultME)
 
 
-type JsonCodecError
+type JsonCodingError
     = L3Error L3.L3Error
     | NoCodingSpecified
 
@@ -49,7 +51,7 @@ errorCatalogue =
         ]
 
 
-errorBuilder : ErrorBuilder pos JsonCodecError
+errorBuilder : ErrorBuilder pos JsonCodingError
 errorBuilder posFn err =
     case err of
         L3Error l3error ->
@@ -64,7 +66,7 @@ check l3 =
     l3 |> Ok
 
 
-processorImpl : ProcessorImpl pos JsonCodecError
+processorImpl : ProcessorImpl pos JsonCodingError
 processorImpl =
     { name = "Elm.Json.Coding"
     , defaults = defaultProperties
@@ -109,7 +111,7 @@ coding :
     PropertiesAPI pos
     -> String
     -> Declarable pos RefChecked
-    -> ResultME JsonCodecError FunGen
+    -> ResultME JsonCodingError FunGen
 coding propertiesApi name decl =
     (propertiesApi.declarable decl).getOptionalEnumProperty jsonCodingEnum "jsonCoding"
         |> ResultME.mapError L3Error
@@ -138,7 +140,7 @@ partialCoding :
     -> String
     -> String
     -> Nonempty (Field pos RefChecked)
-    -> ResultME JsonCodecError FunGen
+    -> ResultME JsonCodingError FunGen
 partialCoding propertiesApi name codingKind fields =
     case codingKind of
         "Encoder" ->
