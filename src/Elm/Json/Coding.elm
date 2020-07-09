@@ -104,8 +104,23 @@ coding propertiesApi name decl =
 partialCoding :
     PropertiesAPI pos
     -> String
+    -> String
     -> Nonempty (Field pos RefChecked)
     -> ResultME JsonCodecError FunGen
-partialCoding propertiesApi name fields =
-    NoCodingSpecified
-        |> ResultME.error
+partialCoding propertiesApi name codingKind fields =
+    case codingKind of
+        "Encoder" ->
+            Encode.partialEncoder Encode.defaultEncoderOptions name fields
+                |> Ok
+
+        "Decoder" ->
+            Decode.partialDecoder Decode.defaultDecoderOptions name fields
+                |> Ok
+
+        "MinibillCodec" ->
+            NoCodingSpecified
+                |> ResultME.error
+
+        _ ->
+            NoCodingSpecified
+                |> ResultME.error

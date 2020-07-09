@@ -19,7 +19,7 @@ import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Helper as Util
 import L1 exposing (Basic(..), Container(..), Declarable(..), Field, Restricted(..), Type(..))
 import L2 exposing (RefChecked(..))
-import List.Nonempty
+import List.Nonempty as Nonempty exposing (Nonempty(..))
 import Maybe.Extra
 import Naming
 import Set exposing (Set)
@@ -65,10 +65,10 @@ encoder options name decl =
             typeAliasEncoder options name l1Type
 
         DSum _ _ constructors ->
-            customTypeEncoder options name (List.Nonempty.toList constructors)
+            customTypeEncoder options name (Nonempty.toList constructors)
 
         DEnum _ _ labels ->
-            enumEncoder name (List.Nonempty.toList labels)
+            enumEncoder name (Nonempty.toList labels)
 
         DRestricted _ _ res ->
             restrictedEncoder name res
@@ -76,7 +76,7 @@ encoder options name decl =
 
 {-| Generates an Encoder for a list of fields (which may be part of a record).
 -}
-partialEncoder : EncoderOptions -> String -> List (Field pos RefChecked) -> FunGen
+partialEncoder : EncoderOptions -> String -> Nonempty (Field pos RefChecked) -> FunGen
 partialEncoder options name fields =
     let
         encodeFnName =
@@ -89,7 +89,7 @@ partialEncoder options name fields =
             CG.typed "Encoder" [ CG.typed typeName [] ]
 
         impl =
-            encoderNamedProduct options name fields
+            encoderNamedProduct options name (Nonempty.toList fields)
 
         doc =
             CG.emptyDocComment
@@ -320,7 +320,7 @@ encoderNamedType options name l1Type =
             CG.string "encoderNamedType_TNamed"
 
         TProduct _ _ fields ->
-            encoderNamedProduct options name (List.Nonempty.toList fields)
+            encoderNamedProduct options name (Nonempty.toList fields)
 
         TEmptyProduct _ _ ->
             encoderNamedProduct options name []
@@ -344,7 +344,7 @@ encoderType options l1Type =
             encoderNamed options named
 
         TProduct _ _ fields ->
-            encoderProduct (List.Nonempty.toList fields)
+            encoderProduct (Nonempty.toList fields)
 
         TContainer _ _ container ->
             encoderContainer options container
@@ -370,7 +370,7 @@ encoderTypeField options name l1Type =
                 |> encoderField options name
 
         TProduct _ _ fields ->
-            encoderProduct (List.Nonempty.toList fields)
+            encoderProduct (Nonempty.toList fields)
                 |> encoderField options name
 
         TEmptyProduct _ _ ->
