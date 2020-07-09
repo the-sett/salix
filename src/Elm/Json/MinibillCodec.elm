@@ -1,4 +1,4 @@
-module Elm.Codec exposing (codec)
+module Elm.Json.MinibillCodec exposing (codec)
 
 {-| Elm code generation for Codecs using `minibill/elm-codec` from L2 models.
 

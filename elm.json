@@ -13,12 +13,12 @@
         "Checker",
         "Query",
         "SourcePos",
-        "Elm.Codec",
-        "Elm.Encode",
-        "Elm.Decode",
         "Elm.Lang",
         "Elm.FunDecl",
-        "Elm.Json.Coding"
+        "Elm.Json.Coding",
+        "Elm.Json.Decode",
+        "Elm.Json.Encode",
+        "Elm.Json.MinibillCodec"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",
     "dependencies": {

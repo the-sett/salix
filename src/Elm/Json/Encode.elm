@@ -1,4 +1,4 @@
-module Elm.Encode exposing
+module Elm.Json.Encode exposing
     ( encoder, partialEncoder
     , EncoderOptions, AssumedEncoderForNamedType(..), defaultEncoderOptions
     )
