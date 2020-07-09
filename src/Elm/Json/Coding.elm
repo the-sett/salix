@@ -1,9 +1,23 @@
-module Elm.Json.Coding exposing (..)
+module Elm.Json.Coding exposing
+    ( processorImpl, JsonCodecError
+    , coding, partialCoding
+    )
 
 {-| Elm.Json.Coding is a code generator for JSON encoders, decoders and miniBill/elm-codec
 style codecs. The 'codec' property when defined on a declaration will signifiy which type
 of json coding is required. The 'codec' property is also used to know how to generate
 references to needed json coders where data models are nested.
+
+
+# The L3 processor implementation.
+
+@docs processorImpl, JsonCodecError
+
+
+# The code generation functions.
+
+@docs coding, partialCoding
+
 -}
 
 import Dict exposing (Dict)
@@ -97,8 +111,26 @@ coding :
     -> Declarable pos RefChecked
     -> ResultME JsonCodecError FunGen
 coding propertiesApi name decl =
-    NoCodingSpecified
-        |> ResultME.error
+    (propertiesApi.declarable decl).getOptionalEnumProperty jsonCodingEnum "jsonCoding"
+        |> ResultME.mapError L3Error
+        |> ResultME.andThen
+            (\maybeCodingKind ->
+                case maybeCodingKind of
+                    Just "Encoder" ->
+                        Encode.encoder Encode.defaultEncoderOptions name decl
+                            |> Ok
+
+                    Just "Decoder" ->
+                        Decode.decoder Decode.defaultDecoderOptions name decl
+                            |> Ok
+
+                    Just "MinibillCodec" ->
+                        Codec.codec name decl
+                            |> Ok
+
+                    _ ->
+                        ResultME.error NoCodingSpecified
+            )
 
 
 partialCoding :
