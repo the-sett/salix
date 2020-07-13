@@ -1,10 +1,13 @@
-module NamedRef exposing (..)
+module Elm.Json.NamedRef exposing (..)
 
+import Dict exposing (Dict)
+import Elm.CodeGen as CG exposing (Expression)
 import L2 exposing (L2, RefChecked)
 import L3 exposing (PropertiesAPI)
+import ResultME exposing (ResultME)
 
 
-decoderNamed : PropertiesAPI -> L2 pos RefChecked -> String -> Expression
+decoderNamed : PropertiesAPI pos -> L2 pos -> String -> Expression
 decoderNamed propertiesApi model named =
     case options.namedTypeDecoder of
         AssumeCodec ->
@@ -18,7 +21,7 @@ decoderNamed propertiesApi model named =
             CG.fun (Naming.safeCCL (named ++ "Decoder"))
 
 
-encoderNamed : PropertiesAPI -> L2 pos RefChecked -> String -> Expression
+encoderNamed : PropertiesAPI pos -> L2 pos -> String -> Expression
 encoderNamed propertiesApi model named =
     case options.namedTypeEncoder of
         AssumeCodec ->

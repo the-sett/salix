@@ -17,6 +17,7 @@ module Elm.Json.Encode exposing
 import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, LetDeclaration, Linkage, Pattern, TypeAnnotation)
 import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Helper as Util
+import Elm.Json.NamedRef as NamedRef
 import L1 exposing (Basic(..), Container(..), Declarable(..), Field, Restricted(..), Type(..))
 import L2 exposing (RefChecked(..))
 import List.Nonempty as Nonempty exposing (Nonempty(..))
