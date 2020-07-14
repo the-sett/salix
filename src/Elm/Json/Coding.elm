@@ -200,16 +200,13 @@ decoderNamed propertiesApi model named =
                         |> Ok
 
                 _ ->
-                    -- No decoder available
-                    CG.unit |> Ok
+                    NamedRef.NoDecoderAvailable named |> ResultME.error
     in
     Dict.get named model
         |> Maybe.map (getCodingKindProp propertiesApi)
-        -- No coding kind specced
-        |> Maybe.map (ResultME.map (Maybe.map codingKindToExpr >> Maybe.withDefault (Ok CG.unit)))
-        |> Maybe.map ResultME.flatten
-        -- Deref error
-        |> Maybe.withDefault (Ok CG.unit)
+        |> Maybe.withDefault (L3.DerefDeclMissing named |> NamedRef.L3Error |> ResultME.error)
+        |> ResultME.map (Maybe.map codingKindToExpr >> Maybe.withDefault (NamedRef.NoCodingKindDefined named |> ResultME.error))
+        |> ResultME.flatten
 
 
 encoderNamed : PropertiesAPI pos -> L2 pos -> NamedRefGen
@@ -231,16 +228,13 @@ encoderNamed propertiesApi model named =
                         |> Ok
 
                 _ ->
-                    -- No encoder available
-                    CG.unit |> Ok
+                    NamedRef.NoEncoderAvailable named |> ResultME.error
     in
     Dict.get named model
         |> Maybe.map (getCodingKindProp propertiesApi)
-        -- No coding kind specced
-        |> Maybe.map (ResultME.map (Maybe.map codingKindToExpr >> Maybe.withDefault (Ok CG.unit)))
-        |> Maybe.map ResultME.flatten
-        -- Deref error
-        |> Maybe.withDefault (Ok CG.unit)
+        |> Maybe.withDefault (L3.DerefDeclMissing named |> NamedRef.L3Error |> ResultME.error)
+        |> ResultME.map (Maybe.map codingKindToExpr >> Maybe.withDefault (NamedRef.NoCodingKindDefined named |> ResultME.error))
+        |> ResultME.flatten
 
 
 codecNamed : PropertiesAPI pos -> L2 pos -> NamedRefGen
@@ -254,16 +248,13 @@ codecNamed propertiesApi model named =
                         |> Ok
 
                 _ ->
-                    -- No codec available
-                    CG.unit |> Ok
+                    NamedRef.NoCodecAvailable named |> ResultME.error
     in
     Dict.get named model
         |> Maybe.map (getCodingKindProp propertiesApi)
-        -- No coding kind specced
-        |> Maybe.map (ResultME.map (Maybe.map codingKindToExpr >> Maybe.withDefault (Ok CG.unit)))
-        |> Maybe.map ResultME.flatten
-        -- Deref error
-        |> Maybe.withDefault (Ok CG.unit)
+        |> Maybe.withDefault (L3.DerefDeclMissing named |> NamedRef.L3Error |> ResultME.error)
+        |> ResultME.map (Maybe.map codingKindToExpr >> Maybe.withDefault (NamedRef.NoCodingKindDefined named |> ResultME.error))
+        |> ResultME.flatten
 
 
 getCodingKindProp : PropertiesAPI pos -> Declarable pos RefChecked -> ResultME NamedRefError (Maybe String)
