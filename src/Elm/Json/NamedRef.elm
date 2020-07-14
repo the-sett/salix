@@ -5,6 +5,4 @@ import ResultME exposing (ResultME)
 
 
 type alias NamedRefGen =
-    { decoderNamed : String -> ResultME String Expression
-    , encoderNamed : String -> ResultME String Expression
-    }
+    String -> ResultME String Expression

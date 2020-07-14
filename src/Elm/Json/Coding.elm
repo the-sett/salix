@@ -34,6 +34,7 @@ import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Json.Decode as Decode
 import Elm.Json.Encode as Encode
 import Elm.Json.MinibillCodec as Codec
+import Elm.Json.NamedRef exposing (NamedRefGen)
 import Enum exposing (Enum)
 import Errors exposing (Error, ErrorBuilder)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Field, PropSpec(..), Properties, Property(..), Restricted(..), Type(..))
@@ -176,7 +177,11 @@ partialCoding propertiesApi name codingKind fields =
                 |> ResultME.error
 
 
-decoderNamed : PropertiesAPI pos -> L2 pos -> String -> ResultME String Expression
+
+-- Referencing to coding functions for named declarations.
+
+
+decoderNamed : PropertiesAPI pos -> L2 pos -> NamedRefGen
 decoderNamed propertiesApi model named =
     -- Dict.get named model
     --     |> Maybe.map
@@ -202,7 +207,7 @@ decoderNamed propertiesApi model named =
     Ok CG.unit
 
 
-encoderNamed : PropertiesAPI pos -> L2 pos -> String -> Expression
+encoderNamed : PropertiesAPI pos -> L2 pos -> NamedRefGen
 encoderNamed propertiesApi model named =
     -- case options.namedTypeEncoder of
     --     AssumeCodec ->
@@ -214,7 +219,7 @@ encoderNamed propertiesApi model named =
     --
     --     AssumeEncoder ->
     --         CG.fun (Naming.safeCCL (named ++ "Encoder"))
-    CG.unit
+    Ok CG.unit
 
 
 codecMod : List String
