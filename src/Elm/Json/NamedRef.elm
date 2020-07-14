@@ -1,8 +1,13 @@
-module Elm.Json.NamedRef exposing (..)
+module Elm.Json.NamedRef exposing (NamedRefError(..), NamedRefGen)
 
 import Elm.CodeGen as CG exposing (Expression)
+import L3
 import ResultME exposing (ResultME)
 
 
+type NamedRefError
+    = L3Error L3.L3Error
+
+
 type alias NamedRefGen =
-    String -> ResultME String Expression
+    String -> ResultME NamedRefError Expression

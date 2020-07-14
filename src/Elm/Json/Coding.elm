@@ -34,7 +34,7 @@ import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Json.Decode as Decode
 import Elm.Json.Encode as Encode
 import Elm.Json.MinibillCodec as Codec
-import Elm.Json.NamedRef exposing (NamedRefGen)
+import Elm.Json.NamedRef as NamedRef exposing (NamedRefError, NamedRefGen)
 import Enum exposing (Enum)
 import Errors exposing (Error, ErrorBuilder)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Field, PropSpec(..), Properties, Property(..), Restricted(..), Type(..))
@@ -183,43 +183,93 @@ partialCoding propertiesApi name codingKind fields =
 
 decoderNamed : PropertiesAPI pos -> L2 pos -> NamedRefGen
 decoderNamed propertiesApi model named =
-    -- Dict.get named model
-    --     |> Maybe.map
-    --         (\decl ->
-    --             (propertiesApi.declarable decl).getOptionalEnumProperty jsonCodingEnum "jsonCoding"
-    --                 |> ResultME.map
-    --                     (Maybe.map
-    --                         (\codingKind ->
-    --                             case codingKind of
-    --                                 "Decoder" ->
-    --                                     CG.fun (Naming.safeCCL (named ++ "Decoder"))
-    --
-    --                                 "MinibillCodec" ->
-    --                                     CG.apply
-    --                                         [ CG.fqFun codecMod "decoder"
-    --                                         , CG.val (Naming.safeCCL (named ++ "Codec"))
-    --                                         ]
-    --                                         |> CG.parens
-    --                         )
-    --                     )
-    --         )
-    --     |> Maybe.withDefault (Ok CG.unit)
-    Ok CG.unit
+    let
+        codingKindToExpr : String -> ResultME NamedRefError Expression
+        codingKindToExpr codingKind =
+            case codingKind of
+                "Decoder" ->
+                    CG.fun (Naming.safeCCL (named ++ "Decoder"))
+                        |> Ok
+
+                "MinibillCodec" ->
+                    CG.apply
+                        [ CG.fqFun codecMod "decoder"
+                        , CG.val (Naming.safeCCL (named ++ "Codec"))
+                        ]
+                        |> CG.parens
+                        |> Ok
+
+                _ ->
+                    -- No decoder available
+                    CG.unit |> Ok
+    in
+    Dict.get named model
+        |> Maybe.map (getCodingKindProp propertiesApi)
+        -- No coding kind specced
+        |> Maybe.map (ResultME.map (Maybe.map codingKindToExpr >> Maybe.withDefault (Ok CG.unit)))
+        |> Maybe.map ResultME.flatten
+        -- Deref error
+        |> Maybe.withDefault (Ok CG.unit)
 
 
 encoderNamed : PropertiesAPI pos -> L2 pos -> NamedRefGen
 encoderNamed propertiesApi model named =
-    -- case options.namedTypeEncoder of
-    --     AssumeCodec ->
-    --         CG.apply
-    --             [ CG.fqFun codecMod "encoder"
-    --             , CG.val (Naming.safeCCL (named ++ "Codec"))
-    --             ]
-    --             |> CG.parens
-    --
-    --     AssumeEncoder ->
-    --         CG.fun (Naming.safeCCL (named ++ "Encoder"))
-    Ok CG.unit
+    let
+        codingKindToExpr : String -> ResultME NamedRefError Expression
+        codingKindToExpr codingKind =
+            case codingKind of
+                "Encoder" ->
+                    CG.fun (Naming.safeCCL (named ++ "Encoder"))
+                        |> Ok
+
+                "MinibillCodec" ->
+                    CG.apply
+                        [ CG.fqFun codecMod "encoder"
+                        , CG.val (Naming.safeCCL (named ++ "Codec"))
+                        ]
+                        |> CG.parens
+                        |> Ok
+
+                _ ->
+                    -- No encoder available
+                    CG.unit |> Ok
+    in
+    Dict.get named model
+        |> Maybe.map (getCodingKindProp propertiesApi)
+        -- No coding kind specced
+        |> Maybe.map (ResultME.map (Maybe.map codingKindToExpr >> Maybe.withDefault (Ok CG.unit)))
+        |> Maybe.map ResultME.flatten
+        -- Deref error
+        |> Maybe.withDefault (Ok CG.unit)
+
+
+codecNamed : PropertiesAPI pos -> L2 pos -> NamedRefGen
+codecNamed propertiesApi model named =
+    let
+        codingKindToExpr : String -> ResultME NamedRefError Expression
+        codingKindToExpr codingKind =
+            case codingKind of
+                "MinibillCodec" ->
+                    CG.val (Naming.safeCCL (named ++ "Codec"))
+                        |> Ok
+
+                _ ->
+                    -- No codec available
+                    CG.unit |> Ok
+    in
+    Dict.get named model
+        |> Maybe.map (getCodingKindProp propertiesApi)
+        -- No coding kind specced
+        |> Maybe.map (ResultME.map (Maybe.map codingKindToExpr >> Maybe.withDefault (Ok CG.unit)))
+        |> Maybe.map ResultME.flatten
+        -- Deref error
+        |> Maybe.withDefault (Ok CG.unit)
+
+
+getCodingKindProp : PropertiesAPI pos -> Declarable pos RefChecked -> ResultME NamedRefError (Maybe String)
+getCodingKindProp propertiesApi decl =
+    (propertiesApi.declarable decl).getOptionalEnumProperty jsonCodingEnum "jsonCoding"
+        |> ResultME.mapError NamedRef.L3Error
 
 
 codecMod : List String
