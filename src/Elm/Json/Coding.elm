@@ -29,6 +29,7 @@ references to needed json coders where data models are nested.
 -}
 
 import Dict exposing (Dict)
+import Elm.CodeGen as CG exposing (Expression)
 import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Json.Decode as Decode
 import Elm.Json.Encode as Encode
@@ -36,9 +37,10 @@ import Elm.Json.MinibillCodec as Codec
 import Enum exposing (Enum)
 import Errors exposing (Error, ErrorBuilder)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Field, PropSpec(..), Properties, Property(..), Restricted(..), Type(..))
-import L2 exposing (RefChecked)
+import L2 exposing (L2, RefChecked)
 import L3 exposing (DefaultProperties, L3, L3Error(..), ProcessorImpl, PropertiesAPI)
 import List.Nonempty as Nonempty exposing (Nonempty(..))
+import Naming
 import ResultME exposing (ResultME)
 
 
@@ -172,3 +174,49 @@ partialCoding propertiesApi name codingKind fields =
         _ ->
             NoCodingSpecified name
                 |> ResultME.error
+
+
+decoderNamed : PropertiesAPI pos -> L2 pos -> String -> ResultME String Expression
+decoderNamed propertiesApi model named =
+    -- Dict.get named model
+    --     |> Maybe.map
+    --         (\decl ->
+    --             (propertiesApi.declarable decl).getOptionalEnumProperty jsonCodingEnum "jsonCoding"
+    --                 |> ResultME.map
+    --                     (Maybe.map
+    --                         (\codingKind ->
+    --                             case codingKind of
+    --                                 "Decoder" ->
+    --                                     CG.fun (Naming.safeCCL (named ++ "Decoder"))
+    --
+    --                                 "MinibillCodec" ->
+    --                                     CG.apply
+    --                                         [ CG.fqFun codecMod "decoder"
+    --                                         , CG.val (Naming.safeCCL (named ++ "Codec"))
+    --                                         ]
+    --                                         |> CG.parens
+    --                         )
+    --                     )
+    --         )
+    --     |> Maybe.withDefault (Ok CG.unit)
+    Ok CG.unit
+
+
+encoderNamed : PropertiesAPI pos -> L2 pos -> String -> Expression
+encoderNamed propertiesApi model named =
+    -- case options.namedTypeEncoder of
+    --     AssumeCodec ->
+    --         CG.apply
+    --             [ CG.fqFun codecMod "encoder"
+    --             , CG.val (Naming.safeCCL (named ++ "Codec"))
+    --             ]
+    --             |> CG.parens
+    --
+    --     AssumeEncoder ->
+    --         CG.fun (Naming.safeCCL (named ++ "Encoder"))
+    CG.unit
+
+
+codecMod : List String
+codecMod =
+    [ "Codec" ]
