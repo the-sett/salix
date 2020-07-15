@@ -99,7 +99,7 @@ typeAliasEncoder options name l1Type =
         (Just doc)
         (Just sig)
         encodeFnName
-        []
+        [ CG.varPattern "val" ]
         impl
     , CG.emptyLinkage
         |> CG.addImport encodeImport
@@ -132,7 +132,7 @@ customTypeEncoder options name constructors =
         (Just doc)
         (Just sig)
         encodeFnName
-        []
+        [ CG.varPattern "val" ]
         impl
     , CG.emptyLinkage
         |> CG.addImport encodeImport
