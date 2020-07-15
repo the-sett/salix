@@ -1,6 +1,6 @@
 module Query exposing
     ( deref
-    , transitiveClosure
+    , transitiveClosure, transitiveClosureWithoutStartingSet
     , expectAlias, expectProduct, expectProductOrEmpty
     , PropertyFilter, andPropFilter, notPropFilter, orPropFilter
     , filterDictByProps, filterListByProps, filterNonemptyByProps
@@ -17,7 +17,7 @@ module Query exposing
 
 # Find dependency sets.
 
-@docs transitiveClosure
+@docs transitiveClosure, transitiveClosureWithoutStartingSet
 
 
 # Partial projections as expectations.
@@ -82,24 +82,58 @@ select a transitive closure from.
 
     transitiveClosure startingSet model
 
--- TODO: Circular deps will blow up - need to keep a breadcrumb trail?
-
--- TODO: Make the buffer a Set keyed by declaration name. That will remove duplicates from the
-search but probably not all.
--- TODO: Add the allGoals function to the Search package.
-
 -}
 transitiveClosure : L2 pos -> L2 pos -> ResultME L3Error (L2 pos)
 transitiveClosure set model =
+    transitiveClosureInner True set model
+
+
+{-| Finds the transitive closure starting from a sub-set of declarations from an L2.
+Any type references in these declarations will pull their referred to declarations
+into the closure, and this process will be continued recursively until no more members
+are added to the closure.
+
+The starting set itself will not be automatically included in the results. Members of
+the starting set may end up in the results, but only if they are dependencies of other
+members of the starting set.
+
+This is useful if some declarations need to be generated from, including all their
+dependencies. For example, to code generate an encoder for a declaration that references
+other types by name, the encoders for those other types also need to be generated. The
+transitive closure gives the full set of declaration to generate encoders for to complete
+the code.
+
+The first argument is the starting set, and the second argument is the complete model to
+select a transitive closure from.
+
+-}
+transitiveClosureWithoutStartingSet : L2 pos -> L2 pos -> ResultME L3Error (L2 pos)
+transitiveClosureWithoutStartingSet set model =
+    transitiveClosureInner False set model
+
+
+{-| The transitive closure algorith, by depth first search.
+
+TODO: Make the buffer a Set keyed by declaration name. That will remove duplicates from the
+search but probably not all.
+TODO: Add the allGoals function to the Search package.
+
+-}
+transitiveClosureInner : Bool -> L2 pos -> L2 pos -> ResultME L3Error (L2 pos)
+transitiveClosureInner keepStartingSet set model =
     let
         crumbs =
-            Dict.keys set |> Set.fromList
+            if keepStartingSet then
+                Dict.keys set |> Set.fromList
+
+            else
+                Set.empty
 
         start =
             Dict.toList set
                 |> List.map (\( name, decl ) -> { name = name, decl = decl, crumbs = crumbs })
                 |> List.map Ok
-                |> List.map (\val -> ( val, True ))
+                |> List.map (\val -> ( val, keepStartingSet ))
     in
     Search.depthFirst { cost = always 1.0, step = step model } start
         |> allGoals
