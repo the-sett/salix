@@ -381,8 +381,9 @@ encoderBasic basic =
 
 
 encoderNamed : NamedRefGen -> String -> Expression
-encoderNamed options named =
-    CG.fun (Naming.safeCCL (named ++ "Encoder"))
+encoderNamed refgen named =
+    refgen named
+        |> Result.withDefault (CG.fun (Naming.safeCCL (named ++ "Encoder")))
 
 
 encoderContainer : NamedRefGen -> Container pos RefChecked -> Expression

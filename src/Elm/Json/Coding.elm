@@ -121,10 +121,11 @@ defaultProperties =
 
 coding :
     PropertiesAPI pos
+    -> L2 pos
     -> String
     -> Declarable pos RefChecked
     -> ResultME JsonCodingError FunGen
-coding propertiesApi name decl =
+coding propertiesApi model name decl =
     (propertiesApi.declarable decl).getOptionalEnumProperty jsonCodingEnum "jsonCoding"
         |> ResultME.mapError L3Error
         |> ResultME.andThen
@@ -135,11 +136,11 @@ coding propertiesApi name decl =
                 -- in
                 case maybeCodingKind of
                     Just "Encoder" ->
-                        Encode.encoder (encoderNamed propertiesApi Dict.empty) name decl
+                        Encode.encoder (encoderNamed propertiesApi model) name decl
                             |> Ok
 
                     Just "Decoder" ->
-                        Decode.decoder (decoderNamed propertiesApi Dict.empty) name decl
+                        Decode.decoder (decoderNamed propertiesApi model) name decl
                             |> Ok
 
                     Just "MinibillCodec" ->
@@ -154,18 +155,19 @@ coding propertiesApi name decl =
 
 partialCoding :
     PropertiesAPI pos
+    -> L2 pos
     -> String
     -> String
     -> Nonempty (Field pos RefChecked)
     -> ResultME JsonCodingError FunGen
-partialCoding propertiesApi name codingKind fields =
+partialCoding propertiesApi model name codingKind fields =
     case codingKind of
         "Encoder" ->
-            Encode.partialEncoder (encoderNamed propertiesApi Dict.empty) name fields
+            Encode.partialEncoder (encoderNamed propertiesApi model) name fields
                 |> Ok
 
         "Decoder" ->
-            Decode.partialDecoder (decoderNamed propertiesApi Dict.empty) name fields
+            Decode.partialDecoder (decoderNamed propertiesApi model) name fields
                 |> Ok
 
         "MinibillCodec" ->
