@@ -156,11 +156,7 @@ enumEncoder name constructors =
             CG.funAnn (CG.typed typeName []) (CG.typed "Value" [])
 
         impl =
-            CG.apply
-                [ CG.fqFun encodeMod "build"
-                , CG.parens (CG.apply [ CG.fqFun enumMod "encoder", CG.val enumName ])
-                , CG.parens (CG.apply [ CG.fqFun enumMod "decoder", CG.val enumName ])
-                ]
+            CG.apply [ CG.fqFun enumMod "encoder", CG.val enumName ]
 
         doc =
             CG.emptyDocComment
@@ -195,11 +191,7 @@ restrictedEncoder name _ =
             CG.funAnn (CG.typed typeName []) (CG.typed "Value" [])
 
         impl =
-            CG.apply
-                [ CG.fqFun encodeMod "build"
-                , CG.parens (CG.apply [ CG.fqFun refinedMod "encoder", CG.val enumName ])
-                , CG.parens (CG.apply [ CG.fqFun refinedMod "decoder", CG.val enumName ])
-                ]
+            CG.apply [ CG.fqFun refinedMod "encoder", CG.val enumName ]
 
         doc =
             CG.emptyDocComment

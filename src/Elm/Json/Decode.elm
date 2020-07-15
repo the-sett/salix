@@ -156,11 +156,7 @@ enumDecoder name constructors =
             CG.typed "Decoder" [ CG.typed typeName [] ]
 
         impl =
-            CG.apply
-                [ CG.fqFun decodeMod "build"
-                , CG.parens (CG.apply [ CG.fqFun enumMod "decoder", CG.val enumName ])
-                , CG.parens (CG.apply [ CG.fqFun enumMod "decoder", CG.val enumName ])
-                ]
+            CG.apply [ CG.fqFun enumMod "decoder", CG.val enumName ]
 
         doc =
             CG.emptyDocComment
@@ -195,11 +191,7 @@ restrictedDecoder name _ =
             CG.typed "Decoder" [ CG.typed typeName [] ]
 
         impl =
-            CG.apply
-                [ CG.fqFun decodeMod "build"
-                , CG.parens (CG.apply [ CG.fqFun refinedMod "decoder", CG.val enumName ])
-                , CG.parens (CG.apply [ CG.fqFun refinedMod "decoder", CG.val enumName ])
-                ]
+            CG.apply [ CG.fqFun refinedMod "decoder", CG.val enumName ]
 
         doc =
             CG.emptyDocComment
