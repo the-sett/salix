@@ -52,7 +52,7 @@ partialEncoder options name fields =
             Naming.safeCCU name
 
         sig =
-            CG.typed "Encoder" [ CG.typed typeName [] ]
+            CG.funAnn (CG.typed typeName []) (CG.typed "Value" [])
 
         impl =
             encoderNamedProduct options name (Nonempty.toList fields)
@@ -86,7 +86,7 @@ typeAliasEncoder options name l1Type =
             Naming.safeCCU name
 
         sig =
-            CG.typed "Encoder" [ CG.typed typeName [] ]
+            CG.funAnn (CG.typed typeName []) (CG.typed "Value" [])
 
         impl =
             encoderNamedType options name l1Type
@@ -119,7 +119,7 @@ customTypeEncoder options name constructors =
             Naming.safeCCU name
 
         sig =
-            CG.typed "Encoder" [ CG.typed typeName [] ]
+            CG.funAnn (CG.typed typeName []) (CG.typed "Value" [])
 
         impl =
             encoderCustomType options constructors
@@ -153,7 +153,7 @@ enumEncoder name constructors =
             Naming.safeCCL name
 
         sig =
-            CG.typed "Encoder" [ CG.typed typeName [] ]
+            CG.funAnn (CG.typed typeName []) (CG.typed "Value" [])
 
         impl =
             CG.apply
@@ -192,7 +192,7 @@ restrictedEncoder name _ =
             Naming.safeCCL name
 
         sig =
-            CG.typed "Encoder" [ CG.typed typeName [] ]
+            CG.funAnn (CG.typed typeName []) (CG.typed "Value" [])
 
         impl =
             CG.apply
