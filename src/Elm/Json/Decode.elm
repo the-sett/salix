@@ -1,22 +1,15 @@
-module Elm.Json.Decode exposing
-    ( decoder, partialDecoder
-    , DecoderOptions, AssumedDecoderForNamedType(..), defaultDecoderOptions
-    )
+module Elm.Json.Decode exposing (decoder, partialDecoder)
 
 {-| Elm code generation for Decoders using `elm/json` from L2 models.
 
 @docs decoder, partialDecoder
-
-
-# Options for generating decoders.
-
-@docs DecoderOptions, AssumedDecoderForNamedType, defaultDecoderOptions
 
 -}
 
 import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, LetDeclaration, Linkage, Pattern, TypeAnnotation)
 import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Helper as Util
+import Elm.Json.NamedRef as NamedRef exposing (NamedRefError, NamedRefGen)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Field, Restricted(..), Type(..))
 import L2 exposing (RefChecked(..))
 import List.Nonempty as Nonempty exposing (Nonempty(..))
@@ -26,39 +19,12 @@ import Set exposing (Set)
 
 
 
---== Options for generating decoders
-
-
-{-| When generating an decoder for something with a named type nested in it,
-we assume that an decoder for that is also being generated, and simply call it.
-
-It may have been generated as a codec, or as an decoder, and this allows this
-assumption to be captured as an option.
-
--}
-type AssumedDecoderForNamedType
-    = AssumeCodec
-    | AssumeDecoder
-
-
-type alias DecoderOptions =
-    { namedTypeDecoder : AssumedDecoderForNamedType
-    }
-
-
-defaultDecoderOptions : DecoderOptions
-defaultDecoderOptions =
-    { namedTypeDecoder = AssumeDecoder
-    }
-
-
-
 --== Decoders
 
 
 {-| Generates a Decoder for a type declaration.
 -}
-decoder : DecoderOptions -> String -> Declarable pos RefChecked -> FunGen
+decoder : NamedRefGen -> String -> Declarable pos RefChecked -> FunGen
 decoder options name decl =
     case decl of
         DAlias _ _ l1Type ->
@@ -76,7 +42,7 @@ decoder options name decl =
 
 {-| Generates a Decoder for a list of fields (which may be part of a record).
 -}
-partialDecoder : DecoderOptions -> String -> Nonempty (Field pos RefChecked) -> FunGen
+partialDecoder : NamedRefGen -> String -> Nonempty (Field pos RefChecked) -> FunGen
 partialDecoder options name fields =
     let
         decodeFnName =
@@ -110,7 +76,7 @@ partialDecoder options name fields =
 
 {-| Generates a Decoder for an L1 type alias.
 -}
-typeAliasDecoder : DecoderOptions -> String -> Type pos RefChecked -> ( FunDecl, Linkage )
+typeAliasDecoder : NamedRefGen -> String -> Type pos RefChecked -> ( FunDecl, Linkage )
 typeAliasDecoder options name l1Type =
     let
         decodeFnName =
@@ -143,7 +109,7 @@ typeAliasDecoder options name l1Type =
 
 {-| Generates a Decoder for an L1 sum type.
 -}
-customTypeDecoder : DecoderOptions -> String -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> ( FunDecl, Linkage )
+customTypeDecoder : NamedRefGen -> String -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> ( FunDecl, Linkage )
 customTypeDecoder options name constructors =
     let
         decodeFnName =
@@ -252,7 +218,7 @@ restrictedDecoder name _ =
     )
 
 
-decoderCustomType : DecoderOptions -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> Expression
+decoderCustomType : NamedRefGen -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> Expression
 decoderCustomType options constructors =
     let
         decoderVariant name args =
@@ -307,7 +273,7 @@ decoderMatchFn constructors =
 
 {-| Generates a Decoder for an L1 type that has been named as an alias.
 -}
-decoderNamedType : DecoderOptions -> String -> Type pos RefChecked -> Expression
+decoderNamedType : NamedRefGen -> String -> Type pos RefChecked -> Expression
 decoderNamedType options name l1Type =
     case l1Type of
         TUnit _ _ ->
@@ -334,7 +300,7 @@ decoderNamedType options name l1Type =
 
 {-| Generates a Decoder for an L1 type.
 -}
-decoderType : DecoderOptions -> Type pos RefChecked -> Expression
+decoderType : NamedRefGen -> Type pos RefChecked -> Expression
 decoderType options l1Type =
     case l1Type of
         TBasic _ _ basic ->
@@ -355,7 +321,7 @@ decoderType options l1Type =
 
 {-| Generates a field decoder for a named field with an L1 type.
 -}
-decoderTypeField : DecoderOptions -> String -> Type pos RefChecked -> Expression
+decoderTypeField : NamedRefGen -> String -> Type pos RefChecked -> Expression
 decoderTypeField options name l1Type =
     case l1Type of
         TUnit _ _ ->
@@ -414,21 +380,12 @@ decoderBasic basic =
             decodeFn "string"
 
 
-decoderNamed : DecoderOptions -> String -> Expression
+decoderNamed : NamedRefGen -> String -> Expression
 decoderNamed options named =
-    case options.namedTypeDecoder of
-        AssumeCodec ->
-            CG.apply
-                [ CG.fqFun codecMod "decoder"
-                , CG.val (Naming.safeCCL (named ++ "Codec"))
-                ]
-                |> CG.parens
-
-        AssumeDecoder ->
-            CG.fun (Naming.safeCCL (named ++ "Decoder"))
+    CG.fun (Naming.safeCCL (named ++ "Decoder"))
 
 
-decoderContainer : DecoderOptions -> Container pos RefChecked -> Expression
+decoderContainer : NamedRefGen -> Container pos RefChecked -> Expression
 decoderContainer options container =
     case container of
         CList l1Type ->
@@ -447,7 +404,7 @@ decoderContainer options container =
                 |> CG.parens
 
 
-decoderDict : DecoderOptions -> Type pos RefChecked -> Type pos RefChecked -> Expression
+decoderDict : NamedRefGen -> Type pos RefChecked -> Type pos RefChecked -> Expression
 decoderDict options l1keyType l1valType =
     case l1keyType of
         TNamed _ _ name (RcRestricted basic) ->
@@ -496,7 +453,7 @@ decoderDict options l1keyType l1valType =
 {-| Generates a decoder for an L1 product type that has been named as an alias.
 The alias name is also the constructor function for the type.
 -}
-decoderNamedProduct : DecoderOptions -> String -> Nonempty ( String, Type pos RefChecked, L1.Properties ) -> Expression
+decoderNamedProduct : NamedRefGen -> String -> Nonempty ( String, Type pos RefChecked, L1.Properties ) -> Expression
 decoderNamedProduct options name fields =
     let
         typeName =
@@ -523,7 +480,7 @@ decoderProduct fields =
 {-| Generates a field decoder for an L1 container type. The 'optional' type is mapped
 onto `Maybe` and makes use of `Decoder.optionalField`.
 -}
-decoderContainerField : DecoderOptions -> String -> Container pos RefChecked -> Expression
+decoderContainerField : NamedRefGen -> String -> Container pos RefChecked -> Expression
 decoderContainerField options name container =
     case container of
         CList l1Type ->
@@ -548,7 +505,7 @@ decoderContainerField options name container =
 {-| Outputs decoders for a list of fields and terminates the list with `Decoder.buildObject`.
 Helper function useful when building record decoders.
 -}
-decoderFields : DecoderOptions -> Nonempty ( String, Type pos RefChecked, L1.Properties ) -> Nonempty Expression
+decoderFields : NamedRefGen -> Nonempty ( String, Type pos RefChecked, L1.Properties ) -> Nonempty Expression
 decoderFields options fields =
     Nonempty.map (\( fieldName, l1Type, _ ) -> decoderTypeField options fieldName l1Type)
         fields
@@ -556,14 +513,14 @@ decoderFields options fields =
 
 {-| Helper function for building field decoders.
 -}
-decoderField : DecoderOptions -> String -> Expression -> Expression
+decoderField : NamedRefGen -> String -> Expression -> Expression
 decoderField options name expr =
     CG.apply [ CG.fqFun jsonDecodePipelineMod "required", CG.string name, expr ]
 
 
 {-| Helper function for building optional field decoders.
 -}
-decoderOptionalField : DecoderOptions -> String -> Expression -> Expression
+decoderOptionalField : NamedRefGen -> String -> Expression -> Expression
 decoderOptionalField options name expr =
     let
         maybeDecoder =

@@ -135,11 +135,11 @@ coding propertiesApi name decl =
                 -- in
                 case maybeCodingKind of
                     Just "Encoder" ->
-                        Encode.encoder Encode.defaultEncoderOptions name decl
+                        Encode.encoder (encoderNamed propertiesApi Dict.empty) name decl
                             |> Ok
 
                     Just "Decoder" ->
-                        Decode.decoder Decode.defaultDecoderOptions name decl
+                        Decode.decoder (decoderNamed propertiesApi Dict.empty) name decl
                             |> Ok
 
                     Just "MinibillCodec" ->
@@ -161,11 +161,11 @@ partialCoding :
 partialCoding propertiesApi name codingKind fields =
     case codingKind of
         "Encoder" ->
-            Encode.partialEncoder Encode.defaultEncoderOptions name fields
+            Encode.partialEncoder (encoderNamed propertiesApi Dict.empty) name fields
                 |> Ok
 
         "Decoder" ->
-            Decode.partialDecoder Decode.defaultDecoderOptions name fields
+            Decode.partialDecoder (decoderNamed propertiesApi Dict.empty) name fields
                 |> Ok
 
         "MinibillCodec" ->

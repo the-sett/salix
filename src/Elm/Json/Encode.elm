@@ -1,23 +1,15 @@
-module Elm.Json.Encode exposing
-    ( encoder, partialEncoder
-    , EncoderOptions, AssumedEncoderForNamedType(..), defaultEncoderOptions
-    )
+module Elm.Json.Encode exposing (encoder, partialEncoder)
 
 {-| Elm code generation for Encoders using `elm/json` from L2 models.
 
 @docs encoder, partialEncoder
-
-
-# Options for generating encoders.
-
-@docs EncoderOptions, AssumedEncoderForNamedType, defaultEncoderOptions
 
 -}
 
 import Elm.CodeGen as CG exposing (Comment, Declaration, DocComment, Expression, Import, LetDeclaration, Linkage, Pattern, TypeAnnotation)
 import Elm.FunDecl as FunDecl exposing (FunDecl, FunGen)
 import Elm.Helper as Util
-import Elm.Json.NamedRef as NamedRef
+import Elm.Json.NamedRef as NamedRef exposing (NamedRefError, NamedRefGen)
 import L1 exposing (Basic(..), Container(..), Declarable(..), Field, Restricted(..), Type(..))
 import L2 exposing (RefChecked(..))
 import List.Nonempty as Nonempty exposing (Nonempty(..))
@@ -27,39 +19,12 @@ import Set exposing (Set)
 
 
 
---== Options for generating encoders
-
-
-{-| When generating an encoder for something with a named type nested in it,
-we assume that an encoder for that is also being generated, and simply call it.
-
-It may have been generated as a codec, or as an encoder, and this allows this
-assumption to be captured as an option.
-
--}
-type AssumedEncoderForNamedType
-    = AssumeCodec
-    | AssumeEncoder
-
-
-type alias EncoderOptions =
-    { namedTypeEncoder : AssumedEncoderForNamedType
-    }
-
-
-defaultEncoderOptions : EncoderOptions
-defaultEncoderOptions =
-    { namedTypeEncoder = AssumeEncoder
-    }
-
-
-
 --== Encoders
 
 
 {-| Generates an Encoder for a type declaration.
 -}
-encoder : EncoderOptions -> String -> Declarable pos RefChecked -> FunGen
+encoder : NamedRefGen -> String -> Declarable pos RefChecked -> FunGen
 encoder options name decl =
     case decl of
         DAlias _ _ l1Type ->
@@ -77,7 +42,7 @@ encoder options name decl =
 
 {-| Generates an Encoder for a list of fields (which may be part of a record).
 -}
-partialEncoder : EncoderOptions -> String -> Nonempty (Field pos RefChecked) -> FunGen
+partialEncoder : NamedRefGen -> String -> Nonempty (Field pos RefChecked) -> FunGen
 partialEncoder options name fields =
     let
         encodeFnName =
@@ -111,7 +76,7 @@ partialEncoder options name fields =
 
 {-| Generates a Encoder for an L1 type alias.
 -}
-typeAliasEncoder : EncoderOptions -> String -> Type pos RefChecked -> ( FunDecl, Linkage )
+typeAliasEncoder : NamedRefGen -> String -> Type pos RefChecked -> ( FunDecl, Linkage )
 typeAliasEncoder options name l1Type =
     let
         encodeFnName =
@@ -144,7 +109,7 @@ typeAliasEncoder options name l1Type =
 
 {-| Generates a Encoder for an L1 sum type.
 -}
-customTypeEncoder : EncoderOptions -> String -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> ( FunDecl, Linkage )
+customTypeEncoder : NamedRefGen -> String -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> ( FunDecl, Linkage )
 customTypeEncoder options name constructors =
     let
         encodeFnName =
@@ -253,7 +218,7 @@ restrictedEncoder name _ =
     )
 
 
-encoderCustomType : EncoderOptions -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> Expression
+encoderCustomType : NamedRefGen -> List ( String, List ( String, Type pos RefChecked, L1.Properties ) ) -> Expression
 encoderCustomType options constructors =
     let
         encoderVariant name args =
@@ -308,7 +273,7 @@ encoderMatchFn constructors =
 
 {-| Generates a Encoder for an L1 type that has been named as an alias.
 -}
-encoderNamedType : EncoderOptions -> String -> Type pos RefChecked -> Expression
+encoderNamedType : NamedRefGen -> String -> Type pos RefChecked -> Expression
 encoderNamedType options name l1Type =
     case l1Type of
         TUnit _ _ ->
@@ -335,7 +300,7 @@ encoderNamedType options name l1Type =
 
 {-| Generates a Encoder for an L1 type.
 -}
-encoderType : EncoderOptions -> Type pos RefChecked -> Expression
+encoderType : NamedRefGen -> Type pos RefChecked -> Expression
 encoderType options l1Type =
     case l1Type of
         TBasic _ _ basic ->
@@ -356,7 +321,7 @@ encoderType options l1Type =
 
 {-| Generates a field encoder for a named field with an L1 type.
 -}
-encoderTypeField : EncoderOptions -> String -> Type pos RefChecked -> Expression
+encoderTypeField : NamedRefGen -> String -> Type pos RefChecked -> Expression
 encoderTypeField options name l1Type =
     case l1Type of
         TUnit _ _ ->
@@ -415,21 +380,12 @@ encoderBasic basic =
             encodeFn "string"
 
 
-encoderNamed : EncoderOptions -> String -> Expression
+encoderNamed : NamedRefGen -> String -> Expression
 encoderNamed options named =
-    case options.namedTypeEncoder of
-        AssumeCodec ->
-            CG.apply
-                [ CG.fqFun codecMod "encoder"
-                , CG.val (Naming.safeCCL (named ++ "Codec"))
-                ]
-                |> CG.parens
-
-        AssumeEncoder ->
-            CG.fun (Naming.safeCCL (named ++ "Encoder"))
+    CG.fun (Naming.safeCCL (named ++ "Encoder"))
 
 
-encoderContainer : EncoderOptions -> Container pos RefChecked -> Expression
+encoderContainer : NamedRefGen -> Container pos RefChecked -> Expression
 encoderContainer options container =
     case container of
         CList l1Type ->
@@ -448,7 +404,7 @@ encoderContainer options container =
                 |> CG.parens
 
 
-encoderDict : EncoderOptions -> Type pos RefChecked -> Type pos RefChecked -> Expression
+encoderDict : NamedRefGen -> Type pos RefChecked -> Type pos RefChecked -> Expression
 encoderDict options l1keyType l1valType =
     case l1keyType of
         TNamed _ _ name (RcRestricted basic) ->
@@ -497,7 +453,7 @@ encoderDict options l1keyType l1valType =
 {-| Generates a encoder for an L1 product type that has been named as an alias.
 The alias name is also the constructor function for the type.
 -}
-encoderNamedProduct : EncoderOptions -> String -> List ( String, Type pos RefChecked, L1.Properties ) -> Expression
+encoderNamedProduct : NamedRefGen -> String -> List ( String, Type pos RefChecked, L1.Properties ) -> Expression
 encoderNamedProduct options name fields =
     let
         typeName =
@@ -524,7 +480,7 @@ encoderProduct fields =
 {-| Generates a field encoder for an L1 container type. The 'optional' type is mapped
 onto `Maybe` and makes use of `Encoder.optionalField`.
 -}
-encoderContainerField : EncoderOptions -> String -> Container pos RefChecked -> Expression
+encoderContainerField : NamedRefGen -> String -> Container pos RefChecked -> Expression
 encoderContainerField options name container =
     case container of
         CList l1Type ->
@@ -549,7 +505,7 @@ encoderContainerField options name container =
 {-| Outputs encoders for a list of fields and terminates the list with `Encoder.buildObject`.
 Helper function useful when building record encoders.
 -}
-encoderFields : EncoderOptions -> List ( String, Type pos RefChecked, L1.Properties ) -> List Expression
+encoderFields : NamedRefGen -> List ( String, Type pos RefChecked, L1.Properties ) -> List Expression
 encoderFields options fields =
     List.foldr (\( fieldName, l1Type, _ ) accum -> encoderTypeField options fieldName l1Type :: accum)
         []
@@ -558,7 +514,7 @@ encoderFields options fields =
 
 {-| Helper function for building field encoders.
 -}
-encoderField : EncoderOptions -> String -> Expression -> Expression
+encoderField : NamedRefGen -> String -> Expression -> Expression
 encoderField options name expr =
     CG.applyBinOp
         (CG.tuple
@@ -572,7 +528,7 @@ encoderField options name expr =
 
 {-| Helper function for building optional field encoders.
 -}
-encoderOptionalField : EncoderOptions -> String -> Expression -> Expression
+encoderOptionalField : NamedRefGen -> String -> Expression -> Expression
 encoderOptionalField options name expr =
     CG.applyBinOp
         (CG.tuple
