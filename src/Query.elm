@@ -1,6 +1,7 @@
 module Query exposing
     ( deref
     , transitiveClosure, transitiveClosureWithoutStartingSet
+    , transitiveClosureOfType
     , expectAlias, expectProduct, expectProductOrEmpty
     , PropertyFilter, andPropFilter, notPropFilter, orPropFilter
     , filterDictByProps, filterListByProps, filterNonemptyByProps
@@ -18,6 +19,7 @@ module Query exposing
 # Find dependency sets.
 
 @docs transitiveClosure, transitiveClosureWithoutStartingSet
+@docs transitiveClosureOfType
 
 
 # Partial projections as expectations.
@@ -134,6 +136,22 @@ transitiveClosureInner keepStartingSet set model =
                 |> List.map (\( name, decl ) -> { name = name, decl = decl, crumbs = crumbs })
                 |> List.map Ok
                 |> List.map (\val -> ( val, keepStartingSet ))
+    in
+    Search.depthFirst { cost = always 1.0, step = step model } start
+        |> allGoals
+        |> ResultME.combineList
+        |> ResultME.map (List.map (\{ name, decl } -> ( name, decl )))
+        |> ResultME.map Dict.fromList
+
+
+{-| Starting from a type, computes the transitive closure from all outoing TNamed
+references within that type. This yields all declarations that a type depends on.
+-}
+transitiveClosureOfType : Type pos L2.RefChecked -> L2 pos -> ResultME L3Error (L2 pos)
+transitiveClosureOfType l2type model =
+    let
+        start =
+            stepType Set.empty model l2type []
     in
     Search.depthFirst { cost = always 1.0, step = step model } start
         |> allGoals
