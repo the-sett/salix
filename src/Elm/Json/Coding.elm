@@ -45,6 +45,8 @@ import Naming
 import ResultME exposing (ResultME)
 
 
+{-| The errors that can occurr whilst generating JSON codings.
+-}
 type JsonCodingError
     = L3Error L3.L3Error
     | NoCodingSpecified String
@@ -60,6 +62,8 @@ errorCatalogue =
         ]
 
 
+{-| The error building for `JsonCodingError`s.
+-}
 errorBuilder : ErrorBuilder pos JsonCodingError
 errorBuilder posFn err =
     case err of
@@ -78,6 +82,8 @@ check l3 =
     l3 |> Ok
 
 
+{-| The L3 processor implementation for JSON coding.
+-}
 processorImpl : ProcessorImpl pos JsonCodingError
 processorImpl =
     { name = "Elm.Json.Coding"
@@ -87,6 +93,11 @@ processorImpl =
     }
 
 
+{-| An enumeration of the possible JSON codings that can be generated.
+
+Set this on a `Declarable` to generate a coding for it.
+
+-}
 jsonCodingEnum : Enum String
 jsonCodingEnum =
     Enum.define
@@ -119,6 +130,8 @@ defaultProperties =
     }
 
 
+{-| Generates a JSON coding for a `Declarable`.
+-}
 coding :
     PropertiesAPI pos
     -> L2 pos
@@ -153,6 +166,8 @@ coding propertiesApi model name decl =
             )
 
 
+{-| Generates a JSON coding for a set of fields (which may be part of a product).
+-}
 partialCoding :
     PropertiesAPI pos
     -> L2 pos

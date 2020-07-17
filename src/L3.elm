@@ -208,6 +208,10 @@ type alias DefaultProperties =
     }
 
 
+{-| An empty set of default properties. Useful for querying models during L2 processing,
+as without an L3 there are no defaults. So an L2 model can be easily turned into one
+with a `PropertiesAPI` outside of the context of L3 procesing.
+-}
 emptyDefaultProperties : DefaultProperties
 emptyDefaultProperties =
     let

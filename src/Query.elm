@@ -285,6 +285,8 @@ stepContainer crumbs model container accum =
 --
 
 
+{-| Expects a `Declarable` to be a `DAlias` otherwise its an error.
+-}
 expectAlias : Declarable pos ref -> ResultME L3Error ( pos, Properties, Type pos ref )
 expectAlias decl =
     case decl of
@@ -304,6 +306,8 @@ expectAlias decl =
 -- | TFunction pos Properties (Type pos ref) (Type pos ref)
 
 
+{-| Expects a `Type` to be a `TProduct` otherwise its an error.
+-}
 expectProduct : Type pos ref -> ResultME L3Error ( pos, Properties, Nonempty (Field pos ref) )
 expectProduct l1type =
     case l1type of
@@ -314,6 +318,8 @@ expectProduct l1type =
             NotExpectedKind "TProduct" (L1.typeConsName l1type) |> ResultME.error
 
 
+{-| Expects a `Type` to be a `TProduct` or `TEmptyProduct` otherwise its an error.
+-}
 expectProductOrEmpty : Type pos ref -> ResultME L3Error ( pos, Properties, List (Field pos ref) )
 expectProductOrEmpty l1type =
     case l1type of
@@ -331,10 +337,15 @@ expectProductOrEmpty l1type =
 -- Filtering by properties.
 
 
+{-| Defines the type of a function that filters over a set of properties, to things that
+have a certain set of properties.
+-}
 type alias PropertyFilter pos a =
     PropertiesAPI pos -> a -> ResultME L3.L3Error Bool
 
 
+{-| ANDs two `PropertyFilter`s together.
+-}
 andPropFilter : PropertyFilter pos a -> PropertyFilter pos a -> PropertyFilter pos a
 andPropFilter filterA filterB =
     \propertiesAPI val ->
@@ -349,6 +360,8 @@ andPropFilter filterA filterB =
                 )
 
 
+{-| ORs two `PropertyFilter`s together.
+-}
 orPropFilter : PropertyFilter pos a -> PropertyFilter pos a -> PropertyFilter pos a
 orPropFilter filterA filterB =
     \propertiesAPI val ->
@@ -363,6 +376,8 @@ orPropFilter filterA filterB =
                 )
 
 
+{-| Inverts a `PropertyFilter`.
+-}
 notPropFilter : PropertyFilter pos a -> PropertyFilter pos a
 notPropFilter filterA =
     \propertiesAPI val ->
@@ -377,6 +392,8 @@ notPropFilter filterA =
                 )
 
 
+{-| Filters the values in a `Dict` by a `PropertyFilter`.
+-}
 filterDictByProps :
     PropertiesAPI pos
     -> PropertyFilter pos a
@@ -408,6 +425,8 @@ filterDictByProps propertiesApi filter dict =
             Err (Nonempty e es)
 
 
+{-| Filters the elements in a `List` by a `PropertyFilter`.
+-}
 filterListByProps :
     PropertiesAPI pos
     -> PropertyFilter pos a
@@ -439,6 +458,8 @@ filterListByProps propertiesApi filter vals =
             Err (Nonempty e es)
 
 
+{-| Filters the elements in a `Nonempty` list by a `PropertyFilter`.
+-}
 filterNonemptyByProps :
     PropertiesAPI pos
     -> PropertyFilter pos a
