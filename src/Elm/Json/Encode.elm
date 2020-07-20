@@ -495,7 +495,7 @@ encoderContainerField options name container =
                 |> encoderOptionalField options name
 
 
-{-| Outputs encoders for a list of fields and terminates the list with `Encoder.buildObject`.
+{-| Outputs encoders for a list of fields.
 Helper function useful when building record encoders.
 -}
 encoderFields : NamedRefGen -> List ( String, Type pos RefChecked, L1.Properties ) -> List Expression

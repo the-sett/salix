@@ -55,7 +55,7 @@ partialDecoder options name fields =
             CG.typed "Decoder" [ CG.typed typeName [] ]
 
         impl =
-            decoderNamedProduct options name fields
+            decoderAnonProduct options name fields
 
         doc =
             CG.emptyDocComment
@@ -448,6 +448,30 @@ The alias name is also the constructor function for the type.
 -}
 decoderNamedProduct : NamedRefGen -> String -> Nonempty ( String, Type pos RefChecked, L1.Properties ) -> Expression
 decoderNamedProduct options name fields =
+    let
+        typeName =
+            Naming.safeCCU name
+
+        fieldDecoders =
+            decoderFields options fields
+
+        impl =
+            CG.pipe (CG.apply [ decodeFn "succeed", CG.val typeName ]) (Nonempty.toList fieldDecoders)
+    in
+    impl
+
+
+{-| Provides a decoder expression for the list of fields, but does not pass it
+to a constructor function. The caller needs to supply their own constructor
+function:
+
+    ```
+    Json.Decode.succeed consFn **decoderAnonProduct**
+    ```
+
+-}
+decoderAnonProduct : NamedRefGen -> String -> Nonempty ( String, Type pos RefChecked, L1.Properties ) -> Expression
+decoderAnonProduct options name fields =
     let
         typeName =
             Naming.safeCCU name
