@@ -360,16 +360,28 @@ encoderBasic : Basic -> Expression
 encoderBasic basic =
     case basic of
         BBool ->
-            encodeFn "bool"
+            CG.apply
+                [ encodeFn "bool"
+                , CG.val "val"
+                ]
 
         BInt ->
-            encodeFn "int"
+            CG.apply
+                [ encodeFn "int"
+                , CG.val "val"
+                ]
 
         BReal ->
-            encodeFn "float"
+            CG.apply
+                [ encodeFn "float"
+                , CG.val "val"
+                ]
 
         BString ->
-            encodeFn "string"
+            CG.apply
+                [ encodeFn "string"
+                , CG.val "val"
+                ]
 
 
 encoderNamed : NamedRefGen -> String -> Expression
@@ -382,18 +394,18 @@ encoderContainer : NamedRefGen -> Container pos RefChecked -> Expression
 encoderContainer options container =
     case container of
         CList l1Type ->
-            CG.apply [ encodeFn "list", encoderType options l1Type ]
+            CG.apply [ encodeFn "list", encoderType options l1Type, CG.val "val" ]
                 |> CG.parens
 
         CSet l1Type ->
-            CG.apply [ encodeFn "set", encoderType options l1Type ]
+            CG.apply [ encodeFn "set", encoderType options l1Type, CG.val "val" ]
                 |> CG.parens
 
         CDict l1keyType l1valType ->
             encoderDict options l1keyType l1valType
 
         COptional l1Type ->
-            CG.apply [ encodeFn "maybe", encoderType options l1Type ]
+            CG.apply [ encodeFn "maybe", encoderType options l1Type, CG.val "val" ]
                 |> CG.parens
 
 
