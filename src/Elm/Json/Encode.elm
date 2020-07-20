@@ -432,40 +432,18 @@ encoderDict options l1keyType l1valType =
     case l1keyType of
         TNamed _ _ name (RcRestricted basic) ->
             CG.apply
-                [ encodeFn "build"
-                , CG.apply
-                    [ CG.fqFun refinedMod "dictEncoder"
-                    , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encodeFn "encoder", encoderType options l1valType ]
-                        |> CG.parens
-                    ]
-                    |> CG.parens
-                , CG.apply
-                    [ CG.fqFun refinedMod "dictDecoder"
-                    , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encodeFn "decoder", encoderType options l1valType ]
-                        |> CG.parens
-                    ]
-                    |> CG.parens
+                [ CG.fqFun refinedMod "dictEncoder"
+                , CG.val (Naming.safeCCL name)
+                , encoderType options l1valType
+                , CG.val "val"
                 ]
 
         TNamed _ _ name RcEnum ->
             CG.apply
-                [ encodeFn "build"
-                , CG.apply
-                    [ CG.fqFun enumMod "dictEncoder"
-                    , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encodeFn "encoder", encoderType options l1valType ]
-                        |> CG.parens
-                    ]
-                    |> CG.parens
-                , CG.apply
-                    [ CG.fqFun enumMod "dictDecoder"
-                    , CG.val (Naming.safeCCL name)
-                    , CG.apply [ encodeFn "decoder", encoderType options l1valType ]
-                        |> CG.parens
-                    ]
-                    |> CG.parens
+                [ CG.fqFun enumMod "dictEncoder"
+                , CG.val (Naming.safeCCL name)
+                , encoderType options l1valType
+                , CG.val "val"
                 ]
 
         TNamed _ _ name (RcTBasic basic) ->
