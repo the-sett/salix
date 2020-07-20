@@ -409,6 +409,24 @@ encoderContainer options container =
                 |> CG.parens
 
 
+{-| For converting basic types to string for making `Dict` encodings.
+-}
+basicToString : Basic -> Expression
+basicToString basic =
+    case basic of
+        L1.BBool ->
+            CG.fqFun [] "bool"
+
+        L1.BInt ->
+            CG.fqFun stringMod "fromInt"
+
+        L1.BReal ->
+            CG.fqFun stringMod "fromFloat"
+
+        L1.BString ->
+            CG.val "identity"
+
+
 encoderDict : NamedRefGen -> Type pos RefChecked -> Type pos RefChecked -> Expression
 encoderDict options l1keyType l1valType =
     case l1keyType of
@@ -450,8 +468,22 @@ encoderDict options l1keyType l1valType =
                     |> CG.parens
                 ]
 
+        TNamed _ _ name (RcTBasic basic) ->
+            CG.apply
+                [ encodeFn "dict"
+                , basicToString basic
+                , encoderType options l1valType
+                , CG.val "val"
+                ]
+                |> CG.parens
+
         _ ->
-            CG.apply [ encodeFn "dict", encoderType options l1valType ]
+            let
+                _ =
+                    Debug.log "Dict encoder for unsupported key type: " l1keyType
+            in
+            -- basic to string fn needed for key
+            CG.apply [ encodeFn "dict", encoderType options l1valType, CG.val "val" ]
                 |> CG.parens
 
 
@@ -587,6 +619,11 @@ dictRefinedMod =
 refinedMod : List String
 refinedMod =
     [ "Refined" ]
+
+
+stringMod : List String
+stringMod =
+    [ "String" ]
 
 
 encodeFn : String -> Expression
