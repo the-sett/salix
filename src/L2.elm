@@ -2,6 +2,7 @@ module L2 exposing
     ( L2
     , RefChecked(..)
     , Processor, ProcessorImpl, builder
+    , refCheckedConsName
     )
 
 {-| Defines the level 2 language for data models that have been checked for
@@ -22,6 +23,11 @@ regard to specific code generators.
 # Standardized interface to an L2 processor.
 
 @docs Processor, ProcessorImpl, builder
+
+
+# Meta information on the model.
+
+@docs refCheckedConsName
 
 -}
 
@@ -46,8 +52,8 @@ type RefChecked
     | RcRestricted L1.Basic
     | RcSum
     | RcTUnit
-    | RcTBasic
-    | RcTNamed
+    | RcTBasic L1.Basic
+    | RcTNamed -- TODO: Should recursively explore this?
     | RcTProduct
     | RcTEmptyProduct
     | RcTContainer
@@ -88,3 +94,39 @@ type alias ProcessorImpl pos err =
     , check : L1 pos -> ResultME err (L2 pos)
     , buildError : ErrorBuilder pos err
     }
+
+
+{-| Yields the constructor name for a `RefChecked`.
+-}
+refCheckedConsName : RefChecked -> String
+refCheckedConsName refChecked =
+    case refChecked of
+        RcEnum ->
+            "RcEnum"
+
+        RcRestricted _ ->
+            "RcRestricted"
+
+        RcSum ->
+            "RcSum"
+
+        RcTUnit ->
+            "RcTUnit"
+
+        RcTBasic _ ->
+            "RcTBasic"
+
+        RcTNamed ->
+            "RcTNamed"
+
+        RcTProduct ->
+            "RcTProduct"
+
+        RcTEmptyProduct ->
+            "RcTEmptyProduct"
+
+        RcTContainer ->
+            "RcTContainer"
+
+        RcTFunction ->
+            "RcTFunction"

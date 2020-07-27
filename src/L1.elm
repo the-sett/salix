@@ -1,10 +1,11 @@
 module L1 exposing
-    ( Basic(..), Container(..), Type(..), Restricted(..), Declarable(..), L1
+    ( Basic(..), Container(..), Field, Type(..), Restricted(..), Declarable(..), L1
     , PropSpec(..), Property(..), Properties, PropSpecs
     , defineProperties, emptyProperties
     , Unchecked(..)
     , positionOfDeclarable, positionOfType, propertiesOfDeclarable, propertiesOfType
     , updatePropertiesOfDeclarable, updatePropertiesOfType
+    , declarableConsName, typeConsName
     )
 
 {-| Defines the level 1 language for data modelling.
@@ -12,7 +13,7 @@ module L1 exposing
 
 # The L1 data modelling AST.
 
-@docs Basic, Container, Type, Restricted, Declarable, L1
+@docs Basic, Container, Field, Type, Restricted, Declarable, L1
 
 
 # Properties that can be held against the L1 mode.
@@ -30,6 +31,11 @@ module L1 exposing
 
 @docs positionOfDeclarable, positionOfType, propertiesOfDeclarable, propertiesOfType
 @docs updatePropertiesOfDeclarable, updatePropertiesOfType
+
+
+# Meta information on the model.
+
+@docs declarableConsName, typeConsName
 
 -}
 
@@ -56,13 +62,19 @@ type Container pos ref
     | COptional (Type pos ref)
 
 
+{-| Re-usable field definition.
+-}
+type alias Field pos ref =
+    ( String, Type pos ref, Properties )
+
+
 {-| The possible type constructs.
 -}
 type Type pos ref
     = TUnit pos Properties
     | TBasic pos Properties Basic
     | TNamed pos Properties String ref
-    | TProduct pos Properties (Nonempty ( String, Type pos ref, Properties ))
+    | TProduct pos Properties (Nonempty (Field pos ref))
     | TEmptyProduct pos Properties
     | TContainer pos Properties (Container pos ref)
     | TFunction pos Properties (Type pos ref) (Type pos ref)
@@ -87,7 +99,7 @@ type Restricted
 -}
 type Declarable pos ref
     = DAlias pos Properties (Type pos ref)
-    | DSum pos Properties (Nonempty ( String, List ( String, Type pos ref, Properties ) ))
+    | DSum pos Properties (Nonempty ( String, List (Field pos ref) ))
     | DEnum pos Properties (Nonempty String)
     | DRestricted pos Properties Restricted
 
@@ -127,7 +139,6 @@ type Property
     | PEnum (Enum String) String
     | PQName (List String)
     | PBool Bool
-    | POptional PropSpec (Maybe Property)
 
 
 {-| A set of additional properties on the model.
@@ -185,9 +196,6 @@ defineProperties notSet set =
 
                 PBool _ ->
                     PSBool
-
-                POptional spec _ ->
-                    PSOptional spec
     in
     ( fullPropSpecs, properties )
 
@@ -339,3 +347,48 @@ positionOfType type_ =
 
         TFunction pos _ _ _ ->
             pos
+
+
+{-| Yields the constructor name for a `Declarable`.
+-}
+declarableConsName : Declarable pos ref -> String
+declarableConsName decl =
+    case decl of
+        DAlias _ _ _ ->
+            "DAlias"
+
+        DSum _ _ _ ->
+            "DSum"
+
+        DEnum _ _ _ ->
+            "DEnum"
+
+        DRestricted _ _ _ ->
+            "DRestricted"
+
+
+{-| Yields the constructor name for a `Type`.
+-}
+typeConsName : Type pos ref -> String
+typeConsName l1type =
+    case l1type of
+        TUnit _ _ ->
+            "TUnit"
+
+        TBasic _ _ _ ->
+            "TBasic"
+
+        TNamed _ _ _ _ ->
+            "TNamed"
+
+        TProduct _ _ _ ->
+            "TProduct"
+
+        TEmptyProduct _ _ ->
+            "TEmptyProduct"
+
+        TContainer _ _ _ ->
+            "TContainer"
+
+        TFunction _ _ _ _ ->
+            "TFunction"

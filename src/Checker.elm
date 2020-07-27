@@ -289,7 +289,7 @@ checkDictKey pos l2type =
         TBasic _ _ _ ->
             l2type |> Ok
 
-        TNamed _ _ _ RcTBasic ->
+        TNamed _ _ _ (RcTBasic _) ->
             l2type |> Ok
 
         TNamed _ _ _ RcEnum ->
@@ -354,8 +354,8 @@ declToRefChecked decl =
                 TUnit _ _ ->
                     RcTUnit
 
-                TBasic _ _ _ ->
-                    RcTBasic
+                TBasic _ _ basic ->
+                    RcTBasic basic
 
                 TNamed _ _ _ _ ->
                     RcTNamed
