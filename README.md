@@ -30,3 +30,8 @@ generating Elm code are provided.
 - APIs to standardize the L2 and L3 processors were also placed around those. This makes the system more modular allowing many different implementations to be
 'plugged in'. There is still some work to do in this area, around standardizing
 how code generator outputs work.
+
+**3.0.1**
+- L3 code generator for JSON codings in Elm introduced.
+- A few small changes to error reporting when querying properties.
+- Added the L1.Basic type to RCBasic.
