@@ -15,7 +15,13 @@ import Set exposing (Set)
 -}
 prepareLayout : List ( String, Declarable pos check ) -> Doc
 prepareLayout model =
-    Pretty.string "blah"
+    List.map
+        (\decl ->
+            prettyDeclarable decl
+                |> Pretty.a Pretty.line
+        )
+        model
+        |> doubleLines
 
 
 prettyBasic : Basic -> Doc
@@ -38,6 +44,30 @@ prettyType _ =
     Debug.todo "prettyType"
 
 
-prettyDeclarable : Declarable pos ref -> Doc
-prettyDeclarable _ =
-    Debug.todo "prettyDeclarable"
+prettyDeclarable : ( String, Declarable pos ref ) -> Doc
+prettyDeclarable ( name, decl ) =
+    case decl of
+        DAlias pos props typ ->
+            Pretty.string name
+                |> Pretty.append Pretty.space
+                |> Pretty.append (Pretty.string "alias")
+
+        DSum pos props fields ->
+            Pretty.string name
+                |> Pretty.append Pretty.space
+                |> Pretty.append (Pretty.string "sum")
+
+        DEnum pos props labels ->
+            Pretty.string name
+                |> Pretty.append Pretty.space
+                |> Pretty.append (Pretty.string "enum")
+
+        DRestricted pos props res ->
+            Pretty.string name
+                |> Pretty.append Pretty.space
+                |> Pretty.append (Pretty.string "restricted")
+
+
+doubleLines : List Doc -> Doc
+doubleLines =
+    Pretty.join (Pretty.a Pretty.line Pretty.line)
