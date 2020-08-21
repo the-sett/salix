@@ -13,7 +13,7 @@ import Set exposing (Set)
 
 {-| Pretty prints an L1 model.
 -}
-prepareLayout : L1 pos -> Doc
+prepareLayout : List ( String, Declarable pos check ) -> Doc
 prepareLayout model =
     Pretty.string "blah"
 
