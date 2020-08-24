@@ -113,6 +113,7 @@ prettyFields fields =
     Nonempty.map prettyField fields
         |> Nonempty.toList
         |> Pretty.lines
+        |> curlyParens
 
 
 
@@ -142,20 +143,47 @@ prettyDeclarable ( name, decl ) =
         DSum pos props constructors ->
             [ string "sum"
             , string name
+            , string "="
+            , prettyConstructors constructors
             ]
                 |> Pretty.words
 
         DEnum pos props labels ->
             [ string "enum"
             , string name
+            , string "="
+            , prettyEnum labels
             ]
                 |> Pretty.words
 
         DRestricted pos props res ->
-            [ string "restricted"
+            [ string "alias"
             , string name
+            , string "="
+            , prettyRestricted res
             ]
                 |> Pretty.words
+
+
+prettyConstructors : Nonempty ( String, List (Field pos ref) ) -> Doc
+prettyConstructors constructors =
+    Nonempty.map prettyConstructor constructors
+        |> Nonempty.toList
+        |> Pretty.lines
+
+
+prettyConstructor : ( String, List (Field pos ref) ) -> Doc
+prettyConstructor ( cname, cfields ) =
+    string cname
+        :: List.map prettyField cfields
+        |> Pretty.words
+
+
+prettyEnum : Nonempty String -> Doc
+prettyEnum labels =
+    Nonempty.map string labels
+        |> Nonempty.toList
+        |> Pretty.lines
 
 
 
@@ -199,6 +227,11 @@ singleQuotes doc =
 sqParens : Doc -> Doc
 sqParens doc =
     Pretty.surround (Pretty.string "[") (Pretty.string "]") doc
+
+
+curlyParens : Doc -> Doc
+curlyParens doc =
+    Pretty.surround (Pretty.string "{") (Pretty.string "}") doc
 
 
 doubleLines : List Doc -> Doc
