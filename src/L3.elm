@@ -196,15 +196,6 @@ type alias DefaultProperties =
 
     -- Fields
     , fields : ( PropSpecs, Properties )
-
-    -- Types
-    , unit : ( PropSpecs, Properties )
-    , basic : ( PropSpecs, Properties )
-    , named : ( PropSpecs, Properties )
-    , product : ( PropSpecs, Properties )
-    , emptyProduct : ( PropSpecs, Properties )
-    , container : ( PropSpecs, Properties )
-    , function : ( PropSpecs, Properties )
     }
 
 
@@ -224,13 +215,6 @@ emptyDefaultProperties =
     , enum = emptySpec
     , restricted = emptySpec
     , fields = emptySpec
-    , unit = emptySpec
-    , basic = emptySpec
-    , named = emptySpec
-    , product = emptySpec
-    , emptyProduct = emptySpec
-    , container = emptySpec
-    , function = emptySpec
     }
 
 
@@ -252,7 +236,6 @@ type alias PropertiesAPI pos =
     { top : PropertyGet
     , declarable : Declarable pos RefChecked -> PropertyGet
     , field : Properties -> PropertyGet
-    , type_ : Type pos RefChecked -> PropertyGet
     }
 
 
@@ -277,29 +260,6 @@ makePropertiesAPI defaultProperties l3 =
                 DRestricted _ props _ ->
                     makePropertyGet (Tuple.second defaultProperties.restricted) props
     , field = makePropertyGet (Tuple.second defaultProperties.fields)
-    , type_ =
-        \typedef ->
-            case typedef of
-                TUnit _ props ->
-                    makePropertyGet (Tuple.second defaultProperties.unit) props
-
-                TBasic _ props _ ->
-                    makePropertyGet (Tuple.second defaultProperties.basic) props
-
-                TNamed _ props _ _ ->
-                    makePropertyGet (Tuple.second defaultProperties.named) props
-
-                TProduct _ props _ ->
-                    makePropertyGet (Tuple.second defaultProperties.product) props
-
-                TEmptyProduct _ props ->
-                    makePropertyGet (Tuple.second defaultProperties.emptyProduct) props
-
-                TContainer _ props _ ->
-                    makePropertyGet (Tuple.second defaultProperties.container) props
-
-                TFunction _ props _ _ ->
-                    makePropertyGet (Tuple.second defaultProperties.function) props
     }
 
 

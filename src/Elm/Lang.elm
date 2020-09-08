@@ -389,29 +389,29 @@ enumRefinedType name labels =
 lowerType : Type pos RefChecked -> ( TypeAnnotation, Linkage )
 lowerType l1Type =
     case l1Type of
-        TUnit _ _ ->
+        TUnit _ ->
             ( CG.unitAnn, CG.emptyLinkage )
 
-        TBasic _ _ basic ->
+        TBasic _ basic ->
             ( lowerBasic basic
             , CG.emptyLinkage
             )
 
-        TNamed _ _ name _ ->
+        TNamed _ name _ ->
             ( CG.typed (Naming.safeCCU name) []
             , CG.emptyLinkage
             )
 
-        TProduct _ _ fields ->
+        TProduct _ fields ->
             lowerProduct (List.Nonempty.toList fields)
 
-        TEmptyProduct _ _ ->
+        TEmptyProduct _ ->
             lowerProduct []
 
-        TContainer _ _ container ->
+        TContainer _ container ->
             lowerContainer container
 
-        TFunction _ _ arg res ->
+        TFunction _ arg res ->
             ( CG.unitAnn
             , CG.emptyLinkage
             )
@@ -482,7 +482,7 @@ lowerContainer container =
 lowerDict : Type pos RefChecked -> Type pos RefChecked -> ( TypeAnnotation, Linkage )
 lowerDict l1keyType l1valType =
     case l1keyType of
-        TNamed _ _ name (RcRestricted basic) ->
+        TNamed _ name (RcRestricted basic) ->
             let
                 ( keyAnn, keyLink ) =
                     lowerType l1keyType
@@ -494,7 +494,7 @@ lowerDict l1keyType l1valType =
             , CG.combineLinkage [ keyLink, valLink ] |> CG.addImport dictRefinedImport
             )
 
-        TNamed _ _ name RcEnum ->
+        TNamed _ name RcEnum ->
             let
                 ( keyAnn, keyLink ) =
                     lowerType l1keyType

@@ -3,8 +3,8 @@ module L1 exposing
     , PropSpec(..), Property(..), Properties, PropSpecs
     , defineProperties, emptyProperties
     , Unchecked(..)
-    , positionOfDeclarable, positionOfType, propertiesOfDeclarable, propertiesOfType
-    , updatePropertiesOfDeclarable, updatePropertiesOfType
+    , positionOfDeclarable, positionOfType, propertiesOfDeclarable
+    , updatePropertiesOfDeclarable
     , declarableConsName, typeConsName
     )
 
@@ -29,8 +29,8 @@ module L1 exposing
 
 # Helper functions for extracting info from the L1 model.
 
-@docs positionOfDeclarable, positionOfType, propertiesOfDeclarable, propertiesOfType
-@docs updatePropertiesOfDeclarable, updatePropertiesOfType
+@docs positionOfDeclarable, positionOfType, propertiesOfDeclarable
+@docs updatePropertiesOfDeclarable
 
 
 # Meta information on the model.
@@ -71,13 +71,13 @@ type alias Field pos ref =
 {-| The possible type constructs.
 -}
 type Type pos ref
-    = TUnit pos Properties
-    | TBasic pos Properties Basic
-    | TNamed pos Properties String ref
-    | TProduct pos Properties (Nonempty (Field pos ref))
-    | TEmptyProduct pos Properties
-    | TContainer pos Properties (Container pos ref)
-    | TFunction pos Properties (Type pos ref) (Type pos ref)
+    = TUnit pos
+    | TBasic pos Basic
+    | TNamed pos String ref
+    | TProduct pos (Nonempty (Field pos ref))
+    | TEmptyProduct pos
+    | TContainer pos (Container pos ref)
+    | TFunction pos (Type pos ref) (Type pos ref)
 
 
 {-| Restricted forms that are subsets of the basic data types.
@@ -232,33 +232,6 @@ propertiesOfDeclarable decl =
             props
 
 
-{-| Gets the properties from a Type.
--}
-propertiesOfType : Type pos ref -> Properties
-propertiesOfType type_ =
-    case type_ of
-        TUnit _ props ->
-            props
-
-        TBasic _ props _ ->
-            props
-
-        TNamed _ props _ _ ->
-            props
-
-        TProduct _ props _ ->
-            props
-
-        TEmptyProduct _ props ->
-            props
-
-        TContainer _ props _ ->
-            props
-
-        TFunction _ props _ _ ->
-            props
-
-
 {-| Updates the properties from a Declarable.
 -}
 updatePropertiesOfDeclarable : (Properties -> Properties) -> Declarable pos ref -> Declarable pos ref
@@ -275,33 +248,6 @@ updatePropertiesOfDeclarable propsFn decl =
 
         DRestricted pos props def ->
             DRestricted pos (propsFn props) def
-
-
-{-| Updates the properties from a Type.
--}
-updatePropertiesOfType : (Properties -> Properties) -> Type pos ref -> Type pos ref
-updatePropertiesOfType propsFn type_ =
-    case type_ of
-        TUnit pos props ->
-            TUnit pos (propsFn props)
-
-        TBasic pos props basic ->
-            TBasic pos (propsFn props) basic
-
-        TNamed pos props name ref ->
-            TNamed pos (propsFn props) name ref
-
-        TProduct pos props fields ->
-            TProduct pos (propsFn props) fields
-
-        TEmptyProduct pos props ->
-            TEmptyProduct pos (propsFn props)
-
-        TContainer pos props inner ->
-            TContainer pos (propsFn props) inner
-
-        TFunction pos props arg res ->
-            TFunction pos (propsFn props) arg res
 
 
 {-| Gets the position context from a Declarable.
@@ -327,25 +273,25 @@ positionOfDeclarable decl =
 positionOfType : Type pos ref -> pos
 positionOfType type_ =
     case type_ of
-        TUnit pos _ ->
+        TUnit pos ->
             pos
 
-        TBasic pos _ _ ->
+        TBasic pos _ ->
             pos
 
-        TNamed pos _ _ _ ->
+        TNamed pos _ _ ->
             pos
 
-        TProduct pos _ _ ->
+        TProduct pos _ ->
             pos
 
-        TEmptyProduct pos _ ->
+        TEmptyProduct pos ->
             pos
 
-        TContainer pos _ _ ->
+        TContainer pos _ ->
             pos
 
-        TFunction pos _ _ _ ->
+        TFunction pos _ _ ->
             pos
 
 
@@ -372,23 +318,23 @@ declarableConsName decl =
 typeConsName : Type pos ref -> String
 typeConsName l1type =
     case l1type of
-        TUnit _ _ ->
+        TUnit _ ->
             "TUnit"
 
-        TBasic _ _ _ ->
+        TBasic _ _ ->
             "TBasic"
 
-        TNamed _ _ _ _ ->
+        TNamed _ _ _ ->
             "TNamed"
 
-        TProduct _ _ _ ->
+        TProduct _ _ ->
             "TProduct"
 
-        TEmptyProduct _ _ ->
+        TEmptyProduct _ ->
             "TEmptyProduct"
 
-        TContainer _ _ _ ->
+        TContainer _ _ ->
             "TContainer"
 
-        TFunction _ _ _ _ ->
+        TFunction _ _ _ ->
             "TFunction"

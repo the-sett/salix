@@ -58,7 +58,7 @@ deref name model =
     case Dict.get name model of
         Just val ->
             case val of
-                DAlias _ _ (TNamed _ _ nextName _) ->
+                DAlias _ _ (TNamed _ nextName _) ->
                     deref nextName model
 
                 _ ->
@@ -223,7 +223,7 @@ stepDecl crumbs model decl accum =
 stepType : Set String -> L2 pos -> Type pos L2.RefChecked -> List ( State pos, Bool ) -> List ( State pos, Bool )
 stepType crumbs model l2type accum =
     case l2type of
-        TNamed _ _ refName _ ->
+        TNamed _ refName _ ->
             case Set.member refName crumbs of
                 True ->
                     accum
@@ -243,16 +243,16 @@ stepType crumbs model l2type accum =
                         Nothing ->
                             ( DerefDeclMissing refName |> ResultME.error, True ) :: accum
 
-        TProduct _ _ fields ->
+        TProduct _ fields ->
             Nonempty.foldl
                 (\( _, fType, _ ) fieldAccum -> stepType crumbs model fType fieldAccum)
                 accum
                 fields
 
-        TContainer _ _ container ->
+        TContainer _ container ->
             stepContainer crumbs model container accum
 
-        TFunction _ _ fromType toType ->
+        TFunction _ fromType toType ->
             stepType crumbs model toType (stepType crumbs model fromType accum)
 
         _ ->
@@ -308,11 +308,11 @@ expectAlias decl =
 
 {-| Expects a `Type` to be a `TProduct` otherwise its an error.
 -}
-expectProduct : Type pos ref -> ResultME L3Error ( pos, Properties, Nonempty (Field pos ref) )
+expectProduct : Type pos ref -> ResultME L3Error ( pos, Nonempty (Field pos ref) )
 expectProduct l1type =
     case l1type of
-        TProduct pos props fields ->
-            Ok ( pos, props, fields )
+        TProduct pos fields ->
+            Ok ( pos, fields )
 
         _ ->
             NotExpectedKind "TProduct" (L1.typeConsName l1type) |> ResultME.error
@@ -320,14 +320,14 @@ expectProduct l1type =
 
 {-| Expects a `Type` to be a `TProduct` or `TEmptyProduct` otherwise its an error.
 -}
-expectProductOrEmpty : Type pos ref -> ResultME L3Error ( pos, Properties, List (Field pos ref) )
+expectProductOrEmpty : Type pos ref -> ResultME L3Error ( pos, List (Field pos ref) )
 expectProductOrEmpty l1type =
     case l1type of
-        TProduct pos props fields ->
-            Ok ( pos, props, Nonempty.toList fields )
+        TProduct pos fields ->
+            Ok ( pos, Nonempty.toList fields )
 
-        TEmptyProduct pos props ->
-            Ok ( pos, props, [] )
+        TEmptyProduct pos ->
+            Ok ( pos, [] )
 
         _ ->
             NotExpectedKind "TProduct" (L1.typeConsName l1type) |> ResultME.error
