@@ -268,25 +268,25 @@ encoderMatchFn constructors =
 encoderNamedType : NamedRefGen -> String -> Type pos RefChecked -> Expression
 encoderNamedType options name l1Type =
     case l1Type of
-        TUnit _ _ ->
+        TUnit _ ->
             encoderUnit
 
-        TBasic _ _ basic ->
+        TBasic _ basic ->
             encoderType options l1Type
 
-        TNamed _ _ named _ ->
+        TNamed _ named _ ->
             CG.string "encoderNamedType_TNamed"
 
-        TProduct _ _ fields ->
+        TProduct _ fields ->
             encoderNamedProduct options name (Nonempty.toList fields)
 
-        TEmptyProduct _ _ ->
+        TEmptyProduct _ ->
             encoderNamedProduct options name []
 
-        TContainer _ _ container ->
+        TContainer _ container ->
             encoderType options l1Type
 
-        TFunction _ _ arg res ->
+        TFunction _ arg res ->
             CG.unit
 
 
@@ -295,16 +295,16 @@ encoderNamedType options name l1Type =
 encoderType : NamedRefGen -> Type pos RefChecked -> Expression
 encoderType options l1Type =
     case l1Type of
-        TBasic _ _ basic ->
+        TBasic _ basic ->
             encoderBasic basic
 
-        TNamed _ _ named _ ->
+        TNamed _ named _ ->
             encoderNamed options named
 
-        TProduct _ _ fields ->
+        TProduct _ fields ->
             encoderProduct (Nonempty.toList fields)
 
-        TContainer _ _ container ->
+        TContainer _ container ->
             encoderContainer options container
 
         _ ->
@@ -316,29 +316,29 @@ encoderType options l1Type =
 encoderTypeField : NamedRefGen -> String -> Type pos RefChecked -> Expression
 encoderTypeField options name l1Type =
     case l1Type of
-        TUnit _ _ ->
+        TUnit _ ->
             encoderUnit |> encoderField options name
 
-        TBasic _ _ basic ->
+        TBasic _ basic ->
             encoderBasic basic
                 |> encoderField options name
 
-        TNamed _ _ named _ ->
+        TNamed _ named _ ->
             encoderNamed options named
                 |> encoderField options name
 
-        TProduct _ _ fields ->
+        TProduct _ fields ->
             encoderProduct (Nonempty.toList fields)
                 |> encoderField options name
 
-        TEmptyProduct _ _ ->
+        TEmptyProduct _ ->
             encoderProduct []
                 |> encoderField options name
 
-        TContainer _ _ container ->
+        TContainer _ container ->
             encoderContainerField options name container
 
-        TFunction _ _ arg res ->
+        TFunction _ arg res ->
             CG.unit
 
 
@@ -430,7 +430,7 @@ basicToString basic =
 encoderDict : NamedRefGen -> Type pos RefChecked -> Type pos RefChecked -> Expression
 encoderDict options l1keyType l1valType =
     case l1keyType of
-        TNamed _ _ name (RcRestricted basic) ->
+        TNamed _ name (RcRestricted basic) ->
             CG.apply
                 [ CG.fqFun refinedMod "dictEncoder"
                 , CG.val (Naming.safeCCL name)
@@ -438,7 +438,7 @@ encoderDict options l1keyType l1valType =
                 , CG.val "val"
                 ]
 
-        TNamed _ _ name RcEnum ->
+        TNamed _ name RcEnum ->
             CG.apply
                 [ CG.fqFun enumMod "dictEncoder"
                 , CG.val (Naming.safeCCL name)
@@ -446,7 +446,7 @@ encoderDict options l1keyType l1valType =
                 , CG.val "val"
                 ]
 
-        TNamed _ _ name (RcTBasic basic) ->
+        TNamed _ name (RcTBasic basic) ->
             CG.apply
                 [ encodeFn "dict"
                 , basicToString basic

@@ -215,13 +215,13 @@ checkType :
     -> ResultME (ModelCheckingError pos) (Type pos RefChecked)
 checkType decls l1type =
     case l1type of
-        TUnit pos props ->
-            TUnit pos props |> Ok
+        TUnit pos ->
+            TUnit pos |> Ok
 
-        TBasic pos props basic ->
-            TBasic pos props basic |> Ok
+        TBasic pos basic ->
+            TBasic pos basic |> Ok
 
-        TNamed pos props name _ ->
+        TNamed pos name _ ->
             case Dict.get name decls of
                 Nothing ->
                     UnresolvedRef pos name
@@ -229,23 +229,23 @@ checkType decls l1type =
 
                 Just resolvedDecl ->
                     declToRefChecked resolvedDecl
-                        |> TNamed pos props name
+                        |> TNamed pos name
                         |> Ok
 
-        TProduct pos props fields ->
+        TProduct pos fields ->
             checkNonemptyFields pos decls fields
                 |> Result.map Naming.sortNonemptyNamed
-                |> Result.map (TProduct pos props)
+                |> Result.map (TProduct pos)
 
-        TEmptyProduct pos props ->
-            TEmptyProduct pos props |> Ok
+        TEmptyProduct pos ->
+            TEmptyProduct pos |> Ok
 
-        TContainer pos props container ->
+        TContainer pos container ->
             checkContainer pos decls container
-                |> Result.map (TContainer pos props)
+                |> Result.map (TContainer pos)
 
-        TFunction pos props arg res ->
-            ResultME.map2 (TFunction pos props) (checkType decls arg) (checkType decls res)
+        TFunction pos arg res ->
+            ResultME.map2 (TFunction pos) (checkType decls arg) (checkType decls res)
 
 
 checkContainer :
@@ -286,16 +286,16 @@ which makes it simple to know what it refers to in the case where it is a ref.
 checkDictKey : pos -> Type pos RefChecked -> ResultME (ModelCheckingError pos) (Type pos RefChecked)
 checkDictKey pos l2type =
     case l2type of
-        TBasic _ _ _ ->
+        TBasic _ _ ->
             l2type |> Ok
 
-        TNamed _ _ _ (RcTBasic _) ->
+        TNamed _ _ (RcTBasic _) ->
             l2type |> Ok
 
-        TNamed _ _ _ RcEnum ->
+        TNamed _ _ RcEnum ->
             l2type |> Ok
 
-        TNamed _ _ _ (RcRestricted _) ->
+        TNamed _ _ (RcRestricted _) ->
             l2type |> Ok
 
         _ ->
@@ -351,25 +351,25 @@ declToRefChecked decl =
     case decl of
         DAlias _ _ l1type ->
             case l1type of
-                TUnit _ _ ->
+                TUnit _ ->
                     RcTUnit
 
-                TBasic _ _ basic ->
+                TBasic _ basic ->
                     RcTBasic basic
 
-                TNamed _ _ _ _ ->
+                TNamed _ _ _ ->
                     RcTNamed
 
-                TProduct _ _ _ ->
+                TProduct _ _ ->
                     RcTProduct
 
-                TEmptyProduct _ _ ->
+                TEmptyProduct _ ->
                     RcTEmptyProduct
 
-                TContainer _ _ _ ->
+                TContainer _ _ ->
                     RcTContainer
 
-                TFunction _ _ _ _ ->
+                TFunction _ _ _ ->
                     RcTFunction
 
         DSum _ constructors _ ->

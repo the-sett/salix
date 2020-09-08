@@ -120,13 +120,6 @@ defaultProperties =
     , enum = L1.defineProperties [] []
     , restricted = L1.defineProperties [] []
     , fields = L1.defineProperties [] []
-    , unit = L1.defineProperties [] []
-    , basic = L1.defineProperties [] []
-    , named = L1.defineProperties [] []
-    , product = L1.defineProperties [] []
-    , emptyProduct = L1.defineProperties [] []
-    , container = L1.defineProperties [] []
-    , function = L1.defineProperties [] []
     }
 
 

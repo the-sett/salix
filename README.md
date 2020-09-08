@@ -35,3 +35,6 @@ how code generator outputs work.
 - L3 code generator for JSON codings in Elm introduced.
 - A few small changes to error reporting when querying properties.
 - Added the L1.Basic type to RCBasic.
+
+**4.0.0**
+- Removed `Properties` from `Type`s. Properties will only be allowed on declarations and fields. This will make the text source language more manageable as allowing properties anywhere will make it quite awkward. Properties were allowed on types in order to be able to force a property to be set in particular places. This will be handled instead by enriching the property descriptors - not in this version.

@@ -268,25 +268,25 @@ decoderMatchFn constructors =
 decoderNamedType : NamedRefGen -> String -> Type pos RefChecked -> Expression
 decoderNamedType options name l1Type =
     case l1Type of
-        TUnit _ _ ->
+        TUnit _ ->
             decoderUnit
 
-        TBasic _ _ basic ->
+        TBasic _ basic ->
             decoderType options l1Type
 
-        TNamed _ _ named _ ->
+        TNamed _ named _ ->
             CG.string "decoderNamedType_TNamed"
 
-        TProduct _ _ fields ->
+        TProduct _ fields ->
             decoderNamedProduct options name fields
 
-        TEmptyProduct _ _ ->
+        TEmptyProduct _ ->
             CG.unit
 
-        TContainer _ _ container ->
+        TContainer _ container ->
             decoderType options l1Type
 
-        TFunction _ _ arg res ->
+        TFunction _ arg res ->
             CG.unit
 
 
@@ -295,16 +295,16 @@ decoderNamedType options name l1Type =
 decoderType : NamedRefGen -> Type pos RefChecked -> Expression
 decoderType options l1Type =
     case l1Type of
-        TBasic _ _ basic ->
+        TBasic _ basic ->
             decoderBasic basic
 
-        TNamed _ _ named _ ->
+        TNamed _ named _ ->
             decoderNamed options named
 
-        TProduct _ _ fields ->
+        TProduct _ fields ->
             decoderProduct (Nonempty.toList fields)
 
-        TContainer _ _ container ->
+        TContainer _ container ->
             decoderContainer options container
 
         _ ->
@@ -316,29 +316,29 @@ decoderType options l1Type =
 decoderTypeField : NamedRefGen -> String -> Type pos RefChecked -> Expression
 decoderTypeField options name l1Type =
     case l1Type of
-        TUnit _ _ ->
+        TUnit _ ->
             decoderUnit |> decoderField options name
 
-        TBasic _ _ basic ->
+        TBasic _ basic ->
             decoderBasic basic
                 |> decoderField options name
 
-        TNamed _ _ named _ ->
+        TNamed _ named _ ->
             decoderNamed options named
                 |> decoderField options name
 
-        TProduct _ _ fields ->
+        TProduct _ fields ->
             decoderProduct (Nonempty.toList fields)
                 |> decoderField options name
 
-        TEmptyProduct _ _ ->
+        TEmptyProduct _ ->
             decoderProduct []
                 |> decoderField options name
 
-        TContainer _ _ container ->
+        TContainer _ container ->
             decoderContainerField options name container
 
-        TFunction _ _ arg res ->
+        TFunction _ arg res ->
             CG.unit
 
 
@@ -400,7 +400,7 @@ decoderContainer options container =
 decoderDict : NamedRefGen -> Type pos RefChecked -> Type pos RefChecked -> Expression
 decoderDict options l1keyType l1valType =
     case l1keyType of
-        TNamed _ _ name (RcRestricted basic) ->
+        TNamed _ name (RcRestricted basic) ->
             CG.apply
                 [ decodeFn "build"
                 , CG.apply
@@ -419,7 +419,7 @@ decoderDict options l1keyType l1valType =
                     |> CG.parens
                 ]
 
-        TNamed _ _ name RcEnum ->
+        TNamed _ name RcEnum ->
             CG.apply
                 [ decodeFn "build"
                 , CG.apply

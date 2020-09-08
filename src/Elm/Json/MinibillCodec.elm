@@ -241,25 +241,25 @@ codecMatchFn constructors =
 codecNamedType : String -> Type pos RefChecked -> Expression
 codecNamedType name l1Type =
     case l1Type of
-        TUnit _ _ ->
+        TUnit _ ->
             codecUnit
 
-        TBasic _ _ basic ->
+        TBasic _ basic ->
             codecType l1Type
 
-        TNamed _ _ named _ ->
+        TNamed _ named _ ->
             CG.string "codecNamedType_TNamed"
 
-        TProduct _ _ fields ->
+        TProduct _ fields ->
             codecNamedProduct name (List.Nonempty.toList fields)
 
-        TEmptyProduct _ _ ->
+        TEmptyProduct _ ->
             codecNamedProduct name []
 
-        TContainer _ _ container ->
+        TContainer _ container ->
             codecType l1Type
 
-        TFunction _ _ arg res ->
+        TFunction _ arg res ->
             CG.unit
 
 
@@ -268,16 +268,16 @@ codecNamedType name l1Type =
 codecType : Type pos RefChecked -> Expression
 codecType l1Type =
     case l1Type of
-        TBasic _ _ basic ->
+        TBasic _ basic ->
             codecBasic basic
 
-        TNamed _ _ named _ ->
+        TNamed _ named _ ->
             codecNamed named
 
-        TProduct _ _ fields ->
+        TProduct _ fields ->
             codecProduct (List.Nonempty.toList fields)
 
-        TContainer _ _ container ->
+        TContainer _ container ->
             codecContainer container
 
         _ ->
@@ -289,29 +289,29 @@ codecType l1Type =
 codecTypeField : String -> Type pos RefChecked -> Expression
 codecTypeField name l1Type =
     case l1Type of
-        TUnit _ _ ->
+        TUnit _ ->
             codecUnit |> codecField name
 
-        TBasic _ _ basic ->
+        TBasic _ basic ->
             codecBasic basic
                 |> codecField name
 
-        TNamed _ _ named _ ->
+        TNamed _ named _ ->
             codecNamed named
                 |> codecField name
 
-        TProduct _ _ fields ->
+        TProduct _ fields ->
             codecProduct (List.Nonempty.toList fields)
                 |> codecField name
 
-        TEmptyProduct _ _ ->
+        TEmptyProduct _ ->
             codecProduct []
                 |> codecField name
 
-        TContainer _ _ container ->
+        TContainer _ container ->
             codecContainerField name container
 
-        TFunction _ _ arg res ->
+        TFunction _ arg res ->
             CG.unit
 
 
@@ -371,7 +371,7 @@ codecContainer container =
 codecDict : Type pos RefChecked -> Type pos RefChecked -> Expression
 codecDict l1keyType l1valType =
     case l1keyType of
-        TNamed _ _ name (RcRestricted basic) ->
+        TNamed _ name (RcRestricted basic) ->
             CG.apply
                 [ codecFn "build"
                 , CG.apply
@@ -390,7 +390,7 @@ codecDict l1keyType l1valType =
                     |> CG.parens
                 ]
 
-        TNamed _ _ name RcEnum ->
+        TNamed _ name RcEnum ->
             CG.apply
                 [ codecFn "build"
                 , CG.apply
