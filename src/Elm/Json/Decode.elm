@@ -602,7 +602,7 @@ decodeFn =
 
 decodeImport : Import
 decodeImport =
-    CG.importStmt decodeMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Value" ])
+    CG.importStmt decodeMod Nothing (Just <| CG.exposeExplicit [ CG.typeOrAliasExpose "Decoder", CG.typeOrAliasExpose "Value" ])
 
 
 jsonDecodePipelineImport : Import
