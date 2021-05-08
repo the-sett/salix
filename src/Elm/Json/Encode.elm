@@ -447,6 +447,15 @@ encoderDict options l1keyType l1valType =
                 ]
                 |> CG.parens
 
+        TBasic _ basic ->
+            CG.apply
+                [ encodeFn "dict"
+                , basicToString basic
+                , encoderType options l1valType
+                , CG.val "val"
+                ]
+                |> CG.parens
+
         _ ->
             let
                 _ =
