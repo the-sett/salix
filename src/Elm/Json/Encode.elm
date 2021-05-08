@@ -361,27 +361,19 @@ encoderBasic basic =
     case basic of
         BBool ->
             CG.apply
-                [ encodeFn "bool"
-                , CG.val "val"
-                ]
+                [ encodeFn "bool" ]
 
         BInt ->
             CG.apply
-                [ encodeFn "int"
-                , CG.val "val"
-                ]
+                [ encodeFn "int" ]
 
         BReal ->
             CG.apply
-                [ encodeFn "float"
-                , CG.val "val"
-                ]
+                [ encodeFn "float" ]
 
         BString ->
             CG.apply
-                [ encodeFn "string"
-                , CG.val "val"
-                ]
+                [ encodeFn "string" ]
 
 
 encoderNamed : NamedRefGen -> String -> Expression
