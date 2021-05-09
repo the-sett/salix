@@ -44,3 +44,6 @@ how code generator outputs work.
   Added dict encoder for basic key types.
   Basic encoder functions don't need a 'val' argument.
   Importing Decoder from Json.Decode.
+
+**4.0.2**
+- Bumped elm-css version to remove dependency on Skinney/murmur3.
