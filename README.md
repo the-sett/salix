@@ -2,13 +2,13 @@
 - @rupertlssmith on https://elmlang.slack.com
 - @rupert on https://discourse.elm-lang.org
 
-**Status** - 18-Mar-2020
+**Status** - 09-May-2021
+
 This is a work in progress, and is not likely to be of use to you, but feel free to look around if you are inquisitive.
 
 This is currently being used to generate Elm stubs for AWS services and you can learn from this how that is done:
 
 https://github.com/the-sett/elm-aws-codegen
-
 
 
 # Salix
@@ -38,3 +38,9 @@ how code generator outputs work.
 
 **4.0.0**
 - Removed `Properties` from `Type`s. Properties will only be allowed on declarations and fields. This will make the text source language more manageable as allowing properties anywhere will make it quite awkward. Properties were allowed on types in order to be able to force a property to be set in particular places. This will be handled instead by enriching the property descriptors - not in this version.
+
+**4.0.1**
+- Bug fixes to JSON codecs:
+  Added dict encoder for basic key types.
+  Basic encoder functions don't need a 'val' argument.
+  Importing Decoder from Json.Decode.
