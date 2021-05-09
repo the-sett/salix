@@ -26,7 +26,7 @@
         "elm-community/maybe-extra": "5.1.0 <= v < 6.0.0",
         "mdgriffith/elm-markup": "3.0.1 <= v < 4.0.0",
         "mgold/elm-nonempty-list": "4.1.0 <= v < 5.0.0",
-        "rtfeldman/elm-css": "15.1.0 <= v < 16.0.0",
+        "rtfeldman/elm-css": "16.1.1 <= v < 17.0.0",
         "the-sett/ai-search": "5.0.0 <= v < 6.0.0",
         "the-sett/elm-error-handling": "2.2.0 <= v < 3.0.0",
         "the-sett/elm-pretty-printer": "2.2.3 <= v < 3.0.0",
