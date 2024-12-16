@@ -47,3 +47,6 @@ how code generator outputs work.
 
 **4.0.2**
 - Bumped elm-css version to remove dependency on Skinney/murmur3.
+
+**4.0.3**
+- Fixed a bug with generated decoders for Dicts over Enums.
